@@ -5,3 +5,8 @@ export { useEquipmentList, useEquipmentStats, useEquipmentDetail, useMyLoans, us
 export { useMyPickups, usePickupDetail, useCreatePickup, useCancelPickup } from './usePickups';
 export { usePrograms, useFeaturedPrograms, useProgramDetail } from './usePrograms';
 export { useNews, useNewsDetail } from './useNews';
+
+// Phase 5: Advanced Features
+export { useAuctions, useMyBids, useAuctionDetail, usePlaceBid } from './useAuctions';
+export { useFinancialDashboard, useFinancialReports, useFinancialReport } from './useFinancial';
+export { useNotifications, useUnreadCount, useMarkAsRead, useRegisterPushToken } from './useNotifications';

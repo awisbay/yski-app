@@ -50,5 +50,17 @@ class User(Base):
     donations: Mapped[List["Donation"]] = relationship("Donation", foreign_keys="Donation.donor_id", back_populates="donor")
     pickup_requests: Mapped[List["PickupRequest"]] = relationship("PickupRequest", foreign_keys="PickupRequest.requester_id", back_populates="requester")
     
+    # Phase 5: Auction relationships
+    donated_auction_items: Mapped[List["AuctionItem"]] = relationship("AuctionItem", foreign_keys="AuctionItem.donor_id", back_populates="donor")
+    won_auctions: Mapped[List["AuctionItem"]] = relationship("AuctionItem", foreign_keys="AuctionItem.winner_id", back_populates="winner")
+    auction_bids: Mapped[List["AuctionBid"]] = relationship("AuctionBid", back_populates="bidder")
+    
+    # Phase 5: Financial report relationships
+    generated_reports: Mapped[List["FinancialReport"]] = relationship("FinancialReport", back_populates="generator")
+    
+    # Phase 5: Notification relationships
+    notifications: Mapped[List["Notification"]] = relationship("Notification", back_populates="user", order_by="Notification.created_at.desc()")
+    push_tokens: Mapped[List["PushToken"]] = relationship("PushToken", back_populates="user")
+    
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email={self.email}, role={self.role})>"
+        return f"<User(id={self.id}, email={self.email}, role={self.role})>

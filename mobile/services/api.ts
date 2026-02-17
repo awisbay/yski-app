@@ -133,4 +133,36 @@ export const newsApi = {
   getDetail: (id: string) => api.get(`/api/v1/content/news/${id}`),
 };
 
+// Phase 5: Auction API
+export const auctionsApi = {
+  getList: (params?: { search?: string; skip?: number; limit?: number }) =>
+    api.get('/api/v1/auctions', { params }),
+  getMyBids: () => api.get('/api/v1/auctions/my-bids'),
+  getDetail: (id: string) => api.get(`/api/v1/auctions/${id}`),
+  placeBid: (id: string, data: { amount: number }) =>
+    api.post(`/api/v1/auctions/${id}/bid`, data),
+};
+
+// Phase 5: Financial Reports API
+export const financialApi = {
+  getDashboard: () => api.get('/api/v1/financial/dashboard'),
+  getReports: (params?: { skip?: number; limit?: number }) =>
+    api.get('/api/v1/financial/reports', { params }),
+  getReport: (id: string) => api.get(`/api/v1/financial/reports/${id}`),
+  downloadPdf: (id: string) => api.get(`/api/v1/financial/reports/${id}/pdf`, { responseType: 'blob' }),
+};
+
+// Phase 5: Notifications API
+export const notificationsApi = {
+  getList: (params?: { limit?: number; offset?: number; includeRead?: boolean }) =>
+    api.get('/api/v1/notifications', { params }),
+  getUnreadCount: () => api.get('/api/v1/notifications/unread-count'),
+  markAsRead: (id: string) => api.patch(`/api/v1/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/api/v1/notifications/read-all'),
+  registerPushToken: (data: { token: string; deviceType: string }) =>
+    api.post('/api/v1/notifications/push-token', data),
+  removePushToken: (token: string) =>
+    api.delete('/api/v1/notifications/push-token', { params: { token } }),
+};
+
 export default api;
