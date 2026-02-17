@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Calendar, Package, Heart, Truck, User } from 'lucide-react-native';
+import { Calendar, Package, Heart, Truck, User, Gavel, Wallet } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 
 export default function TabsLayout() {
@@ -53,6 +53,22 @@ export default function TabsLayout() {
           title: 'Jemput',
           tabBarIcon: ({ color, size }) => <Truck size={size} color={color} />,
           href: '/pickups',
+        }}
+      />
+      <Tabs.Screen
+        name="auctions"
+        options={{
+          title: 'Lelang',
+          tabBarIcon: ({ color, size }) => <Gavel size={size} color={color} />,
+          href: '/auctions',
+        }}
+      />
+      <Tabs.Screen
+        name="financial"
+        options={{
+          title: 'Keuangan',
+          tabBarIcon: ({ color, size }) => <Wallet size={size} color={color} />,
+          href: '/financial',
         }}
       />
       <Tabs.Screen
