@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Penjemputan Donasi - Clicky Foundation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002147",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1823",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-4 flex items-center justify-between">
+<button class="flex items-center justify-center p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-primary dark:text-white">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-primary dark:text-white">Penjemputan Donasi</h1>
+<div class="w-8"></div> <!-- Spacer for centering -->
+</header>
+<main class="max-w-md mx-auto p-4 space-y-6">
+<!-- Trust Badge -->
+<div class="flex items-center gap-3 bg-primary/5 dark:bg-primary/20 p-3 rounded-xl border border-primary/10">
+<span class="material-symbols-outlined text-primary dark:text-blue-400">verified_user</span>
+<p class="text-xs font-medium text-primary dark:text-blue-300">Layanan penjemputan resmi dari Clicky Foundation. Aman dan Terpercaya.</p>
+</div>
+<!-- Donation Type Toggle -->
+<section class="space-y-3">
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Jenis Donasi</h2>
+<div class="flex p-1 bg-slate-200 dark:bg-slate-800 rounded-xl">
+<label class="flex-1 cursor-pointer">
+<input checked="" class="sr-only peer" name="donation_type" type="radio"/>
+<div class="py-2.5 text-center rounded-lg text-sm font-semibold transition-all peer-checked:bg-primary peer-checked:text-white text-slate-600 dark:text-slate-400">
+                        Zakat
+                    </div>
+</label>
+<label class="flex-1 cursor-pointer">
+<input class="sr-only peer" name="donation_type" type="radio"/>
+<div class="py-2.5 text-center rounded-lg text-sm font-semibold transition-all peer-checked:bg-primary peer-checked:text-white text-slate-600 dark:text-slate-400">
+                        Kencleng/Infaq
+                    </div>
+</label>
+</div>
+</section>
+<!-- Donor Information -->
+<section class="space-y-4">
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Informasi Donatur</h2>
+<div class="space-y-4 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nama Lengkap</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-400">person</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="Masukkan nama Anda" type="text"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nomor Telepon (WhatsApp)</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-400">call</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="Contoh: 08123456789" type="tel"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Pickup Location -->
+<section class="space-y-4">
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Lokasi Penjemputan</h2>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+<div class="h-40 w-full relative bg-slate-200 dark:bg-slate-800">
+<img class="w-full h-full object-cover opacity-80" data-alt="Tampilan peta interaktif dengan pin lokasi penjemputan" data-location="Jakarta" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADzKXqo0dICvmrHwJu9P68RFtjvDAYmvYcOH5BEsZ0J0sz96cpyNUbXiAmatI1isGPFMWK84GfyMPuHkd91vM2SK7rNmaRIX0GhwQbkm5sH6OYDgBbB84vnZEbUro4azg8J3QSnT7y95pUESQYfaY_3QyEeR7MQtQPiUNOJrcurlduLIOkbDtoA_rWbLN_B-Sh7PUSXrnXJld5JGLeiT8GIlcO3ZcA4kGQ1xwDJkJEZ43c6x36Nhach0xmpJDwbQTi1BR1C8iCSD4"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-4xl drop-shadow-md">location_on</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-slate-400 mt-0.5">map</span>
+<p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Jl. Kebon Jeruk Raya No. 12, Jakarta Barat, DKI Jakarta 11530</p>
+</div>
+<button class="w-full py-2.5 flex items-center justify-center gap-2 rounded-lg border-2 border-primary text-primary dark:text-blue-400 dark:border-blue-400 font-bold text-sm hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-sm">edit_location_alt</span>
+                        Pilih dari Peta
+                    </button>
+</div>
+</div>
+</section>
+<!-- Pickup Schedule -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Jadwal Penjemputan</h2>
+<span class="text-xs text-primary dark:text-blue-400 font-medium">Opsional</span>
+</div>
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Pilih Tanggal</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-400">calendar_today</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary transition-all outline-none text-slate-700 dark:text-slate-300" type="date"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Slot Waktu</label>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+<label class="flex-shrink-0">
+<input checked="" class="sr-only peer" name="time_slot" type="radio"/>
+<div class="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary dark:peer-checked:bg-blue-900/40 dark:peer-checked:text-blue-300 transition-all cursor-pointer">
+                                09:00 - 12:00
+                            </div>
+</label>
+<label class="flex-shrink-0">
+<input class="sr-only peer" name="time_slot" type="radio"/>
+<div class="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary dark:peer-checked:bg-blue-900/40 dark:peer-checked:text-blue-300 transition-all cursor-pointer">
+                                13:00 - 15:00
+                            </div>
+</label>
+<label class="flex-shrink-0">
+<input class="sr-only peer" name="time_slot" type="radio"/>
+<div class="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary dark:peer-checked:bg-blue-900/40 dark:peer-checked:text-blue-300 transition-all cursor-pointer">
+                                16:00 - 18:00
+                            </div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Button -->
+<div class="pt-4">
+<button class="w-full bg-primary hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]">
+                Ajukan Penjemputan
+                <span class="material-symbols-outlined">send</span>
+</button>
+<p class="text-center text-[10px] text-slate-400 mt-4 leading-relaxed">
+                Dengan menekan tombol di atas, Anda menyetujui syarat &amp; ketentuan pengumpulan donasi Clicky Foundation.
+            </p>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-50">
+<div class="max-w-md mx-auto flex items-center justify-around py-2">
+<a class="flex flex-col items-center gap-0.5 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">home</span>
+<span class="text-[10px] font-medium">Beranda</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-primary dark:text-blue-400" href="#">
+<span class="material-symbols-outlined text-[26px] font-variation-fill">volunteer_activism</span>
+<span class="text-[10px] font-bold">Donasi</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">history</span>
+<span class="text-[10px] font-medium">Riwayat</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">account_circle</span>
+<span class="text-[10px] font-medium">Profil</span>
+</a>
+</div>
+</nav>
+<style>
+        .font-variation-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</body></html>

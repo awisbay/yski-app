@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Konfirmasi Infaq - Clicky Foundation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002147",
+                        "whatsapp": "#25D366",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1823",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .receipt-dashed {
+            background-image: radial-gradient(circle, #d1d5db 1.5px, transparent 1.5px);
+            background-size: 8px 1px;
+            background-repeat: repeat-x;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
+<!-- Header Navigation -->
+<header class="bg-white dark:bg-background-dark/50 border-b border-primary/10 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary dark:text-white">volunteer_activism</span>
+<span class="font-bold text-primary dark:text-white tracking-tight">Clicky Foundation</span>
+</div>
+<button class="text-primary/60 dark:text-white/60 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 w-full max-w-md mx-auto px-4 py-8 flex flex-col items-center">
+<!-- Success Animation/Icon Area -->
+<div class="relative mb-6">
+<div class="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 !text-6xl font-bold">check_circle</span>
+</div>
+<!-- Decorative dots for celebration feel -->
+<div class="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full opacity-50"></div>
+<div class="absolute bottom-2 -left-4 w-3 h-3 bg-blue-400 rounded-full opacity-50"></div>
+</div>
+<!-- Gratitude Text -->
+<div class="text-center mb-8">
+<h1 class="text-3xl font-bold text-primary dark:text-white mb-2">Terima Kasih!</h1>
+<p class="text-primary/70 dark:text-white/70 leading-relaxed px-4">
+                Terima kasih atas kebaikan Anda. Infaq Anda sangat berarti bagi mereka yang membutuhkan.
+            </p>
+</div>
+<!-- Digital Receipt Card -->
+<div class="w-full bg-white dark:bg-primary/10 border border-primary/5 rounded-xl shadow-sm overflow-hidden mb-8">
+<div class="bg-primary/5 dark:bg-primary/20 px-6 py-3 border-b border-primary/10">
+<p class="text-xs font-semibold uppercase tracking-wider text-primary/60 dark:text-white/60">Ringkasan Transaksi</p>
+</div>
+<div class="p-6 space-y-4">
+<div class="flex justify-between items-start">
+<span class="text-sm text-primary/50 dark:text-white/50">ID Donasi</span>
+<span class="text-sm font-bold text-primary dark:text-white text-right">#CKY-12345678</span>
+</div>
+<div class="flex justify-between items-start">
+<span class="text-sm text-primary/50 dark:text-white/50">Tanggal</span>
+<span class="text-sm font-medium text-primary dark:text-white text-right">24 Mei 2024, 14:20</span>
+</div>
+<div class="flex justify-between items-start">
+<span class="text-sm text-primary/50 dark:text-white/50">Metode</span>
+<span class="text-sm font-medium text-primary dark:text-white text-right">Transfer Bank / E-Wallet</span>
+</div>
+<!-- Divider -->
+<div class="receipt-dashed h-px w-full my-2"></div>
+<div class="flex justify-between items-center pt-2">
+<span class="text-base font-semibold text-primary dark:text-white">Total Donasi</span>
+<span class="text-xl font-bold text-primary dark:text-white">Rp 150.000</span>
+</div>
+</div>
+<!-- Bottom Receipt Edge Visual -->
+<div class="flex justify-center -mb-2 overflow-hidden">
+<div class="flex space-x-2">
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+<div class="w-4 h-4 rounded-full bg-background-light dark:bg-background-dark border border-primary/5"></div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="w-full space-y-3">
+<button class="w-full flex items-center justify-center gap-2 bg-whatsapp hover:bg-whatsapp/90 text-white font-bold py-4 rounded-lg transition-all shadow-lg shadow-whatsapp/20">
+<span class="material-symbols-outlined">share</span>
+                Bagikan ke WhatsApp
+            </button>
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-lg transition-all">
+<span class="material-symbols-outlined">home</span>
+                Kembali ke Beranda
+            </button>
+</div>
+<!-- Help Link -->
+<div class="mt-8 text-center">
+<a class="text-sm text-primary/60 dark:text-white/60 hover:text-primary dark:hover:text-white underline underline-offset-4" href="#">
+                Butuh bantuan dengan donasi Anda?
+            </a>
+</div>
+</main>
+<!-- Navigation Footer (Matching Component Style) -->
+<nav class="bg-white dark:bg-background-dark border-t border-primary/10 px-4 pb-4 pt-2 mt-auto">
+<div class="max-w-md mx-auto flex justify-between">
+<a class="flex flex-col items-center gap-1 text-primary/40 dark:text-white/40" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Beranda</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary dark:text-white" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">volunteer_activism</span>
+<p class="text-[10px] font-bold uppercase tracking-tighter">Donasi</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary/40 dark:text-white/40" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Riwayat</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary/40 dark:text-white/40" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Zakat</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary/40 dark:text-white/40" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Profil</p>
+</a>
+</div>
+</nav>
+</body></html>

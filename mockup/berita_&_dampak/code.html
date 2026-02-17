@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Berita &amp; Dampak - Clicky Foundation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002147",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1823",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10">
+<div class="max-w-xl mx-auto px-4 h-16 flex items-center justify-between">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-primary dark:text-white">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-primary dark:text-white tracking-tight">Berita &amp; Dampak</h1>
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-primary dark:text-white">search</span>
+</button>
+</div>
+</header>
+<!-- Category Filter -->
+<nav class="max-w-xl mx-auto px-4 py-4 overflow-x-auto flex gap-3 hide-scrollbar">
+<button class="shrink-0 px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold">Semua</button>
+<button class="shrink-0 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-primary/10 text-primary dark:text-white text-sm font-medium hover:bg-primary/5">Kesehatan</button>
+<button class="shrink-0 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-primary/10 text-primary dark:text-white text-sm font-medium hover:bg-primary/5">Bencana</button>
+<button class="shrink-0 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-primary/10 text-primary dark:text-white text-sm font-medium hover:bg-primary/5">Pendidikan</button>
+<button class="shrink-0 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-primary/10 text-primary dark:text-white text-sm font-medium hover:bg-primary/5">Sosial</button>
+</nav>
+<!-- Feed Content -->
+<main class="max-w-xl mx-auto px-4 space-y-6">
+<!-- News Card 1 -->
+<article class="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-primary/5">
+<div class="relative aspect-video w-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Children smiling together in a group activity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnfLar64RFSovtD4ZFILG_ezq2WID5LSajr82Agb9wa4DZCI-lsJNyJA2XfQvnC-NPdCVOVcyJMQJ8ztGStlOmJUoTc8NspOFQCzUJJQBTzHaWhoDQ67PGM5_5nWeu70jlREM9y0e4B7oJUrvXdlPil8JR2Xtw_Z74lXBJUVRKqW0_hdPdCsU0vePh8w2BJ9UA3_0o0aR1h8TfCnddyU0MGL8HKRi2qFpd31yIoU7W2okEmuKX_Wxw4kNBtLzBfky_aXnDOyADIBQ"/>
+<div class="absolute top-4 left-4">
+<span class="px-3 py-1 bg-primary/90 text-white text-xs font-bold rounded-lg backdrop-blur-sm">#Kesehatan</span>
+</div>
+</div>
+<div class="p-5">
+<h2 class="text-xl font-bold text-primary dark:text-white leading-tight mb-2">100 Anak Mengikuti Khitanan Massal Hari Ini</h2>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                    Clicky Foundation menyelenggarakan khitanan massal untuk anak-anak kurang mampu di Jakarta Pusat sebagai bagian dari program kesehatan rutin.
+                </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<button class="px-6 h-10 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                        Baca Selengkapnya
+                    </button>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+<span class="text-xs font-bold">124</span>
+</button>
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span class="text-xs font-bold">45</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- News Card 2 -->
+<article class="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-primary/5">
+<div class="relative aspect-video w-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Humanitarian aid boxes being distributed in a village" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFimi3E5Wr50VZfDkYO8cLD1KJhrMe4f2kgjKiAQxeMKn-J72QcO9WxXjJ9Hdp5vuJmxtbcebwZF9x4YTsnqzwKlZKXR6tmX_QfEjC4sahAmYAfN8bsHYnLCsygKkh5OGL3l4W_g9tzfovTUBip9P7VhnAbXFw8OnNn3lIlF6zLZmOTPSVY5x3KZmpt4YhFCtII7UtjbafnjahC4gZE7avHRm-JkOqQDQgflYdAWyRzDDq_zrnJmPPcY5HJhz6g1-GNd9JkSiadW8"/>
+<div class="absolute top-4 left-4">
+<span class="px-3 py-1 bg-primary/90 text-white text-xs font-bold rounded-lg backdrop-blur-sm">#BantuanBencana</span>
+</div>
+</div>
+<div class="p-5">
+<h2 class="text-xl font-bold text-primary dark:text-white leading-tight mb-2">Bantuan Pangan Tersalurkan di Desa Terpencil</h2>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                    Tim relawan kami menempuh medan sulit untuk memastikan 200 paket pangan sampai kepada warga yang terdampak kekeringan panjang.
+                </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<button class="px-6 h-10 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                        Baca Selengkapnya
+                    </button>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+<span class="text-xs font-bold">89</span>
+</button>
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span class="text-xs font-bold">32</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- News Card 3 -->
+<article class="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-primary/5">
+<div class="relative aspect-video w-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Children reading books in a modern library" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVyb3OLGdc1jW0P-FefJaCK3EcaoXckfGzJ6tsfpFeimxuBgKsI5nH7KR8EjZNcd5ONL8TEURd_LouC7hQxdSR-UB0vFZ5VKmazaMPTHqZ1MlTMxPOXbxMH0E9MjDkSVIkj5iLOKVbFBbL2LFmzR7c1X9roxf4pecWs8Xgc5Nx968zlkaoUHt7zZ6amGjQ0HAw6L31QX-oKfROZ1XRd4QoScvP4zCzylX2Qpw2GuMg6TwtcdbZADh9KKAWBHJhzKkLzEy0UD_w_mQ"/>
+<div class="absolute top-4 left-4">
+<span class="px-3 py-1 bg-primary/90 text-white text-xs font-bold rounded-lg backdrop-blur-sm">#Pendidikan</span>
+</div>
+</div>
+<div class="p-5">
+<h2 class="text-xl font-bold text-primary dark:text-white leading-tight mb-2">Beasiswa Mentari: Mencetak Generasi Cerdas</h2>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                    Selamat kepada 50 penerima beasiswa baru tahun ajaran 2024. Perjalanan mewujudkan mimpi baru saja dimulai.
+                </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<button class="px-6 h-10 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                        Baca Selengkapnya
+                    </button>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+<span class="text-xs font-bold">210</span>
+</button>
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span class="text-xs font-bold">76</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+</main>
+<!-- Bottom Navigation Bar -->
+<footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-primary/10 px-4 pb-safe pt-2 z-50">
+<div class="max-w-xl mx-auto flex justify-between items-center h-16">
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Beranda</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 group text-primary" href="#">
+<span class="material-symbols-outlined fill-1" style="font-variation-settings: 'FILL' 1">newspaper</span>
+<span class="text-[10px] font-bold">Dampak</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">calendar_today</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Kegiatan</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">history</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Riwayat</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">account_circle</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Profil</span>
+</a>
+</div>
+</footer>
+</body></html>

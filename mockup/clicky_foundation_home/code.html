@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clicky Foundation - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002147",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1823",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-primary min-h-screen flex flex-col items-center">
+<!-- Mobile Container -->
+<div class="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen flex flex-col relative shadow-xl">
+<!-- Header / Navigation Bar -->
+<header class="flex items-center justify-between px-6 pt-6 pb-2 sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-50">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 flex items-center justify-center overflow-hidden">
+<img alt="Clicky Foundation Logo" class="h-full w-auto object-contain" data-alt="Clicky Foundation minimalist navy blue logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU0x2d0DpPYHY_GUFABdfCZoQpjehJskXyL6OLk7l5-q8ptySGMXfaatY1iN2e5v1mYOQzznI8iIdq3jnDv98G7b024ACxHfc4nbyF-Fun8XEa72oFQOha_5FRk8T3CUEwr2YpPlMo_JELusur31Sk4cbModu0l39nswIXLEli3XWyaY8oUdxs0EPPwaMRCbwNP42Jmazs-0GD4HJA8YKlU8oApLeOybVgJMOFMK73aWblzU3cJ7NDawRq5K37BKkbGYiqKOS485s"/>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-primary dark:text-white">Clicky Foundation</h1>
+</div>
+<button class="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-primary dark:text-white">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Impact Dashboard -->
+<section class="px-6 pt-6">
+<h2 class="text-lg font-bold mb-4 dark:text-white">Total Dampak</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-primary p-5 rounded-xl shadow-lg shadow-primary/20">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-white/70 text-sm">volunteer_activism</span>
+</div>
+<p class="text-white/80 text-xs font-medium uppercase tracking-wider">Donasi</p>
+<p class="text-white text-xl font-bold mt-1">Rp 500jt+</p>
+</div>
+<div class="bg-white dark:bg-slate-800 border border-primary/10 dark:border-slate-700 p-5 rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary/60 dark:text-white/60 text-sm">groups</span>
+</div>
+<p class="text-primary/60 dark:text-white/60 text-xs font-medium uppercase tracking-wider">Aksi Sosial</p>
+<p class="text-primary dark:text-white text-xl font-bold mt-1">1.2k+</p>
+</div>
+</div>
+</section>
+<!-- Quick Access Menu -->
+<section class="px-6 pt-8">
+<div class="grid grid-cols-4 gap-4 text-center">
+<a class="flex flex-col items-center gap-2 group" href="#">
+<div class="w-14 h-14 bg-primary/5 dark:bg-primary/20 rounded-xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-primary dark:text-blue-200 group-hover:text-white">local_shipping</span>
+</div>
+<span class="text-[10px] font-semibold leading-tight dark:text-slate-300">Pindah Gratis</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#">
+<div class="w-14 h-14 bg-primary/5 dark:bg-primary/20 rounded-xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-primary dark:text-blue-200 group-hover:text-white">medical_services</span>
+</div>
+<span class="text-[10px] font-semibold leading-tight dark:text-slate-300">Alat Medis</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#">
+<div class="w-14 h-14 bg-primary/5 dark:bg-primary/20 rounded-xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-primary dark:text-blue-200 group-hover:text-white">favorite</span>
+</div>
+<span class="text-[10px] font-semibold leading-tight dark:text-slate-300">Zakat &amp; Donasi</span>
+</a>
+<a class="flex flex-col items-center gap-2 group" href="#">
+<div class="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-red-600 dark:text-red-400 group-hover:text-white">e911_emergency</span>
+</div>
+<span class="text-[10px] font-semibold leading-tight text-red-600 dark:text-red-400">Laporan Darurat</span>
+</a>
+</div>
+</section>
+<!-- Latest Programs Section -->
+<section class="pt-10">
+<div class="flex items-center justify-between px-6 mb-4">
+<h2 class="text-lg font-bold dark:text-white">Program Sosial Terbaru</h2>
+<a class="text-sm font-semibold text-primary dark:text-blue-400" href="#">Lihat Semua</a>
+</div>
+<div class="flex overflow-x-auto gap-4 px-6 hide-scrollbar">
+<!-- Card 1 -->
+<div class="min-w-[280px] bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+<div class="h-40 w-full bg-gray-200 relative">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Community health workers providing aid" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA5OzVrIU4yHVgWfUYxtE3XLHHrbCdy08SdJHh5cG-P4YV1_iCs0-3XkewpeJy5aeQgyeF0fAz0-yG-xsRTUnAz_CNx2B-dZbjwiFGGh48rJ9fXqa4rxOqv0yDVPALXFdadOyJUMl2D2mmMvbXtmpPfWMx1oVuWdmnrAseiHYUIEKGpuzfsr_-d0S4fT-n6V6FMcBCi4fYsPqVFNuG4M9ixe-E6HTIz3WcyLrEXJBy5OGu2P4ExnFTwkwysNSHUr08Q68i4UKc1B9k')"></div>
+<div class="absolute top-3 left-3 px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase tracking-tighter">Terbaru</div>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-primary dark:text-white mb-1">Khitanan Massal 2024</h3>
+<p class="text-xs text-gray-500 dark:text-slate-400 mb-3">Membantu 500+ anak yatim dan dhuafa di wilayah pedalaman.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-gray-300 flex items-center justify-center text-[8px] overflow-hidden">
+<div class="w-full h-full bg-blue-100" data-alt="Volunteer avatar"></div>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-gray-300 flex items-center justify-center text-[8px] overflow-hidden">
+<div class="w-full h-full bg-green-100" data-alt="Volunteer avatar"></div>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-gray-800 text-white text-[8px] flex items-center justify-center">+12</div>
+</div>
+<button class="px-4 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90">Ikut Serta</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[280px] bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+<div class="h-40 w-full bg-gray-200 relative">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Social charity event with food boxes" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIa6lglWE5ZogQXLhzJacznHYLOHhX7hhXdR2yXCWRehxTApnFo7TEDZdm6H1mTOG3qgDrJqW8B63LSv4VQAHo2yp2BI-pECJ07embKKwWYL3Yeo83mSzfcIa5kJ-pMthS2Woy1vMPLB1xv3bXRVreqLY4_dntBmHfQg6LDx9JpAkpMCzax4-3KL8x1FttPo6690hzetiKaJ6mTfaumWjsk69mNfrHI3MRiw1E_iQz3PChpm3sj2Pf69zgXy_fdspen2YdrR60jM4')"></div>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-primary dark:text-white mb-1">Bakti Sosial Jabodetabek</h3>
+<p class="text-xs text-gray-500 dark:text-slate-400 mb-3">Penyaluran sembako dan layanan kesehatan gratis mingguan.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-gray-300 flex items-center justify-center text-[8px] overflow-hidden">
+<div class="w-full h-full bg-yellow-100" data-alt="Volunteer avatar"></div>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-gray-800 text-white text-[8px] flex items-center justify-center">+45</div>
+</div>
+<button class="px-4 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90">Donasi</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter / CTA Card -->
+<section class="px-6 mt-10">
+<div class="bg-primary/5 dark:bg-slate-800 p-6 rounded-2xl border-2 border-dashed border-primary/20 dark:border-slate-700">
+<div class="flex items-start justify-between">
+<div class="max-w-[70%]">
+<h4 class="font-bold text-primary dark:text-white">Jadi Relawan?</h4>
+<p class="text-xs text-gray-600 dark:text-slate-400 mt-1">Gunakan keahlian Anda untuk membantu sesama bersama kami.</p>
+</div>
+<div class="bg-primary text-white p-2 rounded-lg">
+<span class="material-symbols-outlined text-sm">handshake</span>
+</div>
+</div>
+<button class="w-full mt-4 py-2.5 bg-white dark:bg-primary border border-primary/20 text-primary dark:text-white text-xs font-bold rounded-xl shadow-sm">Daftar Sekarang</button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full max-w-md bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-6 py-3 flex items-center justify-between z-50">
+<a class="flex flex-col items-center gap-1 text-primary dark:text-white" href="#">
+<span class="material-symbols-outlined fill-1">home</span>
+<span class="text-[10px] font-bold">Beranda</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="text-[10px] font-medium">Kegiatan</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-medium">Riwayat</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-medium">Profil</span>
+</a>
+</nav>
+</div>
+</body></html>

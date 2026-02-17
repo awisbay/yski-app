@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002147",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1823",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<title>Pilih Metode Pembayaran - Clicky Foundation</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+<!-- Main Container (Mobile First approach for App UI) -->
+<div class="relative flex min-h-screen w-full max-w-md mx-auto flex-col bg-white dark:bg-background-dark shadow-xl overflow-x-hidden">
+<!-- Top Navigation -->
+<div class="sticky top-0 z-10 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md">
+<div class="flex items-center p-4 pb-2 justify-between">
+<button class="text-primary dark:text-white flex size-10 shrink-0 items-center justify-center hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-primary dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Metode Pembayaran</h2>
+</div>
+<!-- Progress Tracker -->
+<div class="flex flex-col gap-2 px-6 py-4">
+<div class="flex justify-between items-end">
+<p class="text-primary/70 dark:text-white/70 text-xs font-semibold uppercase tracking-wider">Langkah 2 dari 3</p>
+<p class="text-primary dark:text-white text-sm font-bold">Pilih Pembayaran</p>
+</div>
+<div class="h-2 w-full rounded-full bg-primary/10 dark:bg-white/10 overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 66.6%;"></div>
+</div>
+</div>
+</div>
+<!-- Donation Summary Card (Context Reminder) -->
+<div class="px-4 py-2">
+<div class="bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/10 rounded-xl p-4 flex justify-between items-center">
+<div>
+<p class="text-primary/60 dark:text-white/60 text-xs">Total Infaq Anda</p>
+<p class="text-primary dark:text-white text-xl font-bold">Rp 150.000</p>
+</div>
+<div class="text-primary/40">
+<span class="material-symbols-outlined text-3xl">account_balance_wallet</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col pb-32">
+<!-- QRIS Section (Featured) -->
+<div class="px-4 pt-6 pb-2">
+<h3 class="text-primary dark:text-white text-sm font-bold uppercase tracking-widest px-1">Paling Populer</h3>
+</div>
+<label class="group relative flex items-center gap-4 bg-white dark:bg-background-dark px-4 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-b border-primary/5">
+<div class="flex items-center justify-center rounded-lg bg-primary/10 dark:bg-white/10 text-primary dark:text-white size-12 shrink-0">
+<span class="material-symbols-outlined text-2xl">qr_code_2</span>
+</div>
+<div class="flex-1">
+<p class="text-primary dark:text-white text-base font-bold leading-tight">QRIS</p>
+<p class="text-primary/60 dark:text-white/60 text-xs">Gopay, OVO, LinkAja, Dana, &amp; Mobile Banking</p>
+</div>
+<input checked="" class="w-5 h-5 text-primary border-primary/20 focus:ring-primary rounded-full" name="payment" type="radio"/>
+</label>
+<!-- E-Wallet Section -->
+<div class="px-4 pt-6 pb-2">
+<h3 class="text-primary dark:text-white text-sm font-bold uppercase tracking-widest px-1">E-Wallet</h3>
+</div>
+<!-- GoPay -->
+<label class="group relative flex items-center gap-4 bg-white dark:bg-background-dark px-4 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-b border-primary/5">
+<div class="flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20 size-12 shrink-0">
+<span class="material-symbols-outlined text-blue-600">account_balance_wallet</span>
+</div>
+<div class="flex-1">
+<p class="text-primary dark:text-white text-base font-semibold">GoPay</p>
+</div>
+<input class="w-5 h-5 text-primary border-primary/20 focus:ring-primary rounded-full" name="payment" type="radio"/>
+</label>
+<!-- OVO -->
+<label class="group relative flex items-center gap-4 bg-white dark:bg-background-dark px-4 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-b border-primary/5">
+<div class="flex items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20 size-12 shrink-0">
+<span class="material-symbols-outlined text-purple-600">payments</span>
+</div>
+<div class="flex-1">
+<p class="text-primary dark:text-white text-base font-semibold">OVO</p>
+</div>
+<input class="w-5 h-5 text-primary border-primary/20 focus:ring-primary rounded-full" name="payment" type="radio"/>
+</label>
+<!-- ShopeePay -->
+<label class="group relative flex items-center gap-4 bg-white dark:bg-background-dark px-4 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-b border-primary/5">
+<div class="flex items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/20 size-12 shrink-0">
+<span class="material-symbols-outlined text-orange-600">wallet</span>
+</div>
+<div class="flex-1">
+<p class="text-primary dark:text-white text-base font-semibold">ShopeePay</p>
+</div>
+<input class="w-5 h-5 text-primary border-primary/20 focus:ring-primary rounded-full" name="payment" type="radio"/>
+</label>
+<!-- Bank Transfer Section -->
+<div class="px-4 pt-6 pb-2">
+<h3 class="text-primary dark:text-white text-sm font-bold uppercase tracking-widest px-1">Transfer Bank (Virtual Account)</h3>
+</div>
+<!-- Bank BCA -->
+<label class="group relative flex items-center gap-4 bg-white dark:bg-background-dark px-4 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-b border-primary/5">
+<div class="flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 size-12 shrink-0">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+</div>
+<div class="flex-1">
+<p class="text-primary dark:text-white text-base font-semibold">Bank BCA</p>
+<p class="text-primary/60 dark:text-white/60 text-xs">Verifikasi otomatis</p>
+</div>
+<input class="w-5 h-5 text-primary border-primary/20 focus:ring-primary rounded-full" name="payment" type="radio"/>
+</label>
+<!-- Bank Mandiri -->
+<label class="group relative flex items-center gap-4 bg-white dark:bg-background-dark px-4 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-b border-primary/5">
+<div class="flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 size-12 shrink-0">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+</div>
+<div class="flex-1">
+<p class="text-primary dark:text-white text-base font-semibold">Bank Mandiri</p>
+<p class="text-primary/60 dark:text-white/60 text-xs">Verifikasi otomatis</p>
+</div>
+<input class="w-5 h-5 text-primary border-primary/20 focus:ring-primary rounded-full" name="payment" type="radio"/>
+</label>
+</div>
+<!-- Fixed Bottom Action Button -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-background-dark p-4 border-t border-primary/10 dark:border-white/10 z-20">
+<button class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98]">
+                Lanjut ke Pembayaran
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<p class="text-center text-primary/40 dark:text-white/40 text-[10px] mt-2">
+                Pembayaran Anda diproses secara aman oleh Clicky Foundation.
+            </p>
+</div>
+</div>
+</body></html>

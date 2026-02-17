@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inventory Alat Medis - Clicky Foundation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002147",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1823",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-primary min-h-screen flex flex-col">
+<!-- Top Navigation Header -->
+<header class="bg-primary text-white sticky top-0 z-50 shadow-md">
+<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-3xl">medical_services</span>
+<div>
+<h1 class="text-lg font-bold leading-tight uppercase tracking-wider">Inventory Alat Medis</h1>
+<p class="text-[10px] opacity-80 uppercase tracking-[0.1em]">Clicky Foundation Dashboard</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative p-2 hover:bg-white/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border border-white/30">
+<span class="material-symbols-outlined text-xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 max-w-7xl mx-auto w-full p-4 space-y-6 pb-24">
+<!-- Summary Stats Section -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="bg-white dark:bg-primary/10 p-4 rounded-xl shadow-sm border border-primary/5">
+<p class="text-sm text-primary/60 dark:text-white/60 font-medium">Total Alat</p>
+<p class="text-2xl font-bold mt-1">42</p>
+</div>
+<div class="bg-white dark:bg-primary/10 p-4 rounded-xl shadow-sm border border-primary/5">
+<p class="text-sm text-primary/60 dark:text-white/60 font-medium">Dipinjam</p>
+<p class="text-2xl font-bold mt-1 text-primary">7</p>
+</div>
+<div class="bg-white dark:bg-primary/10 p-4 rounded-xl shadow-sm border border-primary/5">
+<p class="text-sm text-primary/60 dark:text-white/60 font-medium">Permintaan</p>
+<p class="text-2xl font-bold mt-1 text-orange-600">3</p>
+</div>
+<div class="bg-white dark:bg-primary/10 p-4 rounded-xl shadow-sm border border-primary/5">
+<p class="text-sm text-primary/60 dark:text-white/60 font-medium">Tersedia</p>
+<p class="text-2xl font-bold mt-1 text-green-600">35</p>
+</div>
+</section>
+<!-- Inventory Cards Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold text-primary dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined">category</span> Ketersediaan Alat
+                </h2>
+<button class="text-sm font-semibold text-primary/70 hover:underline">Lihat Semua</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+<!-- Card 1: Kursi Roda -->
+<div class="bg-white dark:bg-primary/20 rounded-xl overflow-hidden shadow-sm border border-primary/10">
+<div class="h-40 bg-primary/5 relative">
+<img alt="Kursi Roda Medis" class="w-full h-full object-cover" data-alt="Modern medical wheelchair in clinical setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb9Opmycdv0DNjkqOvWbJoOQYcFoj0RRc-6tYceUWPkobllWJyX3BqM1c5vEDbG_GpwXX1AnRPdt0LmhMPfQAF8bz8YuyK7gxivV-smdl00XvYeZkZCP0oRk45ofqDScTaXajlVxZvWalwHyygD_tFcroEx5eaaWJW7H3tsomVaXX2iln_R_Dy3So82SnVr1Ixic-urcXUcFy_6boweNzErvXKklSq0aCxLpi6nzypzq-ly1N1VoWggObtGpOoXCpISGBcLK-Uhz0"/>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-lg text-primary dark:text-white mb-2">Kursi Roda</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                                Tersedia: 5
+                            </span>
+<span class="px-3 py-1 bg-primary/10 text-primary/70 rounded-full text-xs font-bold border border-primary/10">
+                                Dipinjam: 2
+                            </span>
+</div>
+</div>
+</div>
+<!-- Card 2: Tabung Oksigen -->
+<div class="bg-white dark:bg-primary/20 rounded-xl overflow-hidden shadow-sm border border-primary/10">
+<div class="h-40 bg-primary/5 relative">
+<img alt="Tabung Oksigen" class="w-full h-full object-cover" data-alt="Professional oxygen cylinders in hospital storage" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALiKUUen8N5A5kh4LhOVnatQc0u6LjeR0pfY1FJrpZ6a4tQFw1RC5oBQV3u4Y5ibjAu6nrFki2zTEIBEgTHbQlLs8zd52q9vS33cB6yXX5R3q29fY7k0JJ8C7T5155Kc_uBmkWib8zbXBnSh4NGiwt3Ushm5PQVKI62v8cA25mAyKxUITmTOimbBQqvlAbv2nA0yf5af56P9h78_9G6YHxdBGinLFyWhZV1g589nxafaeX2Bp14LHxW5E-P0_KqDTxOic2-B1ZO2o"/>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-lg text-primary dark:text-white mb-2">Tabung Oksigen</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                                Tersedia: 12
+                            </span>
+<span class="px-3 py-1 bg-primary/10 text-primary/70 rounded-full text-xs font-bold border border-primary/10">
+                                Dipinjam: 4
+                            </span>
+</div>
+</div>
+</div>
+<!-- Card 3: Tempat Tidur Pasien -->
+<div class="bg-white dark:bg-primary/20 rounded-xl overflow-hidden shadow-sm border border-primary/10">
+<div class="h-40 bg-primary/5 relative">
+<img alt="Tempat Tidur Pasien" class="w-full h-full object-cover" data-alt="Adjustable hospital bed with white sheets" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6XlBNMSRVhGJXGy-1I74bUtKpZFeBlrC0pLtBQXSGFjM4kpwiEDsyE-FX3FBVj2dxSQYs-SEypsePOgtyBJkktFf0wiPfq-OnEX5wk8nV_jLGWRPqdw5mVPMrDovuUIZoDQ8E9MMlcwlvfWDmNOEHXeyTaDzIVVO6Ag9LuUJD3hFUdu78LoZbhTVWKDDeb0bOa0ziImtGo82Ir4ATc_B_nesXRsuSS0kVNri4yrxwPgX7b8joj8dm1o6WC4tbZ5Pb4YzZHAmOPoE"/>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-lg text-primary dark:text-white mb-2">Tempat Tidur Pasien</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                                Tersedia: 3
+                            </span>
+<span class="px-3 py-1 bg-primary/10 text-primary/70 rounded-full text-xs font-bold border border-primary/10">
+                                Dipinjam: 1
+                            </span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Rentals List -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold text-primary dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined">assignment_turned_in</span> Peminjaman Aktif
+                </h2>
+</div>
+<div class="bg-white dark:bg-primary/10 rounded-xl shadow-sm border border-primary/10 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-primary/5 text-primary/60 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4">Peminjam</th>
+<th class="px-6 py-4">Item</th>
+<th class="px-6 py-4">Tgl. Kembali</th>
+<th class="px-6 py-4 text-right">Aksi</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-primary/5">
+<tr class="hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">B</div>
+<span class="font-semibold">Budi Santoso</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 text-sm text-primary/80">
+<span class="material-symbols-outlined text-sm">accessible</span> Kursi Roda
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm font-medium">12 Okt 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1.5 rounded-lg transition-colors">
+<span class="material-symbols-outlined">info</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">S</div>
+<span class="font-semibold">Susi Susanti</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 text-sm text-primary/80">
+<span class="material-symbols-outlined text-sm">air</span> Tabung Oksigen
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm font-medium">15 Okt 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1.5 rounded-lg transition-colors">
+<span class="material-symbols-outlined">info</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Pending Approval Section / Primary Action -->
+<section class="bg-primary text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-4 text-center md:text-left">
+<div class="p-3 bg-white/20 rounded-xl">
+<span class="material-symbols-outlined text-3xl">pending_actions</span>
+</div>
+<div>
+<h3 class="text-xl font-bold">Ada 3 Permintaan Baru</h3>
+<p class="text-white/70 text-sm">Segera verifikasi permintaan peminjaman yang masuk.</p>
+</div>
+</div>
+<button class="w-full md:w-auto px-8 py-3 bg-white text-primary font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">verified</span>
+                Setujui Permintaan
+            </button>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-primary/10 px-4 pb-4 pt-2 z-50">
+<div class="max-w-md mx-auto flex justify-around">
+<a class="flex flex-col items-center gap-1 text-primary group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:bg-primary/10 p-1 rounded-lg">dashboard</span>
+<span class="text-[10px] font-bold">Beranda</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary/40 group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:bg-primary/10 p-1 rounded-lg">inventory_2</span>
+<span class="text-[10px] font-bold">Inventaris</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary/40 group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:bg-primary/10 p-1 rounded-lg">bar_chart</span>
+<span class="text-[10px] font-bold">Laporan</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary/40 group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:bg-primary/10 p-1 rounded-lg">person</span>
+<span class="text-[10px] font-bold">Profil</span>
+</a>
+</div>
+</nav>
+</body></html>
