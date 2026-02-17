@@ -22,6 +22,7 @@ export default function ServicesScreen() {
         { title: 'Program Yayasan', icon: 'volunteer-activism', desc: 'Lihat program sosial', route: '/programs' },
         { title: 'Berita & Dampak', icon: 'article', desc: 'Update kegiatan yayasan', route: '/news' },
         { title: 'Laporan Keuangan', icon: 'account-balance', desc: 'Transparansi keuangan', route: '/finance' },
+        { title: 'Berita & Dampak', icon: 'article', desc: 'Update kegiatan yayasan', route: '/news' },
       ]
     }
   ];
