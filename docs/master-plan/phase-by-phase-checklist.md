@@ -324,27 +324,69 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 
 **Goal:** Website WordPress ter-sinkronisasi dengan data dari aplikasi.
 
-### WP Plugin Development
-- [ ] Buat plugin skeleton `clicky-foundation`
-- [ ] Plugin activation/deactivation hooks
-- [ ] Settings page di WP Admin (API URL, API key)
-- [ ] Custom Post Types: `clicky_program`, `clicky_news`
-- [ ] REST API endpoints di WP side untuk receive data
+> 📄 **Detailed Checklist:** [Phase 6 Checklist](../phase6/phase-6-checklist.md)  
+> 📄 **Backlog:** [Phase 6 Backlog](../phase6/phase-6-backlog.md)  
+> 📄 **Acceptance Criteria:** [Phase 6 Acceptance](../phase6/phase-6-acceptance.md)  
+> 📄 **WP Plugin Spec:** [WP Plugin Specification](../phase6/wp-plugin-spec.md)
 
-### Content Sync
-- [ ] Sync programs dari FastAPI ke WP (cron-based / webhook)
-- [ ] Sync news/berita dari FastAPI ke WP
-- [ ] Sync financial reports (summary) ke WP
-- [ ] Two-way sync: content edited di WP bisa push balik ke FastAPI
-- [ ] Error handling dan retry logic untuk sync failures
+### WP Plugin Skeleton
+- [x] Buat file utama `clicky-foundation.php` dengan plugin header
+- [x] Implementasi `register_activation_hook()` -- buat custom tables, set default options
+- [ ] Implementasi `register_deactivation_hook()` -- clear cron events
+- [ ] Implementasi `register_uninstall_hook()` -- drop tables, delete options
+- [ ] Buat settings page di WP Admin (Settings > Clicky Foundation)
+- [ ] Register admin menu item dengan icon custom
+- [ ] Buat `includes/` directory structure
+- [ ] Set minimum requirements check (PHP 7.4+, WP 5.8+)
+- [ ] Buat admin notice jika API belum dikonfigurasi
+
+### Settings Page
+- [ ] Field: API Base URL, API Key / Secret Token, Webhook Secret
+- [ ] Field: Sync Interval (15 min, 30 min, hourly, daily)
+- [ ] Field: Content Types to Sync (checkboxes)
+- [ ] Field: Debug Mode toggle
+- [ ] Tombol "Test Connection" dan "Force Sync Now"
+- [ ] Display last sync timestamp dan status
+
+### Custom Post Types
+- [ ] Register CPT `clicky_program` dengan label "Program Yayasan"
+- [ ] Meta boxes: Target Dana, Dana Terkumpul, Status, External ID, Last Synced
+- [ ] Register CPT `clicky_news` dengan label "Berita Yayasan"
+- [ ] Meta boxes: Kategori, External ID, Last Synced, Source
+- [ ] Custom table: `clicky_financial_reports`
+
+### Content Sync Engine
+- [ ] WP-Cron event `clicky_sync_content` terjadwal
+- [ ] `sync_programs()` -- fetch dari FastAPI, create/update CPT
+- [ ] `sync_news()` -- fetch dari FastAPI, create/update CPT
+- [ ] `sync_financial_reports()` -- fetch reports, update table
+- [ ] Incremental sync via `?updated_after=` parameter
+- [ ] Webhook handlers: program.created/updated/deleted, news.*, donation.received
+- [ ] HMAC-SHA256 signature verification untuk webhooks
+- [ ] Error handling: exponential backoff, retry logic, circuit breaker
+
+### REST API Endpoints (WP-Side)
+- [ ] Register REST namespace: `clicky/v1`
+- [ ] `POST /clicky/v1/sync/programs` -- receive program data
+- [ ] `POST /clicky/v1/sync/news` -- receive news data
+- [ ] `POST /clicky/v1/sync/financial-reports` -- receive financial data
+- [ ] `POST /clicky/v1/webhook` -- receive event webhooks
+- [ ] `GET /clicky/v1/status` -- health check
+- [ ] Public endpoints untuk shortcodes
 
 ### Shortcodes
-- [ ] `[clicky_donation_form]` - embed donation form di website
-- [ ] `[clicky_financial_report]` - tampilkan laporan keuangan
-- [ ] `[clicky_equipment_list]` - list alkes tersedia
-- [ ] `[clicky_program_progress]` - progress program dengan bar
-- [ ] `[clicky_news_feed]` - feed berita terbaru
-- [ ] Styling shortcode output sesuai WP theme
+- [ ] `[clicky_donation_form]` -- embed donation form
+- [ ] `[clicky_financial_report]` -- tampilkan laporan keuangan
+- [ ] `[clicky_equipment_list]` -- list alkes tersedia
+- [ ] `[clicky_program_progress]` -- progress program dengan bar
+- [ ] `[clicky_news_feed]` -- feed berita terbaru
+- [ ] Conditional CSS/JS loading
+- [ ] Responsive design
+
+### Testing
+- [ ] PHPUnit tests: activation, settings, CPT, shortcodes
+- [ ] Integration test: full sync cycle (FastAPI → WP)
+- [ ] Manual testing: activate → configure → sync → render
 
 ---
 
@@ -352,43 +394,64 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 
 **Goal:** Aplikasi siap production dengan kualitas dan keamanan terjamin.
 
-### Testing
-- [ ] Backend unit tests (pytest) - coverage target 80%
-- [ ] Backend integration tests (API endpoint tests)
-- [ ] Test database transactions dan edge cases (double-booking, concurrent bids)
-- [ ] Mobile component tests (Jest + React Native Testing Library)
-- [ ] Mobile screen tests (navigation, form submission)
-- [ ] End-to-end test scenarios (critical paths)
-- [ ] Load testing untuk booking engine (Locust / k6)
+> 📄 **Detailed Checklist:** [Phase 7 Checklist](../phase7/phase-7-checklist.md)  
+> 📄 **Testing Strategy:** [Testing Strategy](../phase7/testing-strategy.md)  
+> 📄 **Security Hardening:** [Security Spec](../phase7/security-hardening.md)  
+> 📄 **CI/CD Pipeline:** [CI/CD Spec](../phase7/cicd-pipeline.md)  
+> 📄 **Monitoring:** [Monitoring Spec](../phase7/monitoring-spec.md)  
+> 📄 **Acceptance Criteria:** [Phase 7 Acceptance](../phase7/phase-7-acceptance.md)
+
+### Backend Testing (Pytest)
+- [ ] Unit tests: auth, user, booking, equipment, donation, pickup, auction, financial services
+- [ ] Integration tests: auth flow, booking flow, donation flow, auction flow
+- [ ] Database tests: migrations, concurrent access, race conditions
+- [ ] Coverage target: ≥ 80% overall, ≥ 90% auth, ≥ 85% booking
+- [ ] Test fixtures: db_session, client, admin_user, sahabat_user, auth_headers
+
+### Mobile Testing
+- [ ] Component tests: Button, Input, Card, Badge, Header, LoadingSpinner
+- [ ] Screen tests: Login, Home, Booking, Donation, Profile
+- [ ] Hook tests: useAuth, useBookings, useDonations, useNotifications
+- [ ] Navigation tests: auth guard, tab navigation, deep links
 
 ### Security Hardening
-- [ ] Input validation di semua endpoints (Pydantic)
-- [ ] SQL injection prevention (parameterized queries via SQLAlchemy)
-- [ ] XSS prevention di mobile app
-- [ ] Rate limiting (Nginx + Redis)
-- [ ] CORS configuration production
-- [ ] Secure headers (Nginx)
-- [ ] File upload validation (type, size, content)
-- [ ] Audit log untuk operasi sensitif (admin actions)
-- [ ] Environment variables untuk semua secrets (no hardcoded)
-- [ ] Dependency vulnerability scan (safety, npm audit)
+- [ ] Input validation: Pydantic schemas on all endpoints
+- [ ] SQL injection prevention: SQLAlchemy ORM only
+- [ ] File upload validation: type, size, magic bytes (max 5MB)
+- [ ] JWT security: 15 min access, 7 day refresh, token rotation
+- [ ] Rate limiting: 5/min login, 3/hour register, 100/min global
+- [ ] Password policy: bcrypt with 12 rounds
+- [ ] Nginx security headers: HSTS, CSP, X-Frame-Options, etc.
+- [ ] CORS: whitelist specific origins (no wildcard)
+- [ ] Secrets: environment variables only, no hardcoded
+- [ ] Dependency audit: pip-audit, npm audit
 
-### CI/CD Pipeline
-- [ ] GitHub Actions: lint, test, build pada setiap PR
-- [ ] GitHub Actions: build Docker images pada merge ke main
-- [ ] GitHub Actions: auto-deploy ke staging server
-- [ ] GitHub Actions: manual trigger deploy ke production
-- [ ] Database migration check di CI
-- [ ] Mobile: EAS Build configuration (Expo Application Services)
-- [ ] Mobile: OTA update setup (Expo Updates)
+### Performance & Load Testing
+- [ ] API response time p95 < 200ms (reads), < 500ms (writes)
+- [ ] Database query time: no query > 100ms
+- [ ] Load test: 100 concurrent users on slot availability
+- [ ] Load test: 50 concurrent booking requests (anti-double-booking)
+- [ ] Redis cache hit ratio > 90%
+
+### CI/CD Pipeline (GitHub Actions)
+- [ ] PR Pipeline: lint, format, test, build, security scan
+- [ ] Main Branch Pipeline: test, build image, push registry, deploy staging
+- [ ] Production Deploy: manual trigger, migration, health check, rollback procedure
+- [ ] Mobile Build: EAS Build for iOS/Android, OTA updates
 
 ### Monitoring & Logging
-- [ ] Structured logging (JSON format)
-- [ ] Health check endpoints untuk semua services
-- [ ] Uptime monitoring (external)
-- [ ] Error alerting (email / Telegram bot)
-- [ ] Database performance monitoring
-- [ ] API response time tracking
+- [ ] Health check endpoints: /health, /health/db, /health/redis, /health/minio
+- [ ] Structured JSON logging with rotation (30-day retention)
+- [ ] Telegram bot alerts for critical/error events
+- [ ] External uptime monitoring (UptimeRobot)
+- [ ] Admin dashboard with key metrics
+
+### Infrastructure
+- [ ] Docker production configuration: multi-stage, non-root, resource limits
+- [ ] SSL/TLS with Let's Encrypt auto-renewal
+- [ ] PostgreSQL daily backups with 30-day retention
+- [ ] Firewall: only 80/443 open, SSH key-based auth
+- [ ] Server monitoring: disk, CPU, memory alerts
 
 ---
 
@@ -396,29 +459,60 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 
 **Goal:** Aplikasi dirilis ke beta users untuk validasi dan feedback.
 
-### Beta Testing
-- [ ] Internal testing oleh tim pengurus yayasan
-- [ ] Distribusi via TestFlight (iOS) dan Internal Testing (Android)
-- [ ] Onboard 20-50 beta users (sahabat terpilih)
-- [ ] Bug reporting mechanism (in-app feedback form)
-- [ ] Collect user feedback secara berkala
+> 📄 **Detailed Checklist:** [Phase 8 Checklist](../phase8/phase-8-checklist.md)  
+> 📄 **Beta Launch Plan:** [Beta Launch Plan](../phase8/beta-launch-plan.md)  
+> 📄 **KPI Tracking:** [KPI Tracking Spec](../phase8/kpi-tracking.md)  
+> 📄 **Acceptance Criteria:** [Phase 8 Acceptance](../phase8/phase-8-acceptance.md)
+
+### Pre-Launch Preparation
+- [ ] Apple Developer Account aktif
+- [ ] Google Play Developer Account aktif
+- [ ] App Store Connect: app created, metadata filled
+- [ ] Google Play Console: app created, store listing filled
+- [ ] Privacy policy and terms of service pages live
+- [ ] App icons and screenshots prepared
+- [ ] EAS Build configuration for preview and production
+- [ ] Production server provisioned and configured
+
+### Beta Distribution
+- [ ] iOS: TestFlight internal and external testing groups created
+- [ ] Android: Internal and closed testing tracks configured
+- [ ] Beta tester invite list prepared (30-60 users)
+
+### Beta User Onboarding
+- [ ] Internal team testing: 5-10 pengurus/relawan
+- [ ] External beta users: 20-50 sahabat terpilih
+- [ ] Onboarding materials: installation guide, feature overview
+- [ ] Communication channel: WhatsApp group for beta testers
+- [ ] Feedback form ready (Google Form or in-app)
+
+### In-App Feedback
+- [ ] In-app feedback button on Profile screen
+- [ ] Crash reporting via Sentry or Expo Error Recovery
+- [ ] Feedback form fields: type, description, screenshot
 
 ### KPI Tracking
-- [ ] Track jumlah registrasi baru
-- [ ] Track jumlah booking pindahan berhasil
-- [ ] Track total donasi via aplikasi
-- [ ] Track jumlah peminjaman alkes
-- [ ] Track engagement rate (DAU/MAU)
-- [ ] Track crash rate dan error rate
-- [ ] Dashboard KPI sederhana untuk admin
+- [ ] User metrics: registrations, DAU/WAU/MAU, retention (D1/D7/D30)
+- [ ] Feature adoption: bookings, donations, pickups, loans, auction bids
+- [ ] Technical metrics: API uptime, response time, crash-free rate
+- [ ] Business impact: total funds raised, equipment utilization
+- [ ] KPI dashboard functional with real-time data
+- [ ] Weekly report automation
 
-### Feedback & Iteration
-- [ ] Analisis feedback dari beta users
-- [ ] Prioritasi bug fixes berdasarkan severity
-- [ ] Iterasi UI/UX berdasarkan feedback
-- [ ] Performance optimization berdasarkan real usage data
-- [ ] Dokumentasi lessons learned
-- [ ] Rencana untuk public launch (Phase 9+)
+### Bug Fix & Iteration Cycle
+- [ ] P0 Critical bugs: fix within 1 hour, hotfix + OTA
+- [ ] P1 High bugs: fix within 4 hours, next patch
+- [ ] P2 Medium bugs: fix within 24 hours, weekly release
+- [ ] Daily review of crash reports and feedback
+
+### Beta Exit Criteria
+- [ ] 30+ users registered and active
+- [ ] Crash-free rate >99% over 7 days
+- [ ] API uptime >99.5% over 7 days
+- [ ] All P0 and P1 bugs resolved
+- [ ] Positive feedback >70% from beta testers
+- [ ] Yayasan approval for public launch
+- [ ] Stakeholder sign-off documented
 
 ---
 
@@ -430,9 +524,9 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 | Phase 1 | ✅ Completed | 100% |
 | Phase 2 | ✅ Completed | 95% |
 | Phase 3 | ✅ Completed | 95% |
-| Phase 4 | 🔄 In Progress | 40% |
-| Phase 5 | 📋 Not Started | 0% |
-| Phase 6 | 📋 Not Started | 0% |
+| Phase 4 | ✅ Completed | 90% |
+| Phase 5 | ✅ Completed | 85% |
+| Phase 6 | 🔄 In Progress | 30% |
 | Phase 7 | 📋 Not Started | 0% |
 | Phase 8 | 📋 Not Started | 0% |
 

@@ -1,0 +1,447 @@
+/**
+ * Clicky Foundation - Public Styles
+ */
+
+/* ===== General ===== */
+.clicky-donation-form-wrapper,
+.clicky-programs-grid,
+.clicky-news-list,
+.clicky-news-grid,
+.clicky-financial-reports,
+.clicky-equipment-grid,
+.clicky-equipment-list {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.6;
+}
+
+/* ===== Donation Form ===== */
+.clicky-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.clicky-form-group {
+    margin-bottom: 20px;
+}
+
+.clicky-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.clicky-form-group input,
+.clicky-form-group select,
+.clicky-form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.clicky-form-group input:focus,
+.clicky-form-group select:focus,
+.clicky-form-group textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.clicky-amount-presets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.clicky-amount-btn {
+    padding: 12px;
+    border: 2px solid #4CAF50;
+    background: #fff;
+    color: #4CAF50;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.clicky-amount-btn:hover,
+.clicky-amount-btn.active {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.clicky-amount-input {
+    text-align: right;
+}
+
+.clicky-payment-methods {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.clicky-payment-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.clicky-payment-option input[type="radio"] {
+    width: auto;
+}
+
+.clicky-submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.clicky-submit-btn:hover {
+    background: #45a049;
+}
+
+/* ===== Program Cards ===== */
+.clicky-programs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.clicky-program-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.clicky-program-image img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.clicky-program-content {
+    padding: 20px;
+}
+
+.clicky-program-title {
+    margin: 0 0 10px;
+    font-size: 20px;
+}
+
+.clicky-program-description {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.clicky-progress-bar {
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.clicky-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.clicky-progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.clicky-progress-percent {
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.clicky-donate-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #4CAF50;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.clicky-donate-btn:hover {
+    background: #45a049;
+}
+
+/* ===== News ===== */
+.clicky-news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.clicky-news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.clicky-news-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.clicky-news-grid .clicky-news-item {
+    flex-direction: column;
+}
+
+.clicky-news-thumbnail img {
+    width: 100px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.clicky-news-grid .clicky-news-thumbnail img {
+    width: 100%;
+    height: 150px;
+}
+
+.clicky-news-category {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    font-size: 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.clicky-news-title {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+
+.clicky-news-title a {
+    color: #333;
+    text-decoration: none;
+}
+
+.clicky-news-title a:hover {
+    color: #4CAF50;
+}
+
+.clicky-news-meta {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 8px;
+}
+
+.clicky-news-excerpt {
+    color: #666;
+    font-size: 14px;
+}
+
+.clicky-read-more {
+    display: inline-block;
+    margin-top: 10px;
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* ===== Financial Reports ===== */
+.clicky-financial-reports {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.clicky-financial-report {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.clicky-report-title {
+    margin: 0 0 5px;
+    font-size: 18px;
+}
+
+.clicky-report-period {
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 15px;
+}
+
+.clicky-report-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.clicky-report-summary > div {
+    text-align: center;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.clicky-label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.clicky-amount {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.clicky-positive {
+    color: #4CAF50;
+}
+
+.clicky-negative {
+    color: #f44336;
+}
+
+.clicky-download-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #2196F3;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* ===== Equipment ===== */
+.clicky-equipment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.clicky-equipment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.clicky-equipment-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    transition: transform 0.2s;
+}
+
+.clicky-equipment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.clicky-equipment-card.clicky-unavailable {
+    opacity: 0.6;
+}
+
+.clicky-equipment-image img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.clicky-equipment-content {
+    padding: 15px;
+}
+
+.clicky-equipment-name {
+    margin: 0 0 5px;
+    font-size: 16px;
+}
+
+.clicky-equipment-category {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f0f0f0;
+    font-size: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.clicky-equipment-description {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.clicky-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.clicky-badge.clicky-available {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.clicky-badge.clicky-unavailable {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .clicky-amount-presets {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .clicky-programs-grid,
+    .clicky-news-grid,
+    .clicky-equipment-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .clicky-report-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .clicky-news-item {
+        flex-direction: column;
+    }
+    
+    .clicky-news-thumbnail img {
+        width: 100%;
+        height: 150px;
+    }
+}

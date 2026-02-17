@@ -1,0 +1,77 @@
+/**
+ * Clicky Foundation - Admin Styles
+ */
+
+/* ===== Status Box ===== */
+.clicky-status-box {
+    background: #f0f0f0;
+    border-left: 4px solid #4CAF50;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.clicky-status-box h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.clicky-status-box p {
+    margin: 5px 0;
+}
+
+.clicky-status-success {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.clicky-status-failed {
+    color: #f44336;
+    font-weight: 600;
+}
+
+.clicky-status-never {
+    color: #999;
+}
+
+/* ===== Sync Logs ===== */
+.clicky-log-success {
+    background: #e8f5e9;
+}
+
+.clicky-log-error {
+    background: #ffebee;
+}
+
+.clicky-log-warning {
+    background: #fff3e0;
+}
+
+/* ===== Buttons ===== */
+#clicky-test-connection,
+#clicky-force-sync {
+    margin-left: 10px;
+}
+
+/* ===== AJAX Response ===== */
+#clicky-ajax-response {
+    margin-top: 20px;
+}
+
+#clicky-ajax-response .notice {
+    margin: 10px 0;
+}
+
+/* ===== Admin Columns ===== */
+.column-target,
+.column-collected {
+    width: 120px;
+}
+
+.column-status {
+    width: 100px;
+}
+
+.column-synced {
+    width: 120px;
+}
