@@ -2,9 +2,9 @@
 User Service - Business logic for user management
 """
 
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
@@ -20,8 +20,13 @@ class UserService:
     
     async def get_by_id(self, user_id: str) -> Optional[User]:
         """Get user by ID."""
+        try:
+            uuid_id = UUID(user_id)
+        except ValueError:
+            return None
+            
         result = await self.db.execute(
-            select(User).where(User.id == UUID(user_id))
+            select(User).where(User.id == uuid_id)
         )
         return result.scalar_one_or_none()
     
@@ -31,6 +36,31 @@ class UserService:
             select(User).where(User.email == email)
         )
         return result.scalar_one_or_none()
+    
+    async def list(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        search: Optional[str] = None,
+        role: Optional[str] = None
+    ) -> List[User]:
+        """List users with pagination and filters."""
+        query = select(User)
+        
+        if search:
+            query = query.where(
+                or_(
+                    User.full_name.ilike(f"%{search}%"),
+                    User.email.ilike(f"%{search}%")
+                )
+            )
+        
+        if role:
+            query = query.where(User.role == role)
+        
+        query = query.offset(skip).limit(limit)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
     
     async def create(self, user_data: UserCreate, role: str = "sahabat") -> User:
         """Create a new user."""

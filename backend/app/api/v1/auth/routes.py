@@ -2,12 +2,11 @@
 Authentication Routes
 """
 
-from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.core.security import create_access_token, create_refresh_token, verify_password
 from app.schemas.auth import Token, LoginRequest, RefreshRequest
 from app.schemas.user import UserCreate, UserResponse
@@ -28,12 +27,12 @@ async def register(
     existing = await service.get_by_email(user_data.email)
     if existing:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered"
         )
     
-    # Create user
-    user = await service.create(user_data)
+    # Create user with default 'sahabat' role
+    user = await service.create(user_data, role="sahabat")
     return user
 
 
@@ -46,7 +45,14 @@ async def login(
     service = UserService(db)
     
     user = await service.get_by_email(login_data.email)
-    if not user or not verify_password(login_data.password, user.password_hash):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not verify_password(login_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -88,6 +94,12 @@ async def refresh(
         )
     
     user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+    
     service = UserService(db)
     user = await service.get_by_id(user_id)
     
@@ -97,7 +109,7 @@ async def refresh(
             detail="User not found or inactive"
         )
     
-    # Create new tokens
+    # Create new tokens (token rotation)
     token_data = {"sub": str(user.id), "email": user.email, "role": user.role}
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
@@ -112,8 +124,7 @@ async def refresh(
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: UserResponse = Depends(None)  # Will add dependency later
+    current_user = Depends(get_current_user)
 ):
     """Get current authenticated user info."""
-    # TODO: Implement after adding deps
-    pass
+    return current_user
