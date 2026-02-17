@@ -1,5 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-safe-area-context';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'expo-router';
@@ -66,7 +66,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <View className="h-8" />
-      </ScrollAreaView>
+      </ScrollView>
     </SafeAreaView>
   );
 }
