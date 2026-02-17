@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 
-export default function TabLayout() {
+export default function AdminLayout() {
   const { isAuthenticated, isLoading, user } = useAuthStore();
 
   if (isLoading) {
@@ -19,9 +19,9 @@ export default function TabLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  // Redirect admin/pengurus to admin layout
-  if (user?.role === 'admin' || user?.role === 'pengurus') {
-    return <Redirect href="/(admin)" />;
+  // Only admin and pengurus can access admin layout
+  if (user?.role !== 'admin' && user?.role !== 'pengurus') {
+    return <Redirect href="/(tabs)" />;
   }
 
   return (
@@ -42,27 +42,27 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Beranda',
+          title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
+            <MaterialIcons name="dashboard" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="services"
+        name="inventory"
         options={{
-          title: 'Layanan',
+          title: 'Inventory',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="apps" size={size} color={color} />
+            <MaterialIcons name="inventory-2" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="activity"
+        name="reports"
         options={{
-          title: 'Riwayat',
+          title: 'Laporan',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="history" size={size} color={color} />
+            <MaterialIcons name="bar-chart" size={size} color={color} />
           ),
         }}
       />
@@ -71,7 +71,7 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="account-circle" size={size} color={color} />
+            <MaterialIcons name="person" size={size} color={color} />
           ),
         }}
       />

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { authApi } from '@/services/api';
 
 interface User {
   id: string;
@@ -23,6 +25,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshAccessToken: () => Promise<boolean>;
   setUser: (user: User) => void;
   clearError: () => void;
 }
@@ -34,48 +37,22 @@ interface RegisterData {
   password: string;
 }
 
-// Mock API calls - replace with actual API integration
-const mockLogin = async (email: string, password: string): Promise<{ user: User; token: string; refreshToken: string } | null> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  if (email && password) {
-    return {
-      user: {
-        id: '1',
-        full_name: 'Test User',
-        email: email,
-        phone: '081234567890',
-        role: 'sahabat',
-      },
-      token: 'mock_access_token',
-      refreshToken: 'mock_refresh_token',
-    };
-  }
-  return null;
-};
-
-const mockRegister = async (data: RegisterData): Promise<{ user: User; token: string; refreshToken: string } | null> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  if (data.email && data.password) {
-    return {
-      user: {
-        id: '1',
-        full_name: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        role: 'sahabat',
-      },
-      token: 'mock_access_token',
-      refreshToken: 'mock_refresh_token',
-    };
-  }
-  return null;
+// Secure storage for tokens
+const secureStorage = {
+  async getItem(key: string) {
+    return await SecureStore.getItemAsync(key);
+  },
+  async setItem(key: string, value: string) {
+    await SecureStore.setItemAsync(key, value);
+  },
+  async removeItem(key: string) {
+    await SecureStore.deleteItemAsync(key);
+  },
 };
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       refreshToken: null,
@@ -87,23 +64,26 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         try {
-          const result = await mockLogin(email, password);
+          const response = await authApi.login(email, password);
+          const { user, access_token, refresh_token } = response.data;
           
-          if (result) {
-            set({
-              user: result.user,
-              token: result.token,
-              refreshToken: result.refreshToken,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-            return true;
-          } else {
-            set({ error: 'Invalid credentials', isLoading: false });
-            return false;
-          }
-        } catch (error) {
-          set({ error: 'Login failed', isLoading: false });
+          // Store tokens securely
+          await secureStorage.setItem('access_token', access_token);
+          await secureStorage.setItem('refresh_token', refresh_token);
+          
+          set({
+            user,
+            token: access_token,
+            refreshToken: refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return true;
+        } catch (error: any) {
+          set({ 
+            error: error.response?.data?.detail || 'Login failed', 
+            isLoading: false 
+          });
           return false;
         }
       },
@@ -112,28 +92,39 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         try {
-          const result = await mockRegister(data);
+          const response = await authApi.register({
+            full_name: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            password: data.password,
+          });
           
-          if (result) {
-            set({
-              user: result.user,
-              token: result.token,
-              refreshToken: result.refreshToken,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-            return true;
-          } else {
-            set({ error: 'Registration failed', isLoading: false });
-            return false;
-          }
-        } catch (error) {
-          set({ error: 'Registration failed', isLoading: false });
+          const { user, access_token, refresh_token } = response.data;
+          
+          await secureStorage.setItem('access_token', access_token);
+          await secureStorage.setItem('refresh_token', refresh_token);
+          
+          set({
+            user,
+            token: access_token,
+            refreshToken: refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return true;
+        } catch (error: any) {
+          set({ 
+            error: error.response?.data?.detail || 'Registration failed', 
+            isLoading: false 
+          });
           return false;
         }
       },
 
       logout: async () => {
+        await secureStorage.removeItem('access_token');
+        await secureStorage.removeItem('refresh_token');
+        
         set({
           user: null,
           token: null,
@@ -141,6 +132,29 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           error: null,
         });
+      },
+
+      refreshAccessToken: async () => {
+        const currentRefreshToken = get().refreshToken;
+        if (!currentRefreshToken) return false;
+
+        try {
+          const response = await authApi.refresh(currentRefreshToken);
+          const { access_token, refresh_token } = response.data;
+          
+          await secureStorage.setItem('access_token', access_token);
+          await secureStorage.setItem('refresh_token', refresh_token);
+          
+          set({
+            token: access_token,
+            refreshToken: refresh_token,
+          });
+          return true;
+        } catch (error) {
+          // Refresh failed, logout user
+          get().logout();
+          return false;
+        }
       },
 
       setUser: (user: User) => {
@@ -156,8 +170,6 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

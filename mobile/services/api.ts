@@ -1,5 +1,7 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
+import { useAuthStore } from '@/stores/authStore';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost/api/v1';
 
@@ -14,11 +16,14 @@ export const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    // Get token from storage (will be implemented with expo-secure-store)
-    // const token = await SecureStore.getItemAsync('access_token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    try {
+      const token = await SecureStore.getItemAsync('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Error getting token:', error);
+    }
     return config;
   },
   (error) => {
@@ -36,22 +41,50 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
-      // Implement token refresh logic here
-      // const refreshToken = await SecureStore.getItemAsync('refresh_token');
-      // if (refreshToken) {
-      //   try {
-      //     const response = await axios.post(`${API_URL}/auth/refresh`, { refresh_token: refreshToken });
-      //     const { access_token, refresh_token } = response.data;
-      //     await SecureStore.setItemAsync('access_token', access_token);
-      //     await SecureStore.setItemAsync('refresh_token', refresh_token);
-      //     originalRequest.headers.Authorization = `Bearer ${access_token}`;
-      //     return api(originalRequest);
-      //   } catch (refreshError) {
-      //     // Refresh failed, logout user
-      //     await SecureStore.deleteItemAsync('access_token');
-      //     await SecureStore.deleteItemAsync('refresh_token');
-      //   }
-      // }
+      try {
+        const refreshToken = await SecureStore.getItemAsync('refresh_token');
+        if (refreshToken) {
+          const response = await axios.post(`${API_URL}/auth/refresh`, { 
+            refresh_token: refreshToken 
+          });
+          
+          const { access_token, refresh_token: newRefreshToken } = response.data;
+          
+          await SecureStore.setItemAsync('access_token', access_token);
+          await SecureStore.setItemAsync('refresh_token', newRefreshToken);
+          
+          // Update store
+          useAuthStore.setState({ 
+            token: access_token, 
+            refreshToken: newRefreshToken 
+          });
+          
+          // Retry original request
+          originalRequest.headers.Authorization = `Bearer ${access_token}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        // Refresh failed, logout user
+        useAuthStore.getState().logout();
+      }
+    }
+
+    // Handle other errors
+    if (error.response) {
+      // Server responded with error
+      switch (error.response.status) {
+        case 403:
+          console.error('Forbidden:', error.response.data);
+          break;
+        case 500:
+          console.error('Server Error:', error.response.data);
+          break;
+        default:
+          console.error('API Error:', error.response.data);
+      }
+    } else if (error.request) {
+      // Network error
+      console.error('Network Error:', error.message);
     }
 
     return Promise.reject(error);
@@ -67,7 +100,7 @@ export const authApi = {
     api.post('/auth/register', data),
   
   refresh: (refreshToken: string) =>
-    api.post('/auth/refresh', { refresh_token: refreshToken }),
+    axios.post(`${API_URL}/auth/refresh`, { refresh_token: refreshToken }),
   
   me: () =>
     api.get('/auth/me'),
@@ -89,6 +122,68 @@ export const bookingsApi = {
   
   cancel: (id: string) =>
     api.patch(`/bookings/${id}/cancel`),
+};
+
+// Equipment API
+export const equipmentApi = {
+  getList: () =>
+    api.get('/equipment'),
+  
+  getDetail: (id: string) =>
+    api.get(`/equipment/${id}`),
+  
+  requestLoan: (equipmentId: string, data: any) =>
+    api.post(`/equipment/${equipmentId}/borrow`, data),
+  
+  getMyLoans: () =>
+    api.get('/equipment/loans/my'),
+};
+
+// Donations API
+export const donationsApi = {
+  create: (data: any) =>
+    api.post('/donations', data),
+  
+  getMyDonations: () =>
+    api.get('/donations/my'),
+  
+  getDetail: (id: string) =>
+    api.get(`/donations/${id}`),
+  
+  uploadProof: (id: string, formData: FormData) =>
+    api.post(`/donations/${id}/upload-proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+};
+
+// Pickups API
+export const pickupsApi = {
+  create: (data: any) =>
+    api.post('/pickups', data),
+  
+  getMyPickups: () =>
+    api.get('/pickups/my'),
+  
+  getDetail: (id: string) =>
+    api.get(`/pickups/${id}`),
+};
+
+// Programs API
+export const programsApi = {
+  getList: (params?: { limit?: number; sort?: string }) =>
+    api.get('/programs', { params }),
+  
+  getDetail: (id: string) =>
+    api.get(`/programs/${id}`),
+};
+
+// News API
+export const newsApi = {
+  getList: (params?: { category?: string; page?: number; limit?: number }) =>
+    api.get('/news', { params }),
+  
+  getDetail: (id: string) =>
+    api.get(`/news/${id}`),
 };
 
 export default api;
