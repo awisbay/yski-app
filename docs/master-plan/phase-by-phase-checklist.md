@@ -9,34 +9,34 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 **Goal:** Fondasi project siap untuk development.
 
 ### Monorepo Init
-- [ ] Inisialisasi Git repository
-- [ ] Setup monorepo structure (`backend/`, `mobile/`, `wp-plugin/`, `mockup/`, `docs/`)
-- [ ] Buat `.gitignore` untuk Python, Node.js, dan environment files
-- [ ] Setup `.editorconfig` untuk konsistensi formatting
-- [ ] Buat `README.md` project utama
+- [x] Inisialisasi Git repository
+- [x] Setup monorepo structure (`backend/`, `mobile/`, `wp-plugin/`, `mockup/`, `docs/`)
+- [x] Buat `.gitignore` untuk Python, Node.js, dan environment files
+- [x] Setup `.editorconfig` untuk konsistensi formatting
+- [x] Buat `README.md` project utama
 
 ### Docker Compose
-- [ ] Buat `docker-compose.yml` dengan semua services
-- [ ] Setup **Nginx** container (reverse proxy)
-- [ ] Setup **FastAPI** container dengan hot-reload
-- [ ] Setup **PostgreSQL 16** container dengan persistent volume
-- [ ] Setup **Redis 7** container
-- [ ] Setup **MinIO** container dengan console access
-- [ ] Buat `.env.example` untuk environment variables
+- [x] Buat `docker-compose.yml` dengan semua services
+- [x] Setup **Nginx** container (reverse proxy)
+- [x] Setup **FastAPI** container dengan hot-reload
+- [x] Setup **PostgreSQL 16** container dengan persistent volume
+- [x] Setup **Redis 7** container
+- [x] Setup **MinIO** container dengan console access
+- [x] Buat `.env.example` untuk environment variables
 - [ ] Test: semua containers berjalan dengan `docker compose up`
 
 ### CI/CD Skeleton
-- [ ] Setup GitHub Actions workflow skeleton
-- [ ] Workflow: lint & format check (backend)
-- [ ] Workflow: lint & format check (mobile)
-- [ ] Workflow: run tests (placeholder)
-- [ ] Workflow: build Docker images
+- [x] Setup GitHub Actions workflow skeleton
+- [x] Workflow: lint & format check (backend)
+- [x] Workflow: lint & format check (mobile)
+- [x] Workflow: run tests (placeholder)
+- [x] Workflow: build Docker images
 
 ### Docs Structure
-- [ ] Buat `docs/master-plan/` - implementation plan & checklist
-- [ ] Buat `docs/api/` - placeholder untuk API docs
-- [ ] Buat `docs/guides/` - placeholder untuk developer guides
-- [ ] Dokumentasi setup instructions di README
+- [x] Buat `docs/master-plan/` - implementation plan & checklist
+- [x] Buat `docs/api/` - placeholder untuk API docs
+- [x] Buat `docs/guides/` - placeholder untuk developer guides
+- [x] Dokumentasi setup instructions di README
 
 ---
 
@@ -45,49 +45,49 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 **Goal:** Backend bisa handle authentication dan role-based access control.
 
 ### FastAPI Project Setup
-- [ ] Inisialisasi FastAPI project di `backend/`
-- [ ] Setup project structure (api, core, models, schemas, services, repositories)
-- [ ] Konfigurasi `settings.py` dengan Pydantic Settings (env-based config)
-- [ ] Setup logging configuration
-- [ ] Setup CORS middleware
-- [ ] Buat health check endpoint (`GET /health`)
+- [x] Inisialisasi FastAPI project di `backend/`
+- [x] Setup project structure (api, core, models, schemas, services, repositories)
+- [x] Konfigurasi `settings.py` dengan Pydantic Settings (env-based config)
+- [x] Setup logging configuration
+- [x] Setup CORS middleware
+- [x] Buat health check endpoint (`GET /health`)
 
 ### Database + SQLAlchemy + Alembic
-- [ ] Setup SQLAlchemy 2.0 async engine
-- [ ] Konfigurasi Alembic untuk migrations
-- [ ] Buat base model dengan `created_at`, `updated_at`, `id` (UUID)
-- [ ] Buat `User` model (email, phone, password_hash, role, is_active, profile fields)
-- [ ] Buat `Role` model/enum (admin, pengurus, relawan, sahabat)
-- [ ] Jalankan initial migration
-- [ ] Buat seed script untuk admin user pertama
+- [x] Setup SQLAlchemy 2.0 async engine
+- [x] Konfigurasi Alembic untuk migrations
+- [x] Buat base model dengan `created_at`, `updated_at`, `id` (UUID)
+- [x] Buat `User` model (email, phone, password_hash, role, is_active, profile fields)
+- [x] Buat `RolePermission` model untuk RBAC (admin, pengurus, relawan, sahabat)
+- [x] Jalankan initial migration
+- [x] Buat seed script untuk admin user pertama
 
 ### JWT Authentication
-- [ ] Implement password hashing (bcrypt)
-- [ ] Implement JWT token generation (access + refresh token)
-- [ ] `POST /api/v1/auth/register` - registrasi sahabat baru
-- [ ] `POST /api/v1/auth/login` - login dengan email/phone + password
-- [ ] `POST /api/v1/auth/refresh` - refresh access token
+- [x] Implement password hashing (bcrypt)
+- [x] Implement JWT token generation (access + refresh token)
+- [x] `POST /api/v1/auth/register` - registrasi sahabat baru
+- [x] `POST /api/v1/auth/login` - login dengan email/phone + password
+- [x] `POST /api/v1/auth/refresh` - refresh access token
 - [ ] `POST /api/v1/auth/logout` - invalidate refresh token
-- [ ] Dependency injection: `get_current_user`
+- [x] Dependency injection: `get_current_user`
 - [ ] Token blacklist di Redis (untuk logout)
 
 ### RBAC (Role-Based Access Control)
-- [ ] Buat permission system (role -> permissions mapping)
-- [ ] Implement `require_role()` dependency untuk endpoint protection
-- [ ] Implement `require_permission()` untuk granular access
+- [x] Buat permission system (role -> permissions mapping)
+- [x] Implement `require_role()` dependency untuk endpoint protection
+- [x] Implement `require_permission()` untuk granular access
 - [ ] Test: Admin bisa akses semua endpoint
 - [ ] Test: Sahabat hanya bisa akses endpoint publik
 - [ ] Test: Unauthorized request mendapat 401/403
 
 ### User CRUD
-- [ ] `GET /api/v1/users/me` - profile sendiri
-- [ ] `PUT /api/v1/users/me` - update profile sendiri
-- [ ] `GET /api/v1/users` - list users (admin/pengurus only)
-- [ ] `GET /api/v1/users/{id}` - detail user (admin/pengurus only)
-- [ ] `PUT /api/v1/users/{id}/role` - update role (admin only)
-- [ ] `DELETE /api/v1/users/{id}` - soft delete (admin only)
-- [ ] Pagination untuk list endpoint
-- [ ] Search/filter users by name, role, status
+- [x] `GET /api/v1/users/me` - profile sendiri
+- [x] `PUT /api/v1/users/me` - update profile sendiri
+- [x] `GET /api/v1/users` - list users (admin/pengurus only)
+- [x] `GET /api/v1/users/{id}` - detail user (admin/pengurus only)
+- [x] `PUT /api/v1/users/{id}` - update user (admin only)
+- [x] `DELETE /api/v1/users/{id}` - soft delete (admin only)
+- [x] Pagination untuk list endpoint
+- [x] Search/filter users by name, role, status
 
 ---
 
@@ -96,23 +96,22 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 **Goal:** Semua core business logic ter-implementasi di backend.
 
 ### Booking Pindahan (Anti Double-Booking)
-- [ ] Buat `Armada` model (nama, tipe, kapasitas, status)
-- [ ] Buat `Booking` model (user, armada, tanggal, alamat_asal, alamat_tujuan, status, catatan)
-- [ ] Buat `BookingSlot` model untuk availability tracking
-- [ ] `POST /api/v1/bookings` - buat booking baru
-- [ ] `GET /api/v1/bookings` - list bookings (filtered by role)
-- [ ] `GET /api/v1/bookings/{id}` - detail booking
-- [ ] `PUT /api/v1/bookings/{id}/status` - update status (pengurus/relawan)
-- [ ] `DELETE /api/v1/bookings/{id}` - cancel booking
-- [ ] `GET /api/v1/armada/availability` - cek ketersediaan armada per tanggal
-- [ ] Implement **optimistic locking** untuk prevent double-booking
-- [ ] Implement **SELECT ... FOR UPDATE** di booking creation
+- [x] Buat `MovingBooking` model (single armada model)
+- [x] `POST /api/v1/bookings` - buat booking baru
+- [x] `GET /api/v1/bookings` - list bookings (filtered by role)
+- [x] `GET /api/v1/bookings/{id}` - detail booking
+- [x] `PUT /api/v1/bookings/{id}/status` - update status (pengurus/relawan)
+- [x] `PUT /api/v1/bookings/{id}/cancel` - cancel booking
+- [x] `GET /api/v1/bookings/slots` - cek ketersediaan slot per tanggal
+- [x] Implement **UNIQUE constraint** untuk prevent double-booking (Layer 1)
+- [x] Implement **pessimistic lock** di booking creation (Layer 2)
+- [x] Implement **business validation** (Layer 3)
 - [ ] Auto-cancel expired pending bookings (Celery task)
 - [ ] Test: concurrent booking requests tidak menghasilkan double-book
 
 ### Equipment / Peminjaman Alkes
-- [ ] Buat `Equipment` model (nama, kategori, deskripsi, stok_total, stok_tersedia, foto, kondisi)
-- [ ] Buat `EquipmentLoan` model (user, equipment, tanggal_pinjam, tanggal_kembali, status)
+- [x] Buat `MedicalEquipment` model (nama, kategori, deskripsi, stok_total, stok_tersedia, foto, kondisi)
+- [x] Buat `EquipmentLoan` model (user, equipment, tanggal_pinjam, tanggal_kembali, status)
 - [ ] `GET /api/v1/equipment` - list alkes (semua user)
 - [ ] `GET /api/v1/equipment/{id}` - detail alkes
 - [ ] `POST /api/v1/equipment` - tambah alkes (admin/pengurus)
@@ -122,7 +121,7 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 - [ ] Foto upload ke MinIO
 
 ### Donasi / Infaq + Payment Abstraction
-- [ ] Buat `Donation` model (user, amount, type, payment_method, payment_status, bukti_transfer)
+- [x] Buat `Donation` model (user, amount, type, payment_method, payment_status, bukti_transfer)
 - [ ] Buat `PaymentTransaction` model (abstraksi untuk semua pembayaran)
 - [ ] Implement `PaymentGateway` abstract class
 - [ ] Implement `ManualTransferGateway` (transfer bank manual + upload bukti)
@@ -134,7 +133,7 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 - [ ] Payment callback endpoint untuk payment gateway
 
 ### Jemput Zakat / Donasi
-- [ ] Buat `Pickup` model (user, tipe_zakat, alamat, jadwal, relawan, status, catatan)
+- [x] Buat `PickupRequest` model (user, tipe_zakat, alamat, jadwal, relawan, status, catatan)
 - [ ] `POST /api/v1/pickups` - request jemput zakat
 - [ ] `GET /api/v1/pickups` - list pickup requests
 - [ ] `PUT /api/v1/pickups/{id}/assign` - assign relawan (pengurus)
@@ -142,8 +141,8 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 - [ ] Notifikasi ke relawan saat di-assign
 
 ### Programs & News CRUD
-- [ ] Buat `Program` model (judul, deskripsi, target_dana, dana_terkumpul, status, foto)
-- [ ] Buat `News` model (judul, konten, kategori, thumbnail, published_at)
+- [x] Buat `Program` model (judul, deskripsi, target_dana, dana_terkumpul, status, foto)
+- [x] Buat `NewsArticle` model (judul, konten, kategori, thumbnail, published_at)
 - [ ] CRUD endpoints untuk Programs (admin/pengurus manage, semua bisa view)
 - [ ] CRUD endpoints untuk News/Berita
 - [ ] Image upload ke MinIO untuk thumbnail
@@ -156,17 +155,17 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 **Goal:** Aplikasi mobile siap dengan design system dan navigation.
 
 ### Expo Project Setup
-- [ ] Inisialisasi Expo project (SDK 52) di `mobile/`
-- [ ] Konfigurasi `app.json` / `app.config.js`
-- [ ] Setup TypeScript
-- [ ] Setup ESLint + Prettier
-- [ ] Setup path aliases (`@/components`, `@/hooks`, dll)
+- [x] Inisialisasi Expo project (SDK 52) di `mobile/`
+- [x] Konfigurasi `app.json` / `app.config.js`
+- [x] Setup TypeScript
+- [x] Setup ESLint + Prettier
+- [x] Setup path aliases (`@/components`, `@/hooks`, dll)
 
 ### NativeWind v4 Setup
-- [ ] Install dan konfigurasi NativeWind v4
-- [ ] Setup `tailwind.config.js` dengan custom theme
-- [ ] Definisikan color palette sesuai branding Sahabat Khairat
-- [ ] Definisikan typography scale
+- [x] Install dan konfigurasi NativeWind v4
+- [x] Setup `tailwind.config.js` dengan custom theme
+- [x] Definisikan color palette sesuai branding Sahabat Khairat
+- [x] Definisikan typography scale
 - [ ] Test: NativeWind className berfungsi di komponen
 
 ### Design System (dari Mockups)
@@ -183,21 +182,21 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 - [ ] Dokumentasi design system components
 
 ### Navigation Structure
-- [ ] Setup Expo Router (file-based routing)
-- [ ] Buat layout structure:
+- [x] Setup Expo Router (file-based routing)
+- [x] Buat layout structure:
   - `(auth)/` - login, register screens
   - `(tabs)/` - main app with bottom tabs
   - `(tabs)/home` - beranda
   - `(tabs)/services` - layanan
   - `(tabs)/activity` - aktivitas/riwayat
   - `(tabs)/profile` - profil
-- [ ] Bottom tab navigation dengan icons
+- [x] Bottom tab navigation dengan icons
 - [ ] Stack navigation untuk detail screens
-- [ ] Auth guard (redirect ke login jika belum auth)
+- [x] Auth guard (redirect ke login jika belum auth)
 
 ### Auth Screens
-- [ ] Screen: **Login** (email/phone + password)
-- [ ] Screen: **Register** (nama, email, phone, password)
+- [x] Screen: **Login** (email/phone + password)
+- [x] Screen: **Register** (nama, email, phone, password)
 - [ ] Screen: **Forgot Password** (placeholder)
 - [ ] Implement form validation (React Hook Form + Zod)
 - [ ] Integrasi dengan auth API endpoints
@@ -427,15 +426,15 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 0 | Not Started | 0% |
-| Phase 1 | Not Started | 0% |
-| Phase 2 | Not Started | 0% |
-| Phase 3 | Not Started | 0% |
-| Phase 4 | Not Started | 0% |
-| Phase 5 | Not Started | 0% |
-| Phase 6 | Not Started | 0% |
-| Phase 7 | Not Started | 0% |
-| Phase 8 | Not Started | 0% |
+| Phase 0 | ✅ Completed | 95% |
+| Phase 1 | ✅ Completed | 90% |
+| Phase 2 | 🔄 In Progress | 40% |
+| Phase 3 | 🔄 In Progress | 60% |
+| Phase 4 | 📋 Not Started | 0% |
+| Phase 5 | 📋 Not Started | 0% |
+| Phase 6 | 📋 Not Started | 0% |
+| Phase 7 | 📋 Not Started | 0% |
+| Phase 8 | 📋 Not Started | 0% |
 
 ---
 
