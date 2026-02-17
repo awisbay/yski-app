@@ -1,176 +1,273 @@
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Card, Badge } from '@/components';
+import { Package, Search, Filter, ChevronRight, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
+import { ScreenWrapper, SectionHeader, FilterTabBar, Skeleton } from '@/components/ui';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { Badge } from '@/components/Badge';
+import { EmptyState } from '@/components/EmptyState';
+import { Header } from '@/components/Header';
+import { useEquipmentList, useEquipmentStats, useMyLoans } from '@/hooks';
+import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
 
-const STATS = [
-  { label: 'Total Alat', value: '24', icon: 'medical-services', color: '#3B82F6' },
-  { label: 'Dipinjam', value: '8', icon: 'assignment', color: '#F59E0B' },
-  { label: 'Permintaan', value: '3', icon: 'pending', color: '#8B5CF6' },
-  { label: 'Tersedia', value: '16', icon: 'check-circle', color: '#10B981' },
-];
-
-const EQUIPMENT = [
-  {
-    id: '1',
-    name: 'Kursi Roda Standard',
-    category: 'Mobility',
-    available: 5,
-    borrowed: 2,
-    image: null,
-  },
-  {
-    id: '2',
-    name: 'Tabung Oksigen 1M',
-    category: 'Respiratory',
-    available: 3,
-    borrowed: 1,
-    image: null,
-  },
-  {
-    id: '3',
-    name: 'Tempat Tidur Pasien',
-    category: 'Furniture',
-    available: 2,
-    borrowed: 3,
-    image: null,
-  },
-];
-
-const ACTIVE_LOANS = [
-  { id: '1', borrower: 'Ahmad Subari', item: 'Kursi Roda', returnDate: '20 Mei 2024' },
-  { id: '2', borrower: 'Siti Aminah', item: 'Tabung Oksigen', returnDate: '18 Mei 2024' },
-  { id: '3', borrower: 'Budi Santoso', item: 'Tongkat Jalan', returnDate: '25 Mei 2024' },
+const CATEGORIES = [
+  { key: 'all', label: 'Semua' },
+  { key: 'vehicle', label: 'Kendaraan' },
+  { key: 'tools', label: 'Peralatan' },
+  { key: 'electronics', label: 'Elektronik' },
 ];
 
 export default function EquipmentScreen() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState('catalog');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const { data: equipment, isLoading } = useEquipmentList();
+  const { data: stats } = useEquipmentStats();
+  const { data: myLoans } = useMyLoans();
+
+  const filteredEquipment = equipment?.filter((item) => {
+    if (activeCategory === 'all') return true;
+    return item.category === activeCategory;
+  }) || [];
+
+  const renderEquipmentItem = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      onPress={() => router.push(`/equipment/${item.id}`)}
+      activeOpacity={0.7}
+    >
+      <Card style={styles.equipmentCard}>
+        <View style={styles.equipmentHeader}>
+          <View style={[styles.equipmentIcon, { backgroundColor: colors.secondary[100] }]}>
+            <Package size={24} color={colors.secondary[600]} />
+          </View>
+          <View style={styles.equipmentInfo}>
+            <Text style={styles.equipmentName}>{item.name}</Text>
+            <Text style={styles.equipmentCategory}>{item.category}</Text>
+          </View>
+          <Badge
+            label={item.availableStock > 0 ? 'Tersedia' : 'Kosong'}
+            variant={item.availableStock > 0 ? 'success' : 'error'}
+            size="sm"
+          />
+        </View>
+        
+        <View style={styles.equipmentFooter}>
+          <Text style={styles.stockText}>
+            Stok: {item.availableStock}/{item.totalStock}
+          </Text>
+          {item.availableStock > 0 && (
+            <Button
+              title="Pinjam"
+              size="sm"
+              onPress={() => router.push(`/equipment/${item.id}/loan`)}
+            />
+          )}
+        </View>
+      </Card>
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="px-6 py-4 bg-white border-b border-gray-200">
-        <Text className="text-2xl font-bold text-gray-900">Inventaris Alat Medis</Text>
-        <Text className="text-gray-500 mt-1">Peminjaman alkes gratis untuk sahabat</Text>
-      </View>
+    <ScreenWrapper>
+      <Header
+        title="Peralatan"
+        showBackButton
+        rightElement={
+          <TouchableOpacity style={styles.searchButton}>
+            <Search size={24} color={colors.gray[700]} />
+          </TouchableOpacity>
+        }
+      />
 
-      <ScrollView className="flex-1">
-        {/* Stats */}
-        <View className="flex-row flex-wrap px-6 pt-6">
-          {STATS.map((stat, index) => (
-            <View key={index} className="w-1/2 pr-2 mb-3">
-              <View className="bg-white rounded-xl p-4 shadow-sm">
-                <View className="flex-row items-center">
-                  <View
-                    className="w-10 h-10 rounded-lg items-center justify-center"
-                    style={{ backgroundColor: `${stat.color}15` }}
-                  >
-                    <MaterialIcons name={stat.icon as any} size={20} color={stat.color} />
-                  </View>
-                  <View className="ml-3">
-                    <Text className="text-2xl font-bold text-gray-900">{stat.value}</Text>
-                    <Text className="text-gray-500 text-xs">{stat.label}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* New Requests Banner */}
-        <View className="mx-6 mt-2">
-          <View className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-4">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-white/20 rounded-lg items-center justify-center">
-                  <MaterialIcons name="notifications" size={24} color="white" />
-                </View>
-                <View className="ml-3">
-                  <Text className="text-white font-semibold">Ada 3 Permintaan Baru</Text>
-                  <Text className="text-white/80 text-sm">Segera verifikasi permintaan</Text>
-                </View>
-              </View>
-              <TouchableOpacity className="bg-white px-4 py-2 rounded-lg">
-                <Text className="text-primary-600 font-medium text-sm">Setujui</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Stats */}
+      {stats && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.totalEquipment || 0}</Text>
+            <Text style={styles.statLabel}>Total Item</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.availableCount || 0}</Text>
+            <Text style={styles.statLabel}>Tersedia</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{myLoans?.length || 0}</Text>
+            <Text style={styles.statLabel}>Dipinjam</Text>
           </View>
         </View>
+      )}
 
-        {/* Equipment Catalog */}
-        <View className="px-6 mt-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-lg font-semibold text-gray-900">Ketersediaan Alat</Text>
-            <TouchableOpacity>
-              <Text className="text-primary-600 text-sm">Lihat Semua</Text>
-            </TouchableOpacity>
-          </View>
-
-          {EQUIPMENT.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              className="bg-white rounded-xl p-4 mb-3 shadow-sm"
-              onPress={() => {}}
-            >
-              <View className="flex-row">
-                <View className="w-20 h-20 bg-gray-100 rounded-lg items-center justify-center">
-                  <MaterialIcons name="healing" size={32} color="#9CA3AF" />
-                </View>
-                <View className="flex-1 ml-4">
-                  <Text className="font-semibold text-gray-900">{item.name}</Text>
-                  <Text className="text-gray-500 text-sm">{item.category}</Text>
-                  <View className="flex-row mt-2">
-                    <View className="bg-green-100 px-2 py-1 rounded-md mr-2">
-                      <Text className="text-green-700 text-xs">Tersedia: {item.available}</Text>
-                    </View>
-                    <View className="bg-blue-100 px-2 py-1 rounded-md">
-                      <Text className="text-blue-700 text-xs">Dipinjam: {item.borrowed}</Text>
-                    </View>
-                  </View>
-                </View>
+      {/* My Loans Section */}
+      {myLoans && myLoans.length > 0 && (
+        <>
+          <SectionHeader title="Peminjaman Saya" />
+          {myLoans.slice(0, 2).map((loan) => (
+            <Card key={loan.id} style={styles.loanCard}>
+              <View style={styles.loanHeader}>
+                <Text style={styles.loanEquipment}>{loan.equipmentName}</Text>
+                <Badge
+                  label={loan.status}
+                  variant={loan.status === 'active' ? 'primary' : loan.status === 'returned' ? 'success' : 'warning'}
+                  size="sm"
+                />
               </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Active Loans Table */}
-        <View className="px-6 mt-6 mb-8">
-          <Text className="text-lg font-semibold text-gray-900 mb-4">Peminjaman Aktif</Text>
-          <View className="bg-white rounded-xl overflow-hidden">
-            {/* Table Header */}
-            <View className="flex-row bg-gray-50 px-4 py-3 border-b border-gray-200">
-              <Text className="flex-1 text-gray-600 text-sm font-medium">Peminjam</Text>
-              <Text className="w-24 text-gray-600 text-sm font-medium">Item</Text>
-              <Text className="w-20 text-gray-600 text-sm font-medium text-right">Kembali</Text>
-            </View>
-            {/* Table Rows */}
-            {ACTIVE_LOANS.map((loan, index) => (
-              <View
-                key={loan.id}
-                className={`flex-row items-center px-4 py-3 ${
-                  index !== ACTIVE_LOANS.length - 1 ? 'border-b border-gray-100' : ''
-                }`}
-              >
-                <View className="flex-1 flex-row items-center">
-                  <View className="w-8 h-8 bg-primary-100 rounded-full items-center justify-center mr-2">
-                    <Text className="text-primary-700 font-semibold text-xs">
-                      {loan.borrower.charAt(0)}
-                    </Text>
-                  </View>
-                  <Text className="text-gray-900 text-sm" numberOfLines={1}>
-                    {loan.borrower}
+              <View style={styles.loanInfo}>
+                <View style={styles.infoRow}>
+                  <Clock size={14} color={colors.gray[400]} />
+                  <Text style={styles.infoText}>
+                    {new Date(loan.loanDate).toLocaleDateString('id-ID')}
                   </Text>
                 </View>
-                <Text className="w-24 text-gray-600 text-sm">{loan.item}</Text>
-                <Text className="w-20 text-gray-600 text-sm text-right">{loan.returnDate}</Text>
+                {loan.dueDate && (
+                  <View style={styles.infoRow}>
+                    <AlertCircle size={14} color={colors.warning[500]} />
+                    <Text style={[styles.infoText, { color: colors.warning[600] }]}>
+                      Jatuh tempo: {new Date(loan.dueDate).toLocaleDateString('id-ID')}
+                    </Text>
+                  </View>
+                )}
               </View>
-            ))}
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            </Card>
+          ))}
+        </>
+      )}
+
+      <SectionHeader title="Daftar Peralatan" />
+
+      <FilterTabBar
+        tabs={CATEGORIES}
+        activeTab={activeCategory}
+        onChange={setActiveCategory}
+      />
+
+      {isLoading ? (
+        <>
+          <Skeleton height={140} borderRadius={12} />
+          <Skeleton height={140} borderRadius={12} />
+          <Skeleton height={140} borderRadius={12} />
+        </>
+      ) : filteredEquipment.length > 0 ? (
+        <FlatList
+          data={filteredEquipment}
+          renderItem={renderEquipmentItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <EmptyState
+          icon={Package}
+          title="Tidak ada peralatan"
+          description="Belum ada peralatan yang tersedia di kategori ini"
+        />
+      )}
+    </ScreenWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  searchButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statValue: {
+    ...typography.h3,
+    color: colors.gray[900],
+    marginBottom: 4,
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  loanCard: {
+    marginBottom: 12,
+  },
+  loanHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  loanEquipment: {
+    ...typography.body1,
+    fontWeight: '600',
+    color: colors.gray[900],
+  },
+  loanInfo: {
+    gap: 4,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  infoText: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  listContent: {
+    paddingBottom: 100,
+  },
+  equipmentCard: {
+    marginBottom: 12,
+  },
+  equipmentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  equipmentIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  equipmentInfo: {
+    flex: 1,
+  },
+  equipmentName: {
+    ...typography.body1,
+    fontWeight: '600',
+    color: colors.gray[900],
+    marginBottom: 4,
+  },
+  equipmentCategory: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  equipmentFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[100],
+  },
+  stockText: {
+    ...typography.body2,
+    color: colors.gray[600],
+  },
+});

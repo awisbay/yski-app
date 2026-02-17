@@ -14,7 +14,7 @@
 | **Jemput Zakat** | Penjemputan zakat ke lokasi donatur |
 | **Lelang Barang** | Sistem lelang barang donasi untuk penggalangan dana |
 | **Transparansi Keuangan** | Laporan keuangan publik yang transparan |
-
+509
 ### User Levels (RBAC)
 
 | Level | Role | Akses |

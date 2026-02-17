@@ -1,0 +1,177 @@
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { router } from 'expo-router';
+import { Bell, Check, Trash2, ChevronRight, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
+import { Card } from '@/components/Card';
+import { Badge } from '@/components/Badge';
+import { EmptyState } from '@/components/EmptyState';
+import { Header } from '@/components/Header';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
+
+const ICONS: Record<string, any> = {
+  info: Info,
+  success: CheckCircle,
+  warning: AlertTriangle,
+};
+
+export default function NotificationsScreen() {
+  const notifications = useNotificationStore((state) => state.notifications);
+  const markAsRead = useNotificationStore((state) => state.markAsRead);
+  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
+  const clearNotifications = useNotificationStore((state) => state.clearNotifications);
+
+  const formatTime = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Baru saja';
+    if (minutes < 60) return `${minutes} menit yang lalu`;
+    if (hours < 24) return `${hours} jam yang lalu`;
+    if (days < 7) return `${days} hari yang lalu`;
+    return new Date(date).toLocaleDateString('id-ID');
+  };
+
+  const renderNotification = ({ item }: { item: any }) => {
+    const Icon = ICONS[item.type] || Info;
+    const iconColors: Record<string, string> = {
+      info: colors.primary[500],
+      success: colors.success[500],
+      warning: colors.warning[500],
+    };
+
+    return (
+      <TouchableOpacity
+        onPress={() => markAsRead(item.id)}
+        activeOpacity={0.7}
+      >
+        <Card style={[styles.notificationCard, !item.read && styles.unreadCard]}>
+          <View style={styles.notificationContent}>
+            <View style={[styles.iconContainer, { backgroundColor: `${iconColors[item.type]}15` }]}>
+              <Icon size={20} color={iconColors[item.type]} />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={[styles.title, !item.read && styles.unreadText]}>
+                {item.title}
+              </Text>
+              <Text style={styles.message} numberOfLines={2}>
+                {item.message}
+              </Text>
+              <Text style={styles.time}>{formatTime(item.createdAt)}</Text>
+            </View>
+          </View>
+          {!item.read && <View style={styles.unreadDot} />}
+        </Card>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <ScreenWrapper>
+      <Header
+        title="Notifikasi"
+        showBackButton
+        rightElement={
+          notifications.length > 0 ? (
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={markAllAsRead} style={styles.headerButton}>
+                <Check size={20} color={colors.primary[600]} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={clearNotifications} style={styles.headerButton}>
+                <Trash2 size={20} color={colors.error[600]} />
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
+      />
+
+      {notifications.length > 0 ? (
+        <FlatList
+          data={notifications}
+          renderItem={renderNotification}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <EmptyState
+          icon={Bell}
+          title="Tidak ada notifikasi"
+          description="Anda akan menerima notifikasi di sini"
+        />
+      )}
+    </ScreenWrapper>
+  );
+}
+
+const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingBottom: 100,
+  },
+  notificationCard: {
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  unreadCard: {
+    backgroundColor: colors.primary[50],
+  },
+  notificationContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    ...typography.body2,
+    fontWeight: '500',
+    color: colors.gray[700],
+    marginBottom: 4,
+  },
+  unreadText: {
+    fontWeight: '600',
+    color: colors.gray[900],
+  },
+  message: {
+    ...typography.caption,
+    color: colors.gray[500],
+    marginBottom: 4,
+  },
+  time: {
+    ...typography.caption,
+    color: colors.gray[400],
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary[500],
+    marginLeft: 8,
+  },
+});

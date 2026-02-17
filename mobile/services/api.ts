@@ -1,90 +1,60 @@
-import axios from 'axios';
-import Constants from 'expo-constants';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { useAuthStore } from '@/stores/authStore';
+import { API_BASE_URL } from '@/constants/config';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost/api/v1';
-
-export const api = axios.create({
-  baseURL: API_URL,
+// Create axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
 });
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
-  async (config) => {
-    try {
-      const token = await SecureStore.getItemAsync('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch (error) {
-      console.error('Error getting token:', error);
+  async (config: InternalAxiosRequestConfig) => {
+    const token = await SecureStore.getItemAsync('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling and token refresh
+// Response interceptor for token refresh
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Handle 401 Unauthorized
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
         const refreshToken = await SecureStore.getItemAsync('refresh_token');
-        if (refreshToken) {
-          const response = await axios.post(`${API_URL}/auth/refresh`, { 
-            refresh_token: refreshToken 
-          });
-          
-          const { access_token, refresh_token: newRefreshToken } = response.data;
-          
-          await SecureStore.setItemAsync('access_token', access_token);
-          await SecureStore.setItemAsync('refresh_token', newRefreshToken);
-          
-          // Update store
-          useAuthStore.setState({ 
-            token: access_token, 
-            refreshToken: newRefreshToken 
-          });
-          
-          // Retry original request
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return api(originalRequest);
+        if (!refreshToken) {
+          throw new Error('No refresh token');
         }
-      } catch (refreshError) {
-        // Refresh failed, logout user
-        useAuthStore.getState().logout();
-      }
-    }
 
-    // Handle other errors
-    if (error.response) {
-      // Server responded with error
-      switch (error.response.status) {
-        case 403:
-          console.error('Forbidden:', error.response.data);
-          break;
-        case 500:
-          console.error('Server Error:', error.response.data);
-          break;
-        default:
-          console.error('API Error:', error.response.data);
+        const response = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, {
+          refresh_token: refreshToken,
+        });
+
+        const { access_token, refresh_token } = response.data;
+        
+        await SecureStore.setItemAsync('access_token', access_token);
+        await SecureStore.setItemAsync('refresh_token', refresh_token);
+
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Clear tokens and redirect to login
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('refresh_token');
+        return Promise.reject(refreshError);
       }
-    } else if (error.request) {
-      // Network error
-      console.error('Network Error:', error.message);
     }
 
     return Promise.reject(error);
@@ -94,96 +64,73 @@ api.interceptors.response.use(
 // Auth API
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+    api.post('/api/v1/auth/login', { email, password }),
   
-  register: (data: { full_name: string; email: string; phone?: string; password: string }) =>
-    api.post('/auth/register', data),
+  register: (data: { email: string; password: string; fullName: string; phone?: string }) =>
+    api.post('/api/v1/auth/register', data),
   
   refresh: (refreshToken: string) =>
-    axios.post(`${API_URL}/auth/refresh`, { refresh_token: refreshToken }),
+    api.post('/api/v1/auth/refresh', { refresh_token: refreshToken }),
   
-  me: () =>
-    api.get('/auth/me'),
+  logout: () => api.post('/api/v1/auth/logout'),
+  
+  me: () => api.get('/api/v1/auth/me'),
 };
 
 // Bookings API
 export const bookingsApi = {
-  getSlots: (date: string) =>
-    api.get('/bookings/slots', { params: { date } }),
-  
-  create: (data: any) =>
-    api.post('/bookings', data),
-  
-  getMyBookings: () =>
-    api.get('/bookings/my'),
-  
-  getBooking: (id: string) =>
-    api.get(`/bookings/${id}`),
-  
-  cancel: (id: string) =>
-    api.patch(`/bookings/${id}/cancel`),
-};
-
-// Equipment API
-export const equipmentApi = {
-  getList: () =>
-    api.get('/equipment'),
-  
-  getDetail: (id: string) =>
-    api.get(`/equipment/${id}`),
-  
-  requestLoan: (equipmentId: string, data: any) =>
-    api.post(`/equipment/${equipmentId}/borrow`, data),
-  
-  getMyLoans: () =>
-    api.get('/equipment/loans/my'),
+  getList: () => api.get('/api/v1/bookings'),
+  getMyBookings: () => api.get('/api/v1/bookings/my'),
+  getBooking: (id: string) => api.get(`/api/v1/bookings/${id}`),
+  create: (data: any) => api.post('/api/v1/bookings', data),
+  cancel: (id: string) => api.patch(`/api/v1/bookings/${id}/cancel`),
+  getSlots: (date: string) => api.get(`/api/v1/bookings/slots?date=${date}`),
 };
 
 // Donations API
 export const donationsApi = {
-  create: (data: any) =>
-    api.post('/donations', data),
-  
-  getMyDonations: () =>
-    api.get('/donations/my'),
-  
-  getDetail: (id: string) =>
-    api.get(`/donations/${id}`),
-  
+  getList: () => api.get('/api/v1/donations'),
+  getMyDonations: () => api.get('/api/v1/donations/my'),
+  getDetail: (id: string) => api.get(`/api/v1/donations/${id}`),
+  create: (data: any) => api.post('/api/v1/donations', data),
   uploadProof: (id: string, formData: FormData) =>
-    api.post(`/donations/${id}/upload-proof`, formData, {
+    api.post(`/api/v1/donations/${id}/proof`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  getSummary: () => api.get('/api/v1/donations/summary'),
+};
+
+// Equipment API
+export const equipmentApi = {
+  getList: () => api.get('/api/v1/equipment'),
+  getDetail: (id: string) => api.get(`/api/v1/equipment/${id}`),
+  getStats: () => api.get('/api/v1/equipment/stats'),
+  getMyLoans: () => api.get('/api/v1/equipment/loans/my'),
+  requestLoan: (equipmentId: string, data: any) =>
+    api.post(`/api/v1/equipment/${equipmentId}/loans`, data),
 };
 
 // Pickups API
 export const pickupsApi = {
-  create: (data: any) =>
-    api.post('/pickups', data),
-  
-  getMyPickups: () =>
-    api.get('/pickups/my'),
-  
-  getDetail: (id: string) =>
-    api.get(`/pickups/${id}`),
+  getList: () => api.get('/api/v1/pickups'),
+  getMyPickups: () => api.get('/api/v1/pickups/my'),
+  getDetail: (id: string) => api.get(`/api/v1/pickups/${id}`),
+  create: (data: any) => api.post('/api/v1/pickups', data),
+  cancel: (id: string, reason?: string) =>
+    api.patch(`/api/v1/pickups/${id}/cancel`, { cancellation_reason: reason }),
 };
 
-// Programs API
+// Content API
 export const programsApi = {
   getList: (params?: { limit?: number; sort?: string }) =>
-    api.get('/programs', { params }),
-  
-  getDetail: (id: string) =>
-    api.get(`/programs/${id}`),
+    api.get('/api/v1/content/programs', { params }),
+  getDetail: (id: string) => api.get(`/api/v1/content/programs/${id}`),
 };
 
-// News API
 export const newsApi = {
   getList: (params?: { category?: string; page?: number; limit?: number }) =>
-    api.get('/news', { params }),
-  
-  getDetail: (id: string) =>
-    api.get(`/news/${id}`),
+    api.get('/api/v1/content/news', { params }),
+  getDetail: (id: string) => api.get(`/api/v1/content/news/${id}`),
 };
 
 export default api;

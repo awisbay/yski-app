@@ -1,50 +1,70 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Newspaper, Calendar, ChevronRight, Search } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
+import { Heart, TrendingUp, ChevronRight, Search } from 'lucide-react-native';
+import { ScreenWrapper, SectionHeader, Skeleton, ProgramCardSkeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
 import { Header } from '@/components/Header';
-import { useNews } from '@/hooks';
+import { ProgressBar } from '@/components/ProgressBar';
+import { usePrograms } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
-const CATEGORIES = ['all', 'umum', 'kegiatan', 'pengumuman', 'artikel'];
+const CATEGORIES = ['all', 'pendidikan', 'kesehatan', 'sosial', 'dakwah', 'ekonomi'];
 
-export default function NewsScreen() {
+export default function ProgramsScreen() {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const { data: news, isLoading } = useNews({
+  const { data: programs, isLoading } = usePrograms({
     category: selectedCategory === 'all' ? undefined : selectedCategory,
   });
 
-  const renderNewsItem = ({ item }: { item: any }) => (
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const renderProgramItem = ({ item }: { item: any }) => (
     <TouchableOpacity
-      onPress={() => router.push(`/news/${item.id}`)}
+      onPress={() => router.push(`/programs/${item.id}`)}
       activeOpacity={0.7}
     >
-      <Card style={styles.newsCard}>
-        <View style={styles.newsImage}>
-          <Newspaper size={32} color={colors.primary[300]} />
+      <Card style={styles.programCard}>
+        <View style={styles.programImage}>
+          <Heart size={40} color={colors.primary[300]} />
         </View>
-        <View style={styles.newsContent}>
-          <View style={styles.newsHeader}>
-            <Badge label={item.category} variant="secondary" size="sm" />
-            <View style={styles.dateRow}>
-              <Calendar size={14} color={colors.gray[400]} />
-              <Text style={styles.dateText}>
-                {new Date(item.publishedAt).toLocaleDateString('id-ID')}
-              </Text>
-            </View>
+        <View style={styles.programContent}>
+          <View style={styles.programHeader}>
+            <Badge label={item.category} variant="primary" size="sm" />
+            <Text style={styles.programDate}>
+              {new Date(item.createdAt).toLocaleDateString('id-ID')}
+            </Text>
           </View>
-          <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
-          <Text style={styles.newsExcerpt} numberOfLines={2}>
-            {item.excerpt || item.content?.substring(0, 100)}...
+          <Text style={styles.programTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.programDescription} numberOfLines={2}>
+            {item.description}
           </Text>
-          <View style={styles.readMore}>
-            <Text style={styles.readMoreText}>Baca selengkapnya</Text>
-            <ChevronRight size={16} color={colors.primary[600]} />
+          <ProgressBar 
+            progress={item.collectedAmount / item.targetAmount}
+            style={styles.programProgress}
+          />
+          <View style={styles.programStats}>
+            <Text style={styles.raisedAmount}>
+              {formatCurrency(item.collectedAmount)}
+            </Text>
+            <Text style={styles.targetAmount}>
+              dari {formatCurrency(item.targetAmount)}
+            </Text>
+          </View>
+          <View style={styles.donorCount}>
+            <TrendingUp size={14} color={colors.success[500]} />
+            <Text style={styles.donorText}>
+              {item.donorCount || 0} donatur
+            </Text>
           </View>
         </View>
       </Card>
@@ -54,7 +74,7 @@ export default function NewsScreen() {
   return (
     <ScreenWrapper>
       <Header
-        title="Berita & Informasi"
+        title="Program"
         showBackButton
         rightElement={
           <TouchableOpacity style={styles.searchButton}>
@@ -88,23 +108,23 @@ export default function NewsScreen() {
 
       {isLoading ? (
         <>
-          <Skeleton height={200} borderRadius={12} />
-          <Skeleton height={200} borderRadius={12} />
-          <Skeleton height={200} borderRadius={12} />
+          <ProgramCardSkeleton />
+          <ProgramCardSkeleton />
+          <ProgramCardSkeleton />
         </>
-      ) : news?.length > 0 ? (
+      ) : programs?.length > 0 ? (
         <FlatList
-          data={news}
-          renderItem={renderNewsItem}
+          data={programs}
+          renderItem={renderProgramItem}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />
       ) : (
         <EmptyState
-          icon={Newspaper}
-          title="Belum ada berita"
-          description="Berita dan informasi akan segera tersedia"
+          icon={Heart}
+          title="Belum ada program"
+          description="Program akan segera tersedia"
         />
       )}
     </ScreenWrapper>
@@ -146,54 +166,66 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
   },
-  newsCard: {
+  programCard: {
     marginBottom: 16,
     overflow: 'hidden',
   },
-  newsImage: {
+  programImage: {
     height: 160,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[50],
     justifyContent: 'center',
     alignItems: 'center',
     margin: -16,
     marginBottom: 16,
   },
-  newsContent: {
+  programContent: {
     paddingTop: 8,
   },
-  newsHeader: {
+  programHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dateText: {
+  programDate: {
     ...typography.caption,
     color: colors.gray[400],
   },
-  newsTitle: {
+  programTitle: {
     ...typography.h4,
     color: colors.gray[900],
     marginBottom: 8,
   },
-  newsExcerpt: {
+  programDescription: {
     ...typography.body2,
     color: colors.gray[500],
+    marginBottom: 16,
+  },
+  programProgress: {
     marginBottom: 12,
   },
-  readMore: {
+  programStats: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 8,
+  },
+  raisedAmount: {
+    ...typography.body1,
+    fontWeight: '700',
+    color: colors.success[600],
+  },
+  targetAmount: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  donorCount: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
-  readMoreText: {
-    ...typography.body2,
-    color: colors.primary[600],
-    fontWeight: '500',
-    marginRight: 4,
+  donorText: {
+    ...typography.caption,
+    color: colors.success[600],
   },
 });

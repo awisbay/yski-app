@@ -43,3 +43,6 @@ export const config = {
 } as const;
 
 export type Config = typeof config;
+
+// Direct exports for convenience
+export const API_BASE_URL = config.api.baseUrl;

@@ -1,60 +1,57 @@
-import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { authApi } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
-import { useRouter, useSegments } from 'expo-router';
+
+export const authKeys = {
+  all: ['auth'] as const,
+  user: () => [...authKeys.all, 'user'] as const,
+};
 
 export function useAuth() {
-  const router = useRouter();
-  const segments = useSegments();
-  const { isAuthenticated, isLoading, user, token, refreshToken, login, register, logout, refreshAccessToken } = useAuthStore();
+  const queryClient = useQueryClient();
+  const { setUser, setTokens, clearTokens } = useAuthStore();
 
-  // Handle auth guard - redirect to login if not authenticated
-  useEffect(() => {
-    if (isLoading) return;
+  const loginMutation = useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      authApi.login(email, password).then((res) => res.data),
+    onSuccess: async (data) => {
+      await setTokens(data.access_token, data.refresh_token);
+      setUser(data.user);
+      queryClient.setQueryData(authKeys.user(), data.user);
+    },
+  });
 
-    const inAuthGroup = segments[0] === '(auth)';
+  const registerMutation = useMutation({
+    mutationFn: (data: { email: string; password: string; fullName: string; phone?: string }) =>
+      authApi.register(data).then((res) => res.data),
+    onSuccess: async (data) => {
+      await setTokens(data.access_token, data.refresh_token);
+      setUser(data.user);
+      queryClient.setQueryData(authKeys.user(), data.user);
+    },
+  });
 
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(tabs)');
-    }
-  }, [isAuthenticated, isLoading, segments]);
+  const logoutMutation = useMutation({
+    mutationFn: () => authApi.logout(),
+    onSuccess: async () => {
+      await clearTokens();
+      setUser(null);
+      queryClient.clear();
+    },
+  });
 
-  // Auto-refresh token before expiry
-  useEffect(() => {
-    if (!token || !refreshToken) return;
-
-    // Parse JWT to get expiry
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiryTime = payload.exp * 1000;
-      const currentTime = Date.now();
-      const timeUntilExpiry = expiryTime - currentTime;
-      
-      // Refresh 5 minutes before expiry
-      const refreshTime = timeUntilExpiry - 5 * 60 * 1000;
-
-      if (refreshTime > 0) {
-        const timer = setTimeout(() => {
-          refreshAccessToken();
-        }, refreshTime);
-
-        return () => clearTimeout(timer);
-      } else if (timeUntilExpiry <= 0) {
-        // Token already expired, try to refresh immediately
-        refreshAccessToken();
-      }
-    } catch (error) {
-      console.error('Error parsing token:', error);
-    }
-  }, [token, refreshToken]);
+  const userQuery = useQuery({
+    queryKey: authKeys.user(),
+    queryFn: () => authApi.me().then((res) => res.data),
+    enabled: false, // Only fetch when needed
+  });
 
   return {
-    isAuthenticated,
-    isLoading,
-    user,
-    login,
-    register,
-    logout,
+    user: userQuery.data,
+    isLoading: loginMutation.isPending || registerMutation.isPending,
+    error: loginMutation.error?.message || registerMutation.error?.message,
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
+    logout: logoutMutation.mutateAsync,
   };
 }

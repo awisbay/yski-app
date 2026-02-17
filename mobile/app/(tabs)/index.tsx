@@ -1,173 +1,508 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { 
+  Calendar, 
+  Package, 
+  Heart, 
+  Truck, 
+  ChevronRight,
+  Bell,
+  MapPin,
+  Clock,
+  TrendingUp,
+  Users
+} from 'lucide-react-native';
+import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { Badge } from '@/components/Badge';
+import { ProgressBar } from '@/components/ProgressBar';
+import { EmptyState } from '@/components/EmptyState';
 import { useAuthStore } from '@/stores/authStore';
-import { Card } from '@/components';
+import { useBookingStore } from '@/stores/bookingStore';
+import { useDonationStore } from '@/stores/donationStore';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { useMyBookings, useBookingSlots, usePrograms, useNews } from '@/hooks';
+import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
+
+const MENU_ITEMS = [
+  { icon: Calendar, label: 'Booking', route: '/booking', color: colors.primary[500] },
+  { icon: Package, label: 'Peralatan', route: '/equipment', color: colors.secondary[500] },
+  { icon: Heart, label: 'Donasi', route: '/donations', color: colors.success[500] },
+  { icon: Truck, label: 'Jemput', route: '/pickups', color: colors.warning[500] },
+];
 
 export default function HomeScreen() {
-  const router = useRouter();
-  const { user } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const user = useAuthStore((state) => state.user);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  
+  const { data: bookings, isLoading: bookingsLoading, refetch: refetchBookings } = useMyBookings();
+  const { data: programs, isLoading: programsLoading } = usePrograms({ limit: 3 });
+  const { data: news, isLoading: newsLoading } = useNews({ limit: 2 });
+  
+  const [refreshing, setRefreshing] = useState(false);
 
-  const quickActions = [
-    {
-      title: 'Pindah Gratis',
-      icon: 'local-shipping',
-      color: '#10B981',
-      onPress: () => router.push('/booking'),
-    },
-    {
-      title: 'Alat Medis',
-      icon: 'healing',
-      color: '#3B82F6',
-      onPress: () => router.push('/equipment'),
-    },
-    {
-      title: 'Zakat & Donasi',
-      icon: 'favorite',
-      color: '#F59E0B',
-      onPress: () => router.push('/donation'),
-    },
-    {
-      title: 'Jemput Zakat',
-      icon: 'cleaning-services',
-      color: '#8B5CF6',
-      onPress: () => router.push('/pickup'),
-    },
-  ];
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchBookings()]);
+    setRefreshing(false);
+  };
 
-  const programs = [
-    { id: '1', title: 'Bantuan Pendidikan Anak Yatim', progress: 75, target: 'Rp 100jt', collected: 'Rp 75jt' },
-    { id: '2', title: 'Program Kesehatan Gratis', progress: 45, target: 'Rp 50jt', collected: 'Rp 22.5jt' },
-    { id: '3', title: 'Bantuan Bencana Alam', progress: 90, target: 'Rp 200jt', collected: 'Rp 180jt' },
-  ];
+  const activeBookings = bookings?.filter(b => b.status === 'confirmed' || b.status === 'pending') || [];
+  const nextBooking = activeBookings[0];
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const handleMenuPress = (route: string) => {
+    router.push(route);
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1">
-        {/* Header */}
-        <View className="bg-primary-500 px-6 pt-6 pb-8 rounded-b-3xl">
-          <Text className="text-white/80 text-sm">Selamat datang,</Text>
-          <Text className="text-white text-2xl font-bold mt-1">
-            {user?.full_name || 'Sahabat'}
-          </Text>
-          
-          {/* Impact Stats */}
-          <View className="flex-row mt-6">
-            <View className="flex-1 bg-white/10 rounded-xl p-4 mr-3">
-              <MaterialIcons name="favorite" size={24} color="white" />
-              <Text className="text-white text-xl font-bold mt-2">Rp500jt+</Text>
-              <Text className="text-white/80 text-sm">Total Donasi</Text>
-            </View>
-            <View className="flex-1 bg-white/10 rounded-xl p-4">
-              <MaterialIcons name="people" size={24} color="white" />
-              <Text className="text-white text-xl font-bold mt-2">1.2k+</Text>
-              <Text className="text-white/80 text-sm">Aksi Sosial</Text>
-            </View>
-          </View>
+    <ScreenWrapper
+      refreshable
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.greeting}>Selamat Datang,</Text>
+          <Text style={styles.userName}>{user?.fullName || 'Pengguna'}</Text>
         </View>
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={() => router.push('/notifications')}
+        >
+          <Bell size={24} color={colors.gray[700]} />
+          {unreadCount > 0 && (
+            <Badge 
+              label={unreadCount.toString()} 
+              variant="error" 
+              size="sm"
+              style={styles.notificationBadge}
+            />
+          )}
+        </TouchableOpacity>
+      </View>
 
-        {/* Quick Actions */}
-        <View className="px-6 -mt-4">
-          <View className="bg-white rounded-2xl shadow-sm p-4">
-            <Text className="text-gray-800 font-semibold mb-4">Layanan Kami</Text>
-            <View className="flex-row flex-wrap">
-              {quickActions.map((action, index) => (
-                <TouchableOpacity
-                  key={index}
-                  className="w-1/4 items-center py-3"
-                  onPress={action.onPress}
-                >
-                  <View
-                    className="w-14 h-14 rounded-2xl items-center justify-center mb-2"
-                    style={{ backgroundColor: `${action.color}15` }}
-                  >
-                    <MaterialIcons name={action.icon as any} size={28} color={action.color} />
-                  </View>
-                  <Text className="text-xs text-gray-600 text-center">{action.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+      {/* Quick Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, { backgroundColor: colors.primary[100] }]}>
+            <Calendar size={20} color={colors.primary[600]} />
           </View>
+          <Text style={styles.statValue}>{activeBookings.length}</Text>
+          <Text style={styles.statLabel}>Booking Aktif</Text>
         </View>
-
-        {/* Programs Section */}
-        <View className="px-6 mt-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-lg font-semibold text-gray-800">Program Sosial</Text>
-            <TouchableOpacity>
-              <Text className="text-primary-600 text-sm">Lihat Semua</Text>
-            </TouchableOpacity>
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, { backgroundColor: colors.success[100] }]}>
+            <Heart size={20} color={colors.success[600]} />
           </View>
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {programs.map((program) => (
-              <TouchableOpacity
-                key={program.id}
-                className="w-72 bg-white rounded-2xl p-4 mr-3 shadow-sm"
-              >
-                <View className="h-32 bg-gray-200 rounded-xl mb-4 items-center justify-center">
-                  <MaterialIcons name="volunteer-activism" size={40} color="#9CA3AF" />
-                </View>
-                <Text className="font-bold text-gray-900 mb-2" numberOfLines={2}>{program.title}</Text>
-                <View className="h-2 bg-gray-200 rounded-full mb-2">
-                  <View 
-                    className="h-2 bg-primary-500 rounded-full" 
-                    style={{ width: `${program.progress}%` }}
-                  />
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-primary-600 font-semibold text-sm">{program.collected}</Text>
-                  <Text className="text-gray-500 text-sm">{program.target}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <Text style={styles.statValue}>12</Text>
+          <Text style={styles.statLabel}>Total Donasi</Text>
         </View>
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, { backgroundColor: colors.secondary[100] }]}>
+            <Package size={20} color={colors.secondary[600]} />
+          </View>
+          <Text style={styles.statValue}>3</Text>
+          <Text style={styles.statLabel}>Peminjaman</Text>
+        </View>
+      </View>
 
-        {/* Volunteer CTA */}
-        <View className="px-6 mt-6">
-          <TouchableOpacity 
-            className="bg-secondary-500 rounded-2xl p-6 flex-row items-center"
-            onPress={() => {}}
+      {/* Menu Grid */}
+      <View style={styles.menuContainer}>
+        {MENU_ITEMS.map((item) => (
+          <TouchableOpacity
+            key={item.label}
+            style={styles.menuItem}
+            onPress={() => handleMenuPress(item.route)}
           >
-            <View className="w-14 h-14 bg-white/20 rounded-xl items-center justify-center">
-              <MaterialIcons name="group-add" size={32} color="white" />
+            <View style={[styles.menuIcon, { backgroundColor: item.color + '15' }]}>
+              <item.icon size={28} color={item.color} />
             </View>
-            <View className="flex-1 ml-4">
-              <Text className="text-white font-bold text-lg">Jadi Relawan?</Text>
-              <Text className="text-white/80 text-sm">Daftar sekarang dan bantu sesama</Text>
-            </View>
-            <MaterialIcons name="arrow-forward" size={24} color="white" />
+            <Text style={styles.menuLabel}>{item.label}</Text>
           </TouchableOpacity>
-        </View>
+        ))}
+      </View>
 
-        {/* News Section */}
-        <View className="px-6 mt-6 mb-8">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-lg font-semibold text-gray-800">Berita Terbaru</Text>
-            <TouchableOpacity onPress={() => router.push('/news')}>
-              <Text className="text-primary-600 text-sm">Lihat Semua</Text>
-            </TouchableOpacity>
+      {/* Next Booking */}
+      <SectionHeader 
+        title="Booking Berikutnya" 
+        right={
+          <TouchableOpacity onPress={() => router.push('/booking')}>
+            <Text style={styles.link}>Lihat Semua</Text>
+          </TouchableOpacity>
+        }
+      />
+      
+      {bookingsLoading ? (
+        <Skeleton height={120} borderRadius={12} />
+      ) : nextBooking ? (
+        <Card style={styles.bookingCard}>
+          <View style={styles.bookingHeader}>
+            <Badge 
+              label={nextBooking.status} 
+              variant={nextBooking.status === 'confirmed' ? 'success' : 'warning'}
+            />
+            <Text style={styles.bookingId}>#{nextBooking.id.slice(-6).toUpperCase()}</Text>
           </View>
-          
-          <TouchableOpacity 
-            className="bg-white rounded-2xl overflow-hidden shadow-sm"
-            onPress={() => router.push('/news')}
-          >
-            <View className="h-40 bg-gray-200 items-center justify-center">
-              <MaterialIcons name="article" size={48} color="#9CA3AF" />
+          <View style={styles.bookingInfo}>
+            <View style={styles.infoRow}>
+              <Calendar size={16} color={colors.gray[500]} />
+              <Text style={styles.infoText}>
+                {new Date(nextBooking.bookingDate).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </Text>
             </View>
-            <View className="p-4">
-              <View className="self-start bg-primary-50 px-3 py-1 rounded-full mb-2">
-                <Text className="text-primary-700 text-xs font-medium">Kesehatan</Text>
+            <View style={styles.infoRow}>
+              <Clock size={16} color={colors.gray[500]} />
+              <Text style={styles.infoText}>{nextBooking.timeSlot}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <MapPin size={16} color={colors.gray[500]} />
+              <Text style={styles.infoText} numberOfLines={1}>
+                {nextBooking.pickupAddress}
+              </Text>
+            </View>
+          </View>
+        </Card>
+      ) : (
+        <EmptyState
+          icon={Calendar}
+          title="Belum ada booking"
+          description="Mulai dengan membuat booking pertama Anda"
+          action={{
+            label: 'Buat Booking',
+            onPress: () => router.push('/booking/new'),
+          }}
+          compact
+        />
+      )}
+
+      {/* Featured Programs */}
+      <SectionHeader 
+        title="Program Unggulan"
+        right={
+          <TouchableOpacity onPress={() => router.push('/programs')}>
+            <Text style={styles.link}>Lihat Semua</Text>
+          </TouchableOpacity>
+        }
+      />
+      
+      {programsLoading ? (
+        <Skeleton height={200} borderRadius={12} />
+      ) : programs?.length > 0 ? (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.programsScroll}
+        >
+          {programs.map((program) => (
+            <TouchableOpacity
+              key={program.id}
+              style={styles.programCard}
+              onPress={() => router.push(`/programs/${program.id}`)}
+            >
+              <View style={styles.programImage}>
+                <Heart size={32} color={colors.primary[300]} />
               </View>
-              <Text className="font-bold text-gray-900 mb-1">Program Vaksinasi Gratis</Text>
-              <Text className="text-gray-500 text-sm">YSKI mengadakan vaksinasi gratis untuk warga kurang mampu...</Text>
+              <View style={styles.programContent}>
+                <Badge label={program.category} variant="primary" size="sm" />
+                <Text style={styles.programTitle} numberOfLines={2}>{program.title}</Text>
+                <Text style={styles.programDescription} numberOfLines={2}>
+                  {program.description}
+                </Text>
+                <ProgressBar 
+                  progress={program.collectedAmount / program.targetAmount}
+                  style={styles.programProgress}
+                />
+                <View style={styles.programStats}>
+                  <Text style={styles.programRaised}>
+                    {formatCurrency(program.collectedAmount)}
+                  </Text>
+                  <Text style={styles.programTarget}>
+                    dari {formatCurrency(program.targetAmount)}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : (
+        <EmptyState
+          icon={TrendingUp}
+          title="Belum ada program"
+          description="Program akan segera tersedia"
+          compact
+        />
+      )}
+
+      {/* Latest News */}
+      <SectionHeader 
+        title="Berita Terbaru"
+        right={
+          <TouchableOpacity onPress={() => router.push('/news')}>
+            <Text style={styles.link}>Lihat Semua</Text>
+          </TouchableOpacity>
+        }
+      />
+      
+      {newsLoading ? (
+        <>
+          <Skeleton height={80} borderRadius={12} />
+          <Skeleton height={80} borderRadius={12} />
+        </>
+      ) : news?.length > 0 ? (
+        news.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.newsItem}
+            onPress={() => router.push(`/news/${item.id}`)}
+          >
+            <View style={styles.newsImage} />
+            <View style={styles.newsContent}>
+              <Badge label={item.category} variant="secondary" size="sm" />
+              <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.newsDate}>
+                {new Date(item.publishedAt).toLocaleDateString('id-ID')}
+              </Text>
             </View>
           </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        ))
+      ) : (
+        <EmptyState
+          icon={TrendingUp}
+          title="Belum ada berita"
+          description="Berita akan segera tersedia"
+          compact
+        />
+      )}
+    </ScreenWrapper>
   );
 }
+
+import { useState } from 'react';
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  greeting: {
+    ...typography.body2,
+    color: colors.gray[500],
+  },
+  userName: {
+    ...typography.h3,
+    color: colors.gray[900],
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    ...typography.h3,
+    color: colors.gray[900],
+    marginBottom: 4,
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  menuContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  menuItem: {
+    width: '23%',
+    alignItems: 'center',
+  },
+  menuIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  menuLabel: {
+    ...typography.caption,
+    color: colors.gray[700],
+    fontWeight: '500',
+  },
+  link: {
+    ...typography.button,
+    color: colors.primary[600],
+  },
+  bookingCard: {
+    marginBottom: 24,
+  },
+  bookingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bookingId: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  bookingInfo: {
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoText: {
+    ...typography.body2,
+    color: colors.gray[700],
+    flex: 1,
+  },
+  programsScroll: {
+    gap: 12,
+    paddingRight: 16,
+  },
+  programCard: {
+    width: 280,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  programImage: {
+    height: 120,
+    backgroundColor: colors.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  programContent: {
+    padding: 12,
+  },
+  programTitle: {
+    ...typography.body1,
+    fontWeight: '600',
+    color: colors.gray[900],
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  programDescription: {
+    ...typography.body2,
+    color: colors.gray[500],
+    marginBottom: 12,
+  },
+  programProgress: {
+    marginBottom: 8,
+  },
+  programStats: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  programRaised: {
+    ...typography.body2,
+    fontWeight: '600',
+    color: colors.success[600],
+  },
+  programTarget: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  newsItem: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  newsImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: colors.gray[200],
+    marginRight: 12,
+  },
+  newsContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  newsTitle: {
+    ...typography.body2,
+    fontWeight: '500',
+    color: colors.gray[900],
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  newsDate: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+});

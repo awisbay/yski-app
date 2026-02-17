@@ -1,40 +1,25 @@
 import { Tabs } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useAuthStore } from '@/stores/authStore';
-import { View, ActivityIndicator } from 'react-native';
-import { Redirect } from 'expo-router';
+import { Calendar, Package, Heart, Truck, User } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
 
-export default function TabLayout() {
-  const { isAuthenticated, isLoading, user } = useAuthStore();
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#10B981" />
-      </View>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // Redirect admin/pengurus to admin layout
-  if (user?.role === 'admin' || user?.role === 'pengurus') {
-    return <Redirect href="/(admin)" />;
-  }
-
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarActiveTintColor: colors.primary[600],
+        tabBarInactiveTintColor: colors.gray[400],
         tabBarStyle: {
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingBottom: 8,
+          borderTopColor: colors.gray[200],
           paddingTop: 8,
+          paddingBottom: 8,
           height: 64,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: 4,
         },
         headerShown: false,
       }}
@@ -43,36 +28,38 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Beranda',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Calendar size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="services"
+        name="booking"
         options={{
-          title: 'Layanan',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="apps" size={size} color={color} />
-          ),
+          title: 'Booking',
+          tabBarIcon: ({ color, size }) => <Package size={size} color={color} />,
+          href: '/booking',
         }}
       />
       <Tabs.Screen
-        name="activity"
+        name="donations"
         options={{
-          title: 'Riwayat',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="history" size={size} color={color} />
-          ),
+          title: 'Donasi',
+          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
+          href: '/donations',
+        }}
+      />
+      <Tabs.Screen
+        name="pickups"
+        options={{
+          title: 'Jemput',
+          tabBarIcon: ({ color, size }) => <Truck size={size} color={color} />,
+          href: '/pickups',
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="account-circle" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
     </Tabs>

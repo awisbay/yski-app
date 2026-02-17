@@ -1,268 +1,212 @@
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button, Input } from '@/components';
+import { Plus, Calendar, MapPin, Clock, ChevronRight } from 'lucide-react-native';
+import { ScreenWrapper, SectionHeader, FilterTabBar, Skeleton, BookingCardSkeleton } from '@/components/ui';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { Badge } from '@/components/Badge';
+import { EmptyState } from '@/components/EmptyState';
+import { Header } from '@/components/Header';
+import { useMyBookings, useCancelBooking } from '@/hooks';
+import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
 
-const TIME_SLOTS = [
-  { time: '08:00', label: '08:00 - 10:00' },
-  { time: '10:00', label: '10:00 - 12:00' },
-  { time: '13:00', label: '13:00 - 15:00' },
-  { time: '15:00', label: '15:00 - 17:00' },
+const FILTER_TABS = [
+  { key: 'all', label: 'Semua' },
+  { key: 'active', label: 'Aktif' },
+  { key: 'completed', label: 'Selesai' },
+  { key: 'cancelled', label: 'Dibatalkan' },
 ];
 
-export default function BookingScreen() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    pickupAddress: '',
-    pickupNotes: '',
-    dropoffAddress: '',
-    dropoffNotes: '',
-  });
+export default function BookingListScreen() {
+  const [activeTab, setActiveTab] = useState('all');
+  const { data: bookings, isLoading, refetch } = useMyBookings();
+  const cancelMutation = useCancelBooking();
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setDate(selectedDate);
+  const filteredBookings = bookings?.filter((booking) => {
+    switch (activeTab) {
+      case 'active':
+        return booking.status === 'confirmed' || booking.status === 'pending';
+      case 'completed':
+        return booking.status === 'completed';
+      case 'cancelled':
+        return booking.status === 'cancelled';
+      default:
+        return true;
+    }
+  }) || [];
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelMutation.mutateAsync(id);
+    } catch (error) {
+      console.error('Failed to cancel booking:', error);
     }
   };
 
-  const renderStepIndicator = () => (
-    <View className="flex-row items-center justify-center py-4">
-      <View className={`w-8 h-8 rounded-full items-center justify-center ${step >= 1 ? 'bg-primary-500' : 'bg-gray-300'}`}>
-        <Text className="text-white font-semibold">1</Text>
-      </View>
-      <View className={`w-12 h-1 ${step >= 2 ? 'bg-primary-500' : 'bg-gray-300'}`} />
-      <View className={`w-8 h-8 rounded-full items-center justify-center ${step >= 2 ? 'bg-primary-500' : 'bg-gray-300'}`}>
-        <Text className="text-white font-semibold">2</Text>
-      </View>
-      <View className={`w-12 h-1 ${step >= 3 ? 'bg-primary-500' : 'bg-gray-300'}`} />
-      <View className={`w-8 h-8 rounded-full items-center justify-center ${step >= 3 ? 'bg-primary-500' : 'bg-gray-300'}`}>
-        <Text className="text-white font-semibold">3</Text>
-      </View>
-    </View>
-  );
+  const renderBookingItem = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      onPress={() => router.push(`/booking/${item.id}`)}
+      activeOpacity={0.7}
+    >
+      <Card style={styles.bookingCard}>
+        <View style={styles.bookingHeader}>
+          <Badge 
+            label={item.status}
+            variant={
+              item.status === 'confirmed' ? 'success' :
+              item.status === 'pending' ? 'warning' :
+              item.status === 'completed' ? 'secondary' :
+              'error'
+            }
+          />
+          <Text style={styles.bookingId}>#{item.id.slice(-6).toUpperCase()}</Text>
+        </View>
 
-  const renderStep1 = () => (
-    <View className="px-6">
-      <Text className="text-xl font-bold text-gray-900 mb-2">Pilih Tanggal & Waktu</Text>
-      <Text className="text-gray-500 mb-6">Kapan Anda ingin pindahan?</Text>
-
-      {/* Date Picker */}
-      <TouchableOpacity
-        className="flex-row items-center border border-gray-300 rounded-xl px-4 py-4 mb-6"
-        onPress={() => setShowDatePicker(true)}
-      >
-        <MaterialIcons name="calendar-today" size={24} color="#6B7280" />
-        <Text className="flex-1 ml-3 text-gray-900">
-          {date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </Text>
-        <MaterialIcons name="chevron-right" size={24} color="#9CA3AF" />
-      </TouchableOpacity>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
-          onChange={handleDateChange}
-        />
-      )}
-
-      {/* Time Slots */}
-      <Text className="text-sm font-medium text-gray-700 mb-3">Pilih Jam</Text>
-      <View className="flex-row flex-wrap">
-        {TIME_SLOTS.map((slot) => (
-          <TouchableOpacity
-            key={slot.time}
-            className={`w-[48%] mb-3 p-4 rounded-xl border-2 ${
-              selectedSlot === slot.time
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 bg-white'
-            }`}
-            onPress={() => setSelectedSlot(slot.time)}
-          >
-            <Text className={`text-center font-medium ${
-              selectedSlot === slot.time ? 'text-primary-700' : 'text-gray-700'
-            }`}>
-              {slot.label}
+        <View style={styles.bookingInfo}>
+          <View style={styles.infoRow}>
+            <Calendar size={16} color={colors.gray[500]} />
+            <Text style={styles.infoText}>
+              {new Date(item.bookingDate).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
             </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Button
-        title="Lanjutkan"
-        onPress={() => setStep(2)}
-        disabled={!selectedSlot}
-        className="mt-6"
-      />
-    </View>
-  );
-
-  const renderStep2 = () => (
-    <ScrollView className="px-6">
-      <Text className="text-xl font-bold text-gray-900 mb-2">Alamat Pindahan</Text>
-      <Text className="text-gray-500 mb-6">Masukkan alamat penjemputan dan tujuan</Text>
-
-      <View className="mb-4">
-        <Text className="text-sm font-medium text-gray-700 mb-2">Alamat Penjemputan</Text>
-        <Input
-          value={formData.pickupAddress}
-          onChangeText={(text) => setFormData({ ...formData, pickupAddress: text })}
-          placeholder="Masukkan alamat lengkap"
-          icon="location-on"
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-
-      <View className="mb-4">
-        <Text className="text-sm font-medium text-gray-700 mb-2">Catatan Penjemputan (Opsional)</Text>
-        <Input
-          value={formData.pickupNotes}
-          onChangeText={(text) => setFormData({ ...formData, pickupNotes: text })}
-          placeholder="Patokan, lantai, dll"
-        />
-      </View>
-
-      <View className="mb-4">
-        <Text className="text-sm font-medium text-gray-700 mb-2">Alamat Tujuan</Text>
-        <Input
-          value={formData.dropoffAddress}
-          onChangeText={(text) => setFormData({ ...formData, dropoffAddress: text })}
-          placeholder="Masukkan alamat lengkap"
-          icon="location-on"
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-
-      <View className="mb-4">
-        <Text className="text-sm font-medium text-gray-700 mb-2">Catatan Tujuan (Opsional)</Text>
-        <Input
-          value={formData.dropoffNotes}
-          onChangeText={(text) => setFormData({ ...formData, dropoffNotes: text })}
-          placeholder="Patokan, lantai, dll"
-        />
-      </View>
-
-      <View className="flex-row space-x-3 mt-6">
-        <Button
-          title="Kembali"
-          variant="outline"
-          onPress={() => setStep(1)}
-          className="flex-1"
-        />
-        <Button
-          title="Lanjutkan"
-          onPress={() => setStep(3)}
-          disabled={!formData.pickupAddress || !formData.dropoffAddress}
-          className="flex-1"
-        />
-      </View>
-    </ScrollView>
-  );
-
-  const renderStep3 = () => (
-    <ScrollView className="px-6">
-      <Text className="text-xl font-bold text-gray-900 mb-2">Konfirmasi</Text>
-      <Text className="text-gray-500 mb-6">Periksa kembali detail pemesanan Anda</Text>
-
-      <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-        <View className="flex-row items-center mb-4">
-          <MaterialIcons name="calendar-today" size={24} color="#10B981" />
-          <View className="ml-3">
-            <Text className="text-gray-500 text-sm">Tanggal & Waktu</Text>
-            <Text className="text-gray-900 font-medium">
-              {date.toLocaleDateString('id-ID')} • {selectedSlot}
+          </View>
+          <View style={styles.infoRow}>
+            <Clock size={16} color={colors.gray[500]} />
+            <Text style={styles.infoText}>{item.timeSlot}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <MapPin size={16} color={colors.gray[500]} />
+            <Text style={styles.infoText} numberOfLines={1}>
+              {item.pickupAddress}
             </Text>
           </View>
         </View>
 
-        <View className="h-px bg-gray-200 my-4" />
-
-        <View className="mb-4">
-          <View className="flex-row items-start">
-            <MaterialIcons name="location-on" size={24} color="#10B981" />
-            <View className="ml-3 flex-1">
-              <Text className="text-gray-500 text-sm">Penjemputan</Text>
-              <Text className="text-gray-900">{formData.pickupAddress}</Text>
-              {formData.pickupNotes && (
-                <Text className="text-gray-500 text-sm mt-1">Catatan: {formData.pickupNotes}</Text>
-              )}
-            </View>
+        {(item.status === 'confirmed' || item.status === 'pending') && (
+          <View style={styles.actionRow}>
+            <Button
+              title="Batalkan"
+              variant="secondary"
+              size="sm"
+              onPress={() => handleCancel(item.id)}
+              isLoading={cancelMutation.isPending}
+              style={styles.cancelButton}
+            />
+            <ChevronRight size={20} color={colors.gray[400]} />
           </View>
-        </View>
-
-        <View className="flex-row items-center justify-center my-2">
-          <MaterialIcons name="arrow-downward" size={24} color="#6B7280" />
-        </View>
-
-        <View className="flex-row items-start">
-          <MaterialIcons name="location-on" size={24} color="#EF4444" />
-          <View className="ml-3 flex-1">
-            <Text className="text-gray-500 text-sm">Tujuan</Text>
-            <Text className="text-gray-900">{formData.dropoffAddress}</Text>
-            {formData.dropoffNotes && (
-              <Text className="text-gray-500 text-sm mt-1">Catatan: {formData.dropoffNotes}</Text>
-            )}
-          </View>
-        </View>
-      </View>
-
-      <View className="bg-yellow-50 rounded-xl p-4 mb-6">
-        <View className="flex-row items-start">
-          <MaterialIcons name="info" size={20} color="#F59E0B" />
-          <Text className="flex-1 ml-2 text-yellow-800 text-sm">
-            Dengan menekan "Konfirmasi Pesanan", Anda menyetujui syarat dan ketentuan layanan kami.
-          </Text>
-        </View>
-      </View>
-
-      <View className="flex-row space-x-3">
-        <Button
-          title="Kembali"
-          variant="outline"
-          onPress={() => setStep(2)}
-          className="flex-1"
-        />
-        <Button
-          title="Konfirmasi Pesanan"
-          onPress={() => {
-            // Submit booking
-            router.push('/(tabs)');
-          }}
-          className="flex-1"
-        />
-      </View>
-    </ScrollView>
+        )}
+      </Card>
+    </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text className="flex-1 text-center text-lg font-semibold text-gray-900 mr-6">
-          Booking Pindahan
-        </Text>
-      </View>
+    <ScreenWrapper>
+      <Header
+        title="Booking Saya"
+        showBackButton={false}
+        rightElement={
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push('/booking/new')}
+          >
+            <Plus size={24} color={colors.primary[600]} />
+          </TouchableOpacity>
+        }
+      />
 
-      {renderStepIndicator()}
+      <FilterTabBar
+        tabs={FILTER_TABS}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
-      {step === 1 && renderStep1()}
-      {step === 2 && renderStep2()}
-      {step === 3 && renderStep3()}
-    </SafeAreaView>
+      {isLoading ? (
+        <>
+          <BookingCardSkeleton />
+          <BookingCardSkeleton />
+          <BookingCardSkeleton />
+        </>
+      ) : filteredBookings.length > 0 ? (
+        <FlatList
+          data={filteredBookings}
+          renderItem={renderBookingItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <EmptyState
+          icon={Calendar}
+          title="Belum ada booking"
+          description={
+            activeTab === 'all'
+              ? "Anda belum membuat booking. Mulai dengan membuat booking pertama."
+              : `Tidak ada booking ${activeTab === 'active' ? 'aktif' : activeTab === 'completed' ? 'yang selesai' : 'yang dibatalkan'}.`
+          }
+          action={{
+            label: 'Buat Booking',
+            onPress: () => router.push('/booking/new'),
+          }}
+        />
+      )}
+    </ScreenWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingBottom: 100,
+  },
+  bookingCard: {
+    marginBottom: 12,
+  },
+  bookingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bookingId: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  bookingInfo: {
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoText: {
+    ...typography.body2,
+    color: colors.gray[700],
+    flex: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[100],
+  },
+  cancelButton: {
+    flex: 0,
+  },
+});
