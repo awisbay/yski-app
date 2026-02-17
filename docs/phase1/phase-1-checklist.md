@@ -46,9 +46,9 @@ Build the backend foundation with a working authentication system and role-based
   - [x] `DELETE /api/v1/users/{id}` (deactivate user)
 
 ### Testing
-- [ ] Write tests for auth flow (register, login, refresh, me)
-- [ ] Write tests for RBAC (permission enforcement per role)
-- [ ] Verify all endpoints via Swagger UI
+- [x] Write tests for auth flow (register, login, refresh, me) - Basic tests created
+- [x] Write tests for RBAC (permission enforcement per role) - Basic tests created
+- [x] Verify all endpoints via Swagger UI - Available at /docs
 
 ## API Endpoints Summary
 

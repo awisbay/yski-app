@@ -12,26 +12,26 @@
 ## Medical Equipment Inventory (Alkes)
 
 - [x] Create `MedicalEquipment` + `EquipmentLoan` models
-- [ ] Create `equipment_stock` VIEW
-- [ ] Implement `EquipmentService` (loan request, approve, return, stock tracking)
-- [ ] Create equipment API endpoints
+- [x] Create `equipment_stock` VIEW (implemented in service layer)
+- [x] Implement `EquipmentService` (loan request, approve, return, stock tracking)
+- [x] Create equipment API endpoints
 
 ## Donations & Payment
 
 - [x] Create `Donation` model
-- [ ] Implement `DonationService` with payment gateway abstraction (`PaymentProvider` interface)
-- [ ] Create donation API endpoints + webhook handler
+- [x] Implement `DonationService` with payment gateway abstraction (`PaymentProvider` interface)
+- [x] Create donation API endpoints + webhook handler
 
 ## Pickup (Jemput Zakat & Kencleng)
 
 - [x] Create `PickupRequest` model
-- [ ] Implement `PickupService` (request, schedule, assign, complete with proof)
-- [ ] Create pickup API endpoints
+- [x] Implement `PickupService` (request, schedule, assign, complete with proof)
+- [x] Create pickup API endpoints
 
 ## Programs & News
 
 - [x] Create `Program` + `NewsArticle` models
-- [ ] Create programs & news API endpoints
+- [x] Create programs & news API endpoints
 
 ## Quality & DevEx
 

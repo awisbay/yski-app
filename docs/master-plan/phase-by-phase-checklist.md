@@ -427,8 +427,8 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 0 | ✅ Completed | 95% |
-| Phase 1 | 🔄 In Progress | 90% |
-| Phase 2 | 🔄 In Progress | 40% |
+| Phase 1 | ✅ Completed | 100% |
+| Phase 2 | ✅ Completed | 95% |
 | Phase 3 | ✅ Completed | 95% |
 | Phase 4 | 🔄 In Progress | 40% |
 | Phase 5 | 📋 Not Started | 0% |
