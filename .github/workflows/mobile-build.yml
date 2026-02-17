@@ -1,0 +1,99 @@
+name: Mobile Build (EAS)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Build platform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+
+jobs:
+  build-ios:
+    name: Build iOS (TestFlight)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'ios'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      
+      - name: Install dependencies
+        run: cd mobile && npm ci
+      
+      - name: Build iOS
+        run: cd mobile && eas build --platform ios --profile production --non-interactive --auto-submit
+
+  build-android:
+    name: Build Android (Internal Testing)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'android'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      
+      - name: Install dependencies
+        run: cd mobile && npm ci
+      
+      - name: Build Android
+        run: cd mobile && eas build --platform android --profile production --non-interactive --auto-submit
+
+  ota-update:
+    name: OTA Update (Expo Updates)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      
+      - name: Install dependencies
+        run: cd mobile && npm ci
+      
+      - name: Publish OTA Update
+        run: cd mobile && eas update --branch production --message "${{ github.event.head_commit.message }}"

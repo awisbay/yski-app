@@ -1,0 +1,222 @@
+name: PR Pipeline
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  # ==========================================
+  # Backend Jobs
+  # ==========================================
+  backend-lint:
+    name: Backend Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      
+      - name: Install linting tools
+        run: pip install ruff mypy
+      
+      - name: Run Ruff check
+        run: ruff check backend/
+      
+      - name: Run Ruff format check
+        run: ruff format --check backend/
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: clicky_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    
+    env:
+      DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/clicky_test
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET_KEY: test-secret-key-for-ci
+      APP_ENV: testing
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+      
+      - name: Run migrations
+        run: cd backend && alembic upgrade head
+      
+      - name: Run tests
+        run: cd backend && pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+
+  backend-security:
+    name: Backend Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install pip-audit
+        run: pip install pip-audit
+      
+      - name: Run pip-audit
+        run: pip-audit -r backend/requirements.txt --desc --format=markdown
+
+  # ==========================================
+  # Mobile Jobs
+  # ==========================================
+  mobile-lint:
+    name: Mobile Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      
+      - name: Install dependencies
+        run: cd mobile && npm ci
+      
+      - name: Run ESLint
+        run: cd mobile && npx eslint . --ext .ts,.tsx
+      
+      - name: Run TypeScript check
+        run: cd mobile && npx tsc --noEmit
+
+  mobile-test:
+    name: Mobile Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      
+      - name: Install dependencies
+        run: cd mobile && npm ci
+      
+      - name: Run tests
+        run: cd mobile && npm test -- --coverage --ci --passWithNoTests
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: mobile/coverage/lcov.info
+          flags: mobile
+          name: mobile-coverage
+
+  mobile-security:
+    name: Mobile Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      
+      - name: Install dependencies
+        run: cd mobile && npm ci
+      
+      - name: Run npm audit
+        run: cd mobile && npm audit --audit-level=high
+
+  # ==========================================
+  # Docker Build Check
+  # ==========================================
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==========================================
+  # WordPress Plugin Check
+  # ==========================================
+  wp-plugin-check:
+    name: WordPress Plugin Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      
+      - name: Download plugin check
+        run: |
+          wget -O plugin-check.zip https://github.com/WordPress/plugin-check/archive/refs/heads/trunk.zip
+          unzip plugin-check.zip
+      
+      - name: Run plugin check
+        run: |
+          cd plugin-check-trunk
+          composer install
+          php bin/plugin-check check ../wp-plugin/clicky-foundation --exclude-directories=vendor,node_modules

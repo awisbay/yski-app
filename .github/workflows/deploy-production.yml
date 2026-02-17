@@ -1,0 +1,81 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image tag to deploy'
+        required: true
+        default: 'latest'
+      run_migrations:
+        description: 'Run database migrations'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production  # Requires manual approval
+    
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/clicky-foundation
+            
+            # Backup database before deploy
+            echo "Creating database backup..."
+            docker compose exec -T postgres pg_dump -U clicky clicky_db > backup_$(date +%Y%m%d_%H%M%S).sql
+            
+            # Pull new images
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            
+            # Run migrations if requested
+            if [ "${{ inputs.run_migrations }}" = "true" ]; then
+              echo "Running database migrations..."
+              docker compose run --rm fastapi alembic upgrade head
+            fi
+            
+            # Deploy with zero downtime
+            docker compose up -d --remove-orphans
+            
+            # Cleanup
+            docker system prune -f
+            
+            # Health check
+            sleep 10
+            curl -f http://localhost:8000/health || exit 1
+            
+            echo "Deployment successful: ${{ inputs.version }}"
+
+  verify:
+    name: Post-Deploy Verification
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Verify all services
+        run: |
+          # API health
+          curl -f ${{ secrets.PROD_URL }}/health
+          
+          # Database connectivity
+          curl -f ${{ secrets.PROD_URL }}/health/db
+          
+          # Redis connectivity
+          curl -f ${{ secrets.PROD_URL }}/health/redis
+          
+          # MinIO connectivity
+          curl -f ${{ secrets.PROD_URL }}/health/minio
+          
+          echo "All health checks passed!"
