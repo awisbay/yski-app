@@ -19,20 +19,20 @@
 
 - [x] Setup Expo Router file-based navigation structure (app/ directory)
 - [x] Create `(auth)` layout group with `_layout.tsx` (Stack navigator)
-  - [x] `login.tsx` - Login screen
-  - [x] `register.tsx` - Register screen
+  - [x] `login.tsx` - Login screen (basic UI)
+  - [x] `register.tsx` - Register screen (basic UI)
 - [x] Create `(tabs)` layout for sahabat role with `_layout.tsx` (Tab navigator)
-  - [ ] Beranda tab (home icon)
-  - [ ] Kegiatan tab (event_available icon)
-  - [ ] Riwayat tab (history icon)
-  - [ ] Profil tab (account_circle icon)
+  - [x] Beranda tab (home icon)
+  - [x] Kegiatan tab (event_available icon)
+  - [x] Riwayat tab (history icon)
+  - [x] Profil tab (account_circle icon)
 - [ ] Create `(admin)` layout for admin/pengurus role with `_layout.tsx` (Tab navigator)
   - [ ] Dashboard tab (dashboard icon)
   - [ ] Inventory tab (inventory_2 icon)
   - [ ] Laporan tab (bar_chart icon)
   - [ ] Profil tab (person icon)
 - [ ] Implement role-based tab switching (sahabat -> (tabs), admin/pengurus -> (admin))
-- [ ] Setup root `_layout.tsx` with auth guard (redirect to login if not authenticated)
+- [x] Setup root `_layout.tsx` with auth guard (redirect to login if not authenticated)
 
 ## Design System & UI Components
 
@@ -52,21 +52,21 @@
 - [ ] Implement request interceptor (attach JWT access token to Authorization header)
 - [ ] Implement response interceptor (auto-refresh on 401, retry original request)
 - [ ] Setup error handling (network errors, 403 forbidden, 500 server error)
-- [ ] Configure environment-based API URL (app.json extra field)
+- [x] Configure environment-based API URL (app.json extra field)
 
 ## Authentication Flow
 
-- [ ] Implement login screen (phone/email + password, form validation)
-- [ ] Implement register screen (name, phone, email, password, confirm password)
+- [x] Implement login screen (phone/email + password, form validation)
+- [x] Implement register screen (name, phone, email, password, confirm password)
 - [ ] Integrate login API call (`POST /api/v1/auth/login`)
 - [ ] Integrate register API call (`POST /api/v1/auth/register`)
 - [ ] Token storage using `expo-secure-store` (access_token, refresh_token)
 - [ ] Implement auto-refresh token logic (refresh before expiry or on 401)
-- [ ] Implement logout (clear tokens, redirect to login)
+- [x] Implement logout (clear tokens, redirect to login)
 
 ## State Management
 
-- [ ] Setup Zustand `authStore` (user, tokens, isAuthenticated, login/logout actions)
+- [x] Setup Zustand `authStore` (user, tokens, isAuthenticated, login/logout actions)
 - [ ] Setup Zustand `bookingStore` (bookings list, current booking, loading state)
 - [ ] Setup Zustand `notificationStore` (notifications list, unread count)
 - [ ] Create `useAuth` hook (wraps authStore with token management helpers)

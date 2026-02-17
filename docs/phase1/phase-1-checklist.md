@@ -19,14 +19,14 @@ Build the backend foundation with a working authentication system and role-based
 ### Authentication
 - [x] Implement password hashing (bcrypt via passlib)
 - [x] Implement JWT token generation (access + refresh tokens)
-- [ ] Create auth endpoints:
+- [x] Create auth endpoints:
   - [x] `POST /api/v1/auth/register`
   - [x] `POST /api/v1/auth/login`
   - [x] `POST /api/v1/auth/refresh`
   - [x] `GET /api/v1/auth/me`
 
 ### Schemas & Validation
-- [ ] Create user schemas (Pydantic):
+- [x] Create user schemas (Pydantic):
   - [x] `UserCreate`
   - [x] `UserResponse`
   - [x] `UserLogin`
@@ -38,7 +38,7 @@ Build the backend foundation with a working authentication system and role-based
 - [x] Create `deps.py`: `get_db`, `get_current_user`, `require_role()`
 
 ### User Management
-- [ ] Implement user CRUD endpoints (admin only):
+- [x] Implement user CRUD endpoints (admin only):
   - [x] `GET /api/v1/users` (list users, paginated)
   - [x] `GET /api/v1/users/{id}` (get user detail)
   - [x] `POST /api/v1/users` (create user with specific role)
