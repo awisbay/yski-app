@@ -8,8 +8,8 @@
 
 ## Project Initialization
 
-- [ ] Initialize Expo project (SDK 52, TypeScript template)
-- [ ] Install and configure NativeWind v4 + tailwind.config.js
+- [x] Initialize Expo project (SDK 52, TypeScript template)
+- [x] Install and configure NativeWind v4 + tailwind.config.js
 - [ ] Setup custom fonts (Public Sans family: 400, 500, 600, 700)
 - [ ] Configure design tokens (colors, spacing, typography) in constants/
 - [ ] Verify project builds and runs on iOS simulator
@@ -17,11 +17,11 @@
 
 ## Navigation & Routing
 
-- [ ] Setup Expo Router file-based navigation structure (app/ directory)
-- [ ] Create `(auth)` layout group with `_layout.tsx` (Stack navigator)
-  - [ ] `login.tsx` - Login screen
-  - [ ] `register.tsx` - Register screen
-- [ ] Create `(tabs)` layout for sahabat role with `_layout.tsx` (Tab navigator)
+- [x] Setup Expo Router file-based navigation structure (app/ directory)
+- [x] Create `(auth)` layout group with `_layout.tsx` (Stack navigator)
+  - [x] `login.tsx` - Login screen
+  - [x] `register.tsx` - Register screen
+- [x] Create `(tabs)` layout for sahabat role with `_layout.tsx` (Tab navigator)
   - [ ] Beranda tab (home icon)
   - [ ] Kegiatan tab (event_available icon)
   - [ ] Riwayat tab (history icon)
@@ -36,10 +36,10 @@
 
 ## Design System & UI Components
 
-- [ ] Build reusable `Button` component (primary, secondary, outline, ghost variants; sm, md, lg sizes)
-- [ ] Build reusable `Card` component (with image, title, description, actions)
-- [ ] Build reusable `Input` component (text, tel, email, password; with icon prefix, validation error)
-- [ ] Build reusable `Badge` component (status colors: success, warning, error, info)
+- [x] Build reusable `Button` component (primary, secondary, outline, ghost variants; sm, md, lg sizes)
+- [x] Build reusable `Card` component (with image, title, description, actions)
+- [x] Build reusable `Input` component (text, tel, email, password; with icon prefix, validation error)
+- [x] Build reusable `Badge` component (status colors: success, warning, error, info)
 - [ ] Build reusable `BottomSheet` component (modal overlay, draggable)
 - [ ] Build `Header` component (back button, title, right action)
 - [ ] Build `ProgressBar` component (step indicator for multi-step flows)
@@ -48,7 +48,7 @@
 
 ## API Client & Networking
 
-- [ ] Setup API client (axios instance with baseURL from config)
+- [x] Setup API client (axios instance with baseURL from config)
 - [ ] Implement request interceptor (attach JWT access token to Authorization header)
 - [ ] Implement response interceptor (auto-refresh on 401, retry original request)
 - [ ] Setup error handling (network errors, 403 forbidden, 500 server error)

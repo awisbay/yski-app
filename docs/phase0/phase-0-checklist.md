@@ -7,21 +7,21 @@ Initialize the monorepo structure, configure all infrastructure services, and es
 ## Checklist
 
 ### Repository & Monorepo Structure
-- [ ] Initialize git repo & monorepo structure
-- [ ] Setup `backend/` with FastAPI project skeleton (`app/`, `tests/`, `alembic/`)
-- [ ] Setup `mobile/` with Expo (SDK 52) project skeleton
-- [ ] Setup `wp-plugin/` directory structure
-- [ ] Create `docs/` structure
+- [x] Initialize git repo & monorepo structure
+- [x] Setup `backend/` with FastAPI project skeleton (`app/`, `tests/`, `alembic/`)
+- [x] Setup `mobile/` with Expo (SDK 52) project skeleton
+- [x] Setup `wp-plugin/` directory structure
+- [x] Create `docs/` structure
 
 ### Infrastructure & Docker
-- [ ] Create `docker-compose.yml` (nginx, fastapi, postgres:16, redis, minio)
-- [ ] Create Dockerfiles (backend, nginx)
-- [ ] Setup `.env.example` with all required env vars
+- [x] Create `docker-compose.yml` (nginx, fastapi, postgres:16, redis, minio)
+- [x] Create Dockerfiles (backend, nginx)
+- [x] Setup `.env.example` with all required env vars
 - [ ] Verify `docker-compose up` runs successfully
 
 ### CI/CD & Conventions
-- [ ] Setup GitHub Actions CI skeleton
-- [ ] Create `CLAUDE.md` with project conventions
+- [x] Setup GitHub Actions CI skeleton
+- [x] Create `CLAUDE.md` with project conventions
 
 ## Directory Structure (Target)
 

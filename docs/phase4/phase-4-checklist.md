@@ -12,12 +12,12 @@
 
 ## Screen 1: Home / Beranda
 
-- [ ] Implement `ImpactDashboard` component (Total Dampak section)
-  - [ ] Display "Donasi Rp500jt+" stat card with donation icon
-  - [ ] Display "Aksi Sosial 1.2k+" stat card with handshake icon
+- [x] Implement `ImpactDashboard` component (Total Dampak section)
+  - [x] Display "Donasi Rp500jt+" stat card with donation icon
+  - [x] Display "Aksi Sosial 1.2k+" stat card with handshake icon
   - [ ] Fetch impact stats from `GET /donations/summary` and `GET /bookings/stats`
   - [ ] Animate counter numbers on load (optional: `react-native-reanimated`)
-- [ ] Implement `QuickAccessMenu` component (4 quick action buttons)
+- [x] Implement `QuickAccessMenu` component (4 quick action buttons)
   - [ ] "Pindah Gratis" button -> navigates to `/booking/pindahan`
   - [ ] "Alat Medis" button -> navigates to `/alkes`
   - [ ] "Zakat & Donasi" button -> navigates to `/donasi/nominal`
@@ -36,16 +36,16 @@
 
 ## Screen 2: Booking Pindahan
 
-- [ ] Implement `StatusStepper` component
+- [x] Implement `StatusStepper` component
   - [ ] 3-step visual stepper: Menunggu -> Disetujui -> Proses
   - [ ] Active/completed/pending state styling per step
   - [ ] Step label: "Langkah 1/3"
-- [ ] Implement `CalendarPicker` component
+- [x] Implement `CalendarPicker` component
   - [ ] Calendar grid showing current month with navigation arrows
   - [ ] Disable past dates and fully-booked dates
   - [ ] Fetch availability from `GET /bookings/slots?date=YYYY-MM-DD`
   - [ ] Highlight selected date with primary color
-- [ ] Implement `TimeSlotPicker` component
+- [x] Implement `TimeSlotPicker` component
   - [ ] Display 4 time slots: 08:00, 10:00, 13:00, 15:00
   - [ ] Disable booked slots, highlight selected slot
   - [ ] Pill/chip style for each slot
@@ -68,10 +68,10 @@
 
 ## Screen 3: Donasi Step 1 - Pilih Nominal
 
-- [ ] Implement step indicator (Langkah 1 dari 3) with progress bar
+- [x] Implement step indicator (Langkah 1 dari 3) with progress bar
 - [ ] Implement donation type header ("Pilih Nominal Infaq")
-- [ ] Implement `AmountSelector` component
-  - [ ] 3 preset amounts with labels:
+- [x] Implement `AmountSelector` component
+  - [x] 3 preset amounts with labels:
     - [ ] Rp 50.000 - "Nominal Minimal"
     - [ ] Rp 100.000 - "Sering Dipilih"
     - [ ] Rp 500.000 - "Sangat Berarti"
@@ -108,11 +108,11 @@
 
 ## Screen 5: Donasi Step 3 - Sukses
 
-- [ ] Implement success animation
-  - [ ] Large green checkmark icon with scale animation
+- [x] Implement success animation
+  - [x] Large green checkmark icon
   - [ ] "Terima Kasih!" heading
   - [ ] Gratitude message text
-- [ ] Implement "Ringkasan Transaksi" card
+- [x] Implement "Ringkasan Transaksi" card
   - [ ] ID Donasi (e.g., #CKY-12345678)
   - [ ] Tanggal (formatted: "24 Mei 2024, 14:20")
   - [ ] Metode (e.g., "Transfer Bank / E-Wallet")
@@ -127,19 +127,19 @@
 
 ## Screen 6: Form Penjemputan Donasi
 
-- [ ] Implement donation type toggle
+- [x] Implement donation type toggle
   - [ ] Segment control: Zakat | Kencleng/Infaq
   - [ ] Pill style with active state
-- [ ] Implement "Informasi Donatur" section
+- [x] Implement "Informasi Donatur" section
   - [ ] "Nama Lengkap" input with person icon
   - [ ] "Nomor Telepon (WhatsApp)" input with phone icon, tel keyboard
   - [ ] Pre-fill from `authStore.user` if logged in
-- [ ] Implement "Lokasi Penjemputan" section
+- [x] Implement "Lokasi Penjemputan" section
   - [ ] MapView preview showing selected location
   - [ ] Address text below map
   - [ ] "Pilih dari Peta" button -> opens LocationMapPicker
   - [ ] Auto-detect current location on mount
-- [ ] Implement "Jadwal Penjemputan" section (Optional)
+- [x] Implement "Jadwal Penjemputan" section (Optional)
   - [ ] "Pilih Tanggal" date picker with calendar icon
   - [ ] "Slot Waktu" time slot chips: 09:00-12:00, 13:00-15:00, 16:00-18:00
 - [ ] Implement info banner: "Layanan penjemputan resmi dari Clicky Foundation. Aman dan Terpercaya."
@@ -155,23 +155,23 @@
 
 ## Screen 7: Inventory Alat Medis
 
-- [ ] Implement dashboard stats row (4 cards)
+- [x] Implement dashboard stats row (4 cards)
   - [ ] "Total Alat" card with count
   - [ ] "Dipinjam" card with count
   - [ ] "Permintaan" card with count
   - [ ] "Tersedia" card with count
   - [ ] Fetch from `GET /equipment` with aggregation
-- [ ] Implement "Ketersediaan Alat" section with "Lihat Semua" link
+- [x] Implement "Ketersediaan Alat" section with "Lihat Semua" link
 - [ ] Implement equipment cards list
   - [ ] Card with equipment photo, name
   - [ ] Availability badges: "Tersedia: X" (green), "Dipinjam: Y" (blue)
   - [ ] Equipment types: Kursi Roda, Tabung Oksigen, Tempat Tidur Pasien
   - [ ] Tap card -> navigate to `/alkes/[id]` for detail + loan request
-- [ ] Implement "Peminjaman Aktif" table (Pengurus/Admin view)
+- [x] Implement "Peminjaman Aktif" table (Pengurus/Admin view)
   - [ ] Columns: Peminjam, Item, Tgl. Kembali
   - [ ] Show borrower avatar, name, equipment name, return date
   - [ ] Fetch from `GET /equipment/loans?status=active`
-- [ ] Implement "Permintaan Baru" action banner
+- [x] Implement "Permintaan Baru" action banner
   - [ ] "Ada 3 Permintaan Baru" notification banner
   - [ ] "Setujui Permintaan" button
   - [ ] "Segera verifikasi permintaan peminjaman yang masuk"
@@ -180,11 +180,11 @@
 
 ## Screen 8: Berita & Dampak
 
-- [ ] Implement tab filter bar
-  - [ ] Filter tabs: Semua, Kesehatan, Bencana, Pendidikan
+- [x] Implement tab filter bar
+  - [x] Filter tabs: Semua, Kesehatan, Bencana, Pendidikan
   - [ ] Horizontal scrollable with active indicator
   - [ ] Filter maps to `GET /news?category={category}`
-- [ ] Implement news card list
+- [x] Implement news card list
   - [ ] Card with cover image (aspect-video ratio)
   - [ ] Title, description snippet (2-3 lines)
   - [ ] "Baca Selengkapnya" button
