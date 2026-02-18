@@ -41,11 +41,11 @@ export default function NewPickupScreen() {
     resolver: zodResolver(pickupSchema),
     defaultValues: {
       pickupType: 'zakat',
-      requesterName: user?.fullName || '',
+      requesterName: user?.full_name || '',
       requesterPhone: user?.phone || '',
       pickupAddress: '',
-      preferredDate: null,
-      preferredTimeSlot: null,
+      preferredDate: undefined,
+      preferredTimeSlot: undefined,
       notes: '',
     },
   });
@@ -291,7 +291,7 @@ export default function NewPickupScreen() {
                 <Input
                   label="Catatan (Opsional)"
                   placeholder="Tambahkan catatan khusus..."
-                  value={value}
+                  value={value || ''}
                   onChangeText={onChange}
                   multiline
                   numberOfLines={3}
@@ -312,7 +312,7 @@ export default function NewPickupScreen() {
         <View style={styles.buttonContainer}>
           <Button
             title={step === 3 ? 'Konfirmasi' : 'Lanjut'}
-            onPress={handleSubmit(onSubmit)}
+            onPress={handleSubmit(onSubmit as any)}
             isLoading={createMutation.isPending}
             rightIcon={step < 3 ? <ChevronRight size={20} color={colors.white} /> : undefined}
           />

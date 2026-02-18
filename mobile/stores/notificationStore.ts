@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForPushNotificationsAsync } from '@/services/notifications';
 
 export interface Notification {
   id: string;
@@ -77,7 +78,6 @@ export const useNotificationStore = create<NotificationState>()(
       initialize: async () => {
         // Initialize push notifications
         try {
-          const { registerForPushNotificationsAsync } = await import('@/services/notifications');
           const token = await registerForPushNotificationsAsync();
           if (token) {
             set({ pushToken: token });

@@ -14,7 +14,7 @@ export const donationKeys = {
 export function useMyDonations() {
   return useQuery({
     queryKey: donationKeys.lists(),
-    queryFn: () => donationsApi.getMyDonations(),
+    queryFn: () => donationsApi.getMyDonations().then(res => res.data),
   });
 }
 
@@ -22,7 +22,7 @@ export function useMyDonations() {
 export function useDonationDetail(id: string) {
   return useQuery({
     queryKey: donationKeys.detail(id),
-    queryFn: () => donationsApi.getDetail(id),
+    queryFn: () => donationsApi.getDetail(id).then(res => res.data),
     enabled: !!id,
   });
 }
@@ -31,7 +31,7 @@ export function useDonationDetail(id: string) {
 export function useDonationSummary() {
   return useQuery({
     queryKey: donationKeys.summary(),
-    queryFn: () => donationsApi.getSummary(),
+    queryFn: () => donationsApi.getSummary().then(res => res.data),
   });
 }
 

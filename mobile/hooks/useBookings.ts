@@ -16,7 +16,7 @@ export const bookingKeys = {
 export function useBookingSlots(date: string) {
   return useQuery({
     queryKey: bookingKeys.slots(date),
-    queryFn: () => bookingsApi.getSlots(date),
+    queryFn: () => bookingsApi.getSlots(date).then(res => res.data),
     enabled: !!date,
   });
 }
@@ -25,7 +25,7 @@ export function useBookingSlots(date: string) {
 export function useMyBookings() {
   return useQuery({
     queryKey: bookingKeys.lists(),
-    queryFn: () => bookingsApi.getMyBookings(),
+    queryFn: () => bookingsApi.getMyBookings().then(res => res.data),
   });
 }
 
@@ -33,7 +33,7 @@ export function useMyBookings() {
 export function useBookingDetail(id: string) {
   return useQuery({
     queryKey: bookingKeys.detail(id),
-    queryFn: () => bookingsApi.getBooking(id),
+    queryFn: () => bookingsApi.getBooking(id).then(res => res.data),
     enabled: !!id,
   });
 }

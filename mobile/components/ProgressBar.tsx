@@ -1,14 +1,49 @@
-import { View, Text } from 'react-native';
+import { View, Text, ViewStyle } from 'react-native';
+import { colors } from '@/constants/colors';
 
-interface ProgressBarProps {
+interface StepProgressBarProps {
   steps: string[];
   currentStep: number;
   showLabels?: boolean;
+  progress?: never;
+  style?: ViewStyle;
 }
 
-export function ProgressBar({ steps, currentStep, showLabels = true }: ProgressBarProps) {
+interface SimpleProgressBarProps {
+  progress: number;
+  steps?: never;
+  currentStep?: never;
+  showLabels?: never;
+  style?: ViewStyle;
+}
+
+export type ProgressBarProps = StepProgressBarProps | SimpleProgressBarProps;
+
+export function ProgressBar(props: ProgressBarProps) {
+  // Simple progress bar mode (0-1 value)
+  if (typeof props.progress === 'number') {
+    const percent = Math.min(Math.max(props.progress, 0), 1) * 100;
+    return (
+      <View
+        style={[{ height: 8, backgroundColor: colors.gray[200], borderRadius: 4, overflow: 'hidden' }, props.style]}
+      >
+        <View
+          style={{
+            height: '100%',
+            width: `${percent}%`,
+            backgroundColor: colors.primary[500],
+            borderRadius: 4,
+          }}
+        />
+      </View>
+    );
+  }
+
+  // Step progress bar mode
+  const { steps, currentStep, showLabels = true, style } = props;
+
   return (
-    <View className="px-6 py-4">
+    <View className="px-6 py-4" style={style}>
       {/* Step Indicators */}
       <View className="flex-row items-center">
         {steps.map((step, index) => (
@@ -24,7 +59,7 @@ export function ProgressBar({ steps, currentStep, showLabels = true }: ProgressB
               }`}
             >
               {index < currentStep ? (
-                <Text className="text-white font-bold">✓</Text>
+                <Text className="text-white font-bold">&#10003;</Text>
               ) : (
                 <Text
                   className={`font-semibold ${

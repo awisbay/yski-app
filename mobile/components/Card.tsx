@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 interface CardProps {
@@ -9,6 +9,7 @@ interface CardProps {
   actionLabel?: string;
   children?: React.ReactNode;
   className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Card({
@@ -19,6 +20,7 @@ export function Card({
   actionLabel,
   children,
   className = '',
+  style,
 }: CardProps) {
   const CardContent = (
     <View
@@ -26,6 +28,7 @@ export function Card({
         bg-white rounded-2xl shadow-sm overflow-hidden
         ${className}
       `}
+      style={style}
     >
       {imageUrl && (
         <View className="h-40 bg-gray-200" />

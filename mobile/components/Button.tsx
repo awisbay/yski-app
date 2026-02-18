@@ -1,5 +1,8 @@
-import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, Text, ActivityIndicator, View, ViewStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+
+type IconProp = keyof typeof MaterialIcons.glyphMap | React.ReactNode;
 
 interface ButtonProps {
   title: string;
@@ -9,10 +12,25 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   isLoading?: boolean;
-  icon?: keyof typeof MaterialIcons.glyphMap;
-  leftIcon?: keyof typeof MaterialIcons.glyphMap;
-  rightIcon?: keyof typeof MaterialIcons.glyphMap;
+  icon?: IconProp;
+  leftIcon?: IconProp;
+  rightIcon?: IconProp;
   className?: string;
+  style?: ViewStyle;
+}
+
+function renderIcon(icon: IconProp, size: number, color: string, style?: object) {
+  if (typeof icon === 'string') {
+    return (
+      <MaterialIcons
+        name={icon as keyof typeof MaterialIcons.glyphMap}
+        size={size}
+        color={color}
+        style={style}
+      />
+    );
+  }
+  return <View style={style}>{icon}</View>;
 }
 
 export function Button({
@@ -27,30 +45,31 @@ export function Button({
   leftIcon,
   rightIcon,
   className = '',
+  style,
 }: ButtonProps) {
   const isLoadingResolved = isLoading ?? loading;
   const baseStyles = 'flex-row items-center justify-center rounded-xl';
-  
+
   const variantStyles = {
     primary: 'bg-primary-500',
     secondary: 'bg-secondary-500',
     outline: 'bg-transparent border-2 border-primary-500',
     ghost: 'bg-transparent',
   };
-  
+
   const sizeStyles = {
     sm: 'px-4 py-2',
     md: 'px-6 py-3',
     lg: 'px-8 py-4',
   };
-  
+
   const textStyles = {
     primary: 'text-white',
     secondary: 'text-white',
     outline: 'text-primary-500',
     ghost: 'text-primary-500',
   };
-  
+
   const textSizes = {
     sm: 'text-sm',
     md: 'text-base',
@@ -73,19 +92,13 @@ export function Button({
         ${isDisabled ? 'opacity-50' : ''}
         ${className}
       `}
+      style={style}
     >
       {isLoadingResolved ? (
         <ActivityIndicator color={iconColor} />
       ) : (
         <>
-          {resolvedLeftIcon && (
-            <MaterialIcons
-              name={resolvedLeftIcon}
-              size={iconSize}
-              color={iconColor}
-              style={{ marginRight: 8 }}
-            />
-          )}
+          {resolvedLeftIcon && renderIcon(resolvedLeftIcon, iconSize, iconColor, { marginRight: 8 })}
           <Text
             className={`
               font-semibold
@@ -95,14 +108,7 @@ export function Button({
           >
             {title}
           </Text>
-          {rightIcon && (
-            <MaterialIcons
-              name={rightIcon}
-              size={iconSize}
-              color={iconColor}
-              style={{ marginLeft: 8 }}
-            />
-          )}
+          {rightIcon && renderIcon(rightIcon, iconSize, iconColor, { marginLeft: 8 })}
         </>
       )}
     </TouchableOpacity>

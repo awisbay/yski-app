@@ -2,11 +2,12 @@
 export interface User {
   id: string;
   email: string;
-  fullName: string;
+  full_name: string;
   phone?: string;
-  role: 'user' | 'admin' | 'superadmin';
-  isActive: boolean;
-  createdAt: string;
+  role: string;
+  avatar_url?: string;
+  is_active?: boolean;
+  created_at?: string;
 }
 
 // Booking types

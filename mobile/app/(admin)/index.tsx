@@ -52,7 +52,7 @@ export default function AdminDashboard() {
             <Users size={32} color={colors.white} />
           </View>
           <View style={styles.adminText}>
-            <Text style={styles.adminName}>{user?.fullName}</Text>
+            <Text style={styles.adminName}>{user?.full_name}</Text>
             <Text style={styles.adminEmail}>{user?.email}</Text>
             <Badge 
               label={user?.role?.toUpperCase() || 'ADMIN'} 

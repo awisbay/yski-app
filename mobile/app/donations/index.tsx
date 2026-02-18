@@ -30,7 +30,7 @@ export default function DonationsScreen() {
   const { data: donations, isLoading } = useMyDonations();
   const { data: summary } = useDonationSummary();
 
-  const filteredDonations = donations?.filter((donation) => {
+  const filteredDonations = donations?.filter((donation: any) => {
     switch (activeTab) {
       case 'pending':
         return donation.status === 'pending';

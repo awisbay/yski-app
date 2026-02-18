@@ -36,7 +36,7 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       await register({
-        fullName: data.fullName,
+        full_name: data.fullName,
         email: data.email,
         phone: data.phone,
         password: data.password,

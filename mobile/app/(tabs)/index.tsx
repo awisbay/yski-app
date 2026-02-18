@@ -53,7 +53,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const activeBookings = bookings?.filter(b => b.status === 'confirmed' || b.status === 'pending') || [];
+  const activeBookings = bookings?.filter((b: any) => b.status === 'confirmed' || b.status === 'pending') || [];
   const nextBooking = activeBookings[0];
 
   const formatCurrency = (amount: number) => {
@@ -214,7 +214,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.programsScroll}
         >
-          {programs.map((program) => (
+          {programs.map((program: any) => (
             <TouchableOpacity
               key={program.id}
               style={styles.programCard}
@@ -270,7 +270,7 @@ export default function HomeScreen() {
           <Skeleton height={80} borderRadius={12} />
         </>
       ) : news?.length > 0 ? (
-        news.map((item) => (
+        news.map((item: any) => (
           <TouchableOpacity
             key={item.id}
             style={styles.newsItem}

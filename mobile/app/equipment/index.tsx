@@ -25,7 +25,7 @@ export default function EquipmentScreen() {
   const { data: stats } = useEquipmentStats();
   const { data: myLoans } = useMyLoans();
 
-  const filteredEquipment = equipment?.filter((item) => {
+  const filteredEquipment = equipment?.filter((item: any) => {
     if (activeCategory === 'all') return true;
     return item.category === activeCategory;
   }) || [];
@@ -101,7 +101,7 @@ export default function EquipmentScreen() {
       {myLoans && myLoans.length > 0 && (
         <>
           <SectionHeader title="Peminjaman Saya" />
-          {myLoans.slice(0, 2).map((loan) => (
+          {myLoans.slice(0, 2).map((loan: any) => (
             <Card key={loan.id} style={styles.loanCard}>
               <View style={styles.loanHeader}>
                 <Text style={styles.loanEquipment}>{loan.equipmentName}</Text>

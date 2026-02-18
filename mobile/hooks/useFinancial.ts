@@ -13,7 +13,7 @@ export const financialKeys = {
 export function useFinancialDashboard() {
   return useQuery({
     queryKey: financialKeys.dashboard(),
-    queryFn: () => financialApi.getDashboard(),
+    queryFn: () => financialApi.getDashboard().then(res => res.data),
   });
 }
 
@@ -21,7 +21,7 @@ export function useFinancialDashboard() {
 export function useFinancialReports(params?: { skip?: number; limit?: number }) {
   return useQuery({
     queryKey: financialKeys.reports(),
-    queryFn: () => financialApi.getReports(params),
+    queryFn: () => financialApi.getReports(params).then(res => res.data),
   });
 }
 
@@ -29,7 +29,7 @@ export function useFinancialReports(params?: { skip?: number; limit?: number }) 
 export function useFinancialReport(id: string) {
   return useQuery({
     queryKey: financialKeys.report(id),
-    queryFn: () => financialApi.getReport(id),
+    queryFn: () => financialApi.getReport(id).then(res => res.data),
     enabled: !!id,
   });
 }

@@ -63,11 +63,13 @@ export default function FinancialScreen() {
 
   const preparePieData = (data: any[]) => {
     if (!data || data.length === 0) return null;
-    return {
-      labels: data.map(d => formatCategoryName(d.category)),
-      data: data.map(d => d.percentage / 100),
-      colors: CATEGORY_COLORS.slice(0, data.length),
-    };
+    return data.map((d, i) => ({
+      name: formatCategoryName(d.category),
+      population: d.percentage,
+      color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+      legendFontColor: colors.gray[600],
+      legendFontSize: 12,
+    }));
   };
 
   const incomePieData = preparePieData(dashboard?.incomeByCategory);
@@ -173,7 +175,7 @@ export default function FinancialScreen() {
                 width={300}
                 height={180}
                 chartConfig={chartConfig}
-                accessor="data"
+                accessor="population"
                 backgroundColor="transparent"
                 paddingLeft="15"
                 absolute
@@ -201,7 +203,7 @@ export default function FinancialScreen() {
                 width={300}
                 height={180}
                 chartConfig={chartConfig}
-                accessor="data"
+                accessor="population"
                 backgroundColor="transparent"
                 paddingLeft="15"
                 absolute

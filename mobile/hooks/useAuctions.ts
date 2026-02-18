@@ -14,7 +14,7 @@ export const auctionKeys = {
 export function useAuctions(filters?: { search?: string; skip?: number; limit?: number }) {
   return useQuery({
     queryKey: auctionKeys.list(filters || {}),
-    queryFn: () => auctionsApi.getList(filters),
+    queryFn: () => auctionsApi.getList(filters).then(res => res.data),
   });
 }
 
@@ -22,7 +22,7 @@ export function useAuctions(filters?: { search?: string; skip?: number; limit?: 
 export function useMyBids() {
   return useQuery({
     queryKey: auctionKeys.myBids(),
-    queryFn: () => auctionsApi.getMyBids(),
+    queryFn: () => auctionsApi.getMyBids().then(res => res.data),
   });
 }
 
@@ -30,7 +30,7 @@ export function useMyBids() {
 export function useAuctionDetail(id: string) {
   return useQuery({
     queryKey: auctionKeys.detail(id),
-    queryFn: () => auctionsApi.getDetail(id),
+    queryFn: () => auctionsApi.getDetail(id).then(res => res.data),
     enabled: !!id,
   });
 }

@@ -11,10 +11,10 @@ export const programKeys = {
 };
 
 // Hook to get programs list
-export function usePrograms(filters?: { limit?: number; sort?: string }) {
+export function usePrograms(filters?: { limit?: number; sort?: string; category?: string }) {
   return useQuery({
     queryKey: programKeys.list(filters || {}),
-    queryFn: () => programsApi.getList(filters),
+    queryFn: () => programsApi.getList(filters).then(res => res.data),
   });
 }
 
@@ -22,7 +22,7 @@ export function usePrograms(filters?: { limit?: number; sort?: string }) {
 export function useFeaturedPrograms(limit?: number) {
   return useQuery({
     queryKey: programKeys.featured(),
-    queryFn: () => programsApi.getList({ limit: limit || 5, sort: 'created_at:desc' }),
+    queryFn: () => programsApi.getList({ limit: limit || 5, sort: 'created_at:desc' }).then(res => res.data),
   });
 }
 
@@ -30,7 +30,7 @@ export function useFeaturedPrograms(limit?: number) {
 export function useProgramDetail(id: string) {
   return useQuery({
     queryKey: programKeys.detail(id),
-    queryFn: () => programsApi.getDetail(id),
+    queryFn: () => programsApi.getDetail(id).then(res => res.data),
     enabled: !!id,
   });
 }

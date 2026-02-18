@@ -15,7 +15,7 @@ export const equipmentKeys = {
 export function useEquipmentList(filters?: { category?: string; available_only?: boolean }) {
   return useQuery({
     queryKey: equipmentKeys.list(filters || {}),
-    queryFn: () => equipmentApi.getList(),
+    queryFn: () => equipmentApi.getList().then(res => res.data),
   });
 }
 
@@ -23,7 +23,7 @@ export function useEquipmentList(filters?: { category?: string; available_only?:
 export function useEquipmentStats() {
   return useQuery({
     queryKey: equipmentKeys.stats(),
-    queryFn: () => equipmentApi.getStats(),
+    queryFn: () => equipmentApi.getStats().then(res => res.data),
   });
 }
 
@@ -31,7 +31,7 @@ export function useEquipmentStats() {
 export function useEquipmentDetail(id: string) {
   return useQuery({
     queryKey: equipmentKeys.detail(id),
-    queryFn: () => equipmentApi.getDetail(id),
+    queryFn: () => equipmentApi.getDetail(id).then(res => res.data),
     enabled: !!id,
   });
 }
@@ -40,7 +40,7 @@ export function useEquipmentDetail(id: string) {
 export function useMyLoans() {
   return useQuery({
     queryKey: equipmentKeys.loans(),
-    queryFn: () => equipmentApi.getMyLoans(),
+    queryFn: () => equipmentApi.getMyLoans().then(res => res.data),
   });
 }
 

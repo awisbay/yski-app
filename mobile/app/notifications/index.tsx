@@ -49,7 +49,7 @@ export default function NotificationsScreen() {
         onPress={() => markAsRead(item.id)}
         activeOpacity={0.7}
       >
-        <Card style={[styles.notificationCard, !item.read && styles.unreadCard]}>
+        <Card style={[styles.notificationCard, !item.read ? styles.unreadCard : undefined]}>
           <View style={styles.notificationContent}>
             <View style={[styles.iconContainer, { backgroundColor: `${iconColors[item.type]}15` }]}>
               <Icon size={20} color={iconColors[item.type]} />

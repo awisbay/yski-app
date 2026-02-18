@@ -39,8 +39,8 @@ export default function NewDonationScreen() {
   } = useForm<DonationAmountFormData>({
     resolver: zodResolver(donationAmountSchema),
     defaultValues: {
-      donationType: donationStore.donationType || 'infaq',
-      amount: donationStore.amount || 100000,
+      donationType: (donationStore.selectedType || 'infaq') as 'infaq' | 'sedekah' | 'wakaf' | 'zakat',
+      amount: donationStore.selectedAmount || 100000,
     },
   });
 
@@ -50,8 +50,8 @@ export default function NewDonationScreen() {
 
   const onSubmit = async (data: DonationAmountFormData) => {
     if (step === 1) {
-      donationStore.setDonationType(data.donationType);
-      donationStore.setAmount(data.amount);
+      donationStore.setSelectedType(data.donationType);
+      donationStore.setSelectedAmount(data.amount);
       setStep(2);
       return;
     }
@@ -64,7 +64,7 @@ export default function NewDonationScreen() {
       });
       
       // Navigate to payment instructions
-      router.push(`/donations/${result.id}/payment`);
+      router.push(`/donations/${result.data.id}/payment`);
     } catch (error) {
       console.error('Donation failed:', error);
     }
@@ -162,7 +162,7 @@ export default function NewDonationScreen() {
                     <Text style={styles.customAmountLabel}>Atau masukkan nominal lain</Text>
                     <Input
                       placeholder="Rp 0"
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                       value={customAmount ? value.toString() : ''}
                       onChangeText={(text) => {
                         const num = parseInt(text.replace(/[^0-9]/g, '')) || 0;
@@ -222,7 +222,7 @@ export default function NewDonationScreen() {
         <View style={styles.buttonContainer}>
           <Button
             title={step === 2 ? 'Konfirmasi Donasi' : 'Lanjut'}
-            onPress={handleSubmit(onSubmit)}
+            onPress={handleSubmit(onSubmit as any)}
             isLoading={createMutation.isPending}
             rightIcon={step < 2 ? <ChevronRight size={20} color={colors.white} /> : undefined}
           />

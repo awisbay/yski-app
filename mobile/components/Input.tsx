@@ -1,7 +1,10 @@
-import { View, TextInput, Text } from 'react-native';
+import React from 'react';
+import { View, TextInput, Text, TextInputProps, StyleProp, ViewStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-interface InputProps {
+type IconProp = keyof typeof MaterialIcons.glyphMap | React.ReactNode;
+
+export interface InputProps extends Pick<TextInputProps, 'autoCapitalize' | 'autoCorrect' | 'editable'> {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
@@ -9,11 +12,26 @@ interface InputProps {
   error?: string;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad';
-  icon?: keyof typeof MaterialIcons.glyphMap;
-  leftIcon?: keyof typeof MaterialIcons.glyphMap;
-  rightIcon?: keyof typeof MaterialIcons.glyphMap;
+  icon?: IconProp;
+  leftIcon?: IconProp;
+  rightIcon?: IconProp;
   multiline?: boolean;
   numberOfLines?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+function renderIcon(icon: IconProp, style?: object) {
+  if (typeof icon === 'string') {
+    return (
+      <MaterialIcons
+        name={icon as keyof typeof MaterialIcons.glyphMap}
+        size={20}
+        color="#9CA3AF"
+        style={style}
+      />
+    );
+  }
+  return <View style={style}>{icon}</View>;
 }
 
 export function Input({
@@ -29,11 +47,13 @@ export function Input({
   rightIcon,
   multiline = false,
   numberOfLines = 1,
+  style,
+  ...textInputProps
 }: InputProps) {
   const resolvedLeftIcon = leftIcon || icon;
 
   return (
-    <View className="w-full">
+    <View className="w-full" style={[{ marginBottom: 16 }, style]}>
       {label && (
         <Text className="text-sm font-medium text-gray-700 mb-2">
           {label}
@@ -46,14 +66,7 @@ export function Input({
           ${multiline ? 'py-3' : ''}
         `}
       >
-        {resolvedLeftIcon && (
-          <MaterialIcons
-            name={resolvedLeftIcon}
-            size={20}
-            color="#9CA3AF"
-            style={{ marginRight: 12 }}
-          />
-        )}
+        {resolvedLeftIcon && renderIcon(resolvedLeftIcon, { marginRight: 12 })}
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -67,15 +80,9 @@ export function Input({
             ${multiline ? 'h-24 text-base' : 'py-3'}
           `}
           placeholderTextColor="#9CA3AF"
+          {...textInputProps}
         />
-        {rightIcon && (
-          <MaterialIcons
-            name={rightIcon}
-            size={20}
-            color="#9CA3AF"
-            style={{ marginLeft: 12 }}
-          />
-        )}
+        {rightIcon && renderIcon(rightIcon, { marginLeft: 12 })}
       </View>
       {error && (
         <Text className="text-red-500 text-sm mt-1">{error}</Text>

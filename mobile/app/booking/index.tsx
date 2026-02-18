@@ -24,7 +24,7 @@ export default function BookingListScreen() {
   const { data: bookings, isLoading, refetch } = useMyBookings();
   const cancelMutation = useCancelBooking();
 
-  const filteredBookings = bookings?.filter((booking) => {
+  const filteredBookings = bookings?.filter((booking: any) => {
     switch (activeTab) {
       case 'active':
         return booking.status === 'confirmed' || booking.status === 'pending';

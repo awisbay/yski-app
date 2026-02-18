@@ -9,7 +9,7 @@ interface EmptyStateAction {
 }
 
 interface EmptyStateProps {
-  icon?: keyof typeof MaterialIcons.glyphMap | React.ComponentType<{ size: number; color: string }>;
+  icon?: keyof typeof MaterialIcons.glyphMap | React.ComponentType<any>;
   title: string;
   message?: string;
   description?: string;

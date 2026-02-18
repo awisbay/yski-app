@@ -22,7 +22,7 @@ export function useAuth() {
   });
 
   const registerMutation = useMutation({
-    mutationFn: (data: { email: string; password: string; fullName: string; phone?: string }) =>
+    mutationFn: (data: { email: string; password: string; full_name: string; phone?: string }) =>
       authApi.register(data).then((res) => res.data),
     onSuccess: async (data) => {
       await setTokens(data.access_token, data.refresh_token);

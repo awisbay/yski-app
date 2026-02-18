@@ -13,7 +13,7 @@ export const newsKeys = {
 export function useNews(filters?: { category?: string; page?: number; limit?: number }) {
   return useQuery({
     queryKey: newsKeys.list(filters || {}),
-    queryFn: () => newsApi.getList(filters),
+    queryFn: () => newsApi.getList(filters).then(res => res.data),
   });
 }
 
@@ -21,7 +21,7 @@ export function useNews(filters?: { category?: string; page?: number; limit?: nu
 export function useNewsDetail(id: string) {
   return useQuery({
     queryKey: newsKeys.detail(id),
-    queryFn: () => newsApi.getDetail(id),
+    queryFn: () => newsApi.getDetail(id).then(res => res.data),
     enabled: !!id,
   });
 }

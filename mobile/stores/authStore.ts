@@ -26,12 +26,15 @@ interface AuthState {
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<boolean>;
-  setUser: (user: User) => void;
+  setUser: (user: User | null) => void;
+  setTokens: (accessToken: string, refreshToken: string) => Promise<void>;
+  clearTokens: () => Promise<void>;
+  hydrate: () => Promise<void>;
   clearError: () => void;
 }
 
 interface RegisterData {
-  fullName: string;
+  full_name: string;
   email: string;
   phone?: string;
   password: string;
@@ -93,7 +96,7 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const response = await authApi.register({
-            full_name: data.fullName,
+            full_name: data.full_name,
             email: data.email,
             phone: data.phone,
             password: data.password,
@@ -157,8 +160,28 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      setUser: (user: User) => {
-        set({ user });
+      setUser: (user: User | null) => {
+        set({ user, isAuthenticated: !!user });
+      },
+
+      setTokens: async (accessToken: string, refreshToken: string) => {
+        await secureStorage.setItem('access_token', accessToken);
+        await secureStorage.setItem('refresh_token', refreshToken);
+        set({ token: accessToken, refreshToken });
+      },
+
+      clearTokens: async () => {
+        await secureStorage.removeItem('access_token');
+        await secureStorage.removeItem('refresh_token');
+        set({ token: null, refreshToken: null, user: null, isAuthenticated: false });
+      },
+
+      hydrate: async () => {
+        const token = await secureStorage.getItem('access_token');
+        const refreshToken = await secureStorage.getItem('refresh_token');
+        if (token) {
+          set({ token, refreshToken, isAuthenticated: true });
+        }
       },
 
       clearError: () => {

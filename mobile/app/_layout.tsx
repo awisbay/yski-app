@@ -43,9 +43,9 @@ export default function RootLayout() {
           userId: '', // Will be filled from backend
           title: notification.request.content.title || '',
           body: notification.request.content.body || '',
-          type: data?.type || 'info',
-          referenceType: data?.referenceType,
-          referenceId: data?.referenceId,
+          type: (data?.type as 'info' | 'success' | 'warning') || 'info',
+          referenceType: data?.referenceType as string | undefined,
+          referenceId: data?.referenceId as string | undefined,
           read: false,
           createdAt: new Date(),
         });

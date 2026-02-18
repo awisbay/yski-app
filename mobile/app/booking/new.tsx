@@ -289,7 +289,7 @@ export default function NewBookingScreen() {
                 <Input
                   label="Catatan (Opsional)"
                   placeholder="Tambahkan catatan khusus..."
-                  value={value}
+                  value={value || ''}
                   onChangeText={onChange}
                   multiline
                   numberOfLines={3}

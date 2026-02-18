@@ -29,7 +29,7 @@ export default function PickupsScreen() {
   const { data: pickups, isLoading } = useMyPickups();
   const cancelMutation = useCancelPickup();
 
-  const filteredPickups = pickups?.filter((pickup) => {
+  const filteredPickups = pickups?.filter((pickup: any) => {
     switch (activeTab) {
       case 'active':
         return pickup.status === 'pending' || pickup.status === 'scheduled';

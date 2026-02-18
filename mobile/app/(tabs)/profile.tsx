@@ -53,7 +53,7 @@ export default function ProfileScreen() {
             <User size={40} color={colors.primary[600]} />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.name}>{user?.fullName || 'Pengguna'}</Text>
+            <Text style={styles.name}>{user?.full_name || 'Pengguna'}</Text>
             <Text style={styles.email}>{user?.email}</Text>
             <View style={styles.badgeContainer}>
               <Badge 

@@ -13,7 +13,7 @@ export const notificationKeys = {
 export function useNotifications(params?: { limit?: number; offset?: number; includeRead?: boolean }) {
   return useQuery({
     queryKey: notificationKeys.lists(),
-    queryFn: () => notificationsApi.getList(params),
+    queryFn: () => notificationsApi.getList(params).then(res => res.data),
   });
 }
 
@@ -21,7 +21,7 @@ export function useNotifications(params?: { limit?: number; offset?: number; inc
 export function useUnreadCount() {
   return useQuery({
     queryKey: notificationKeys.unread(),
-    queryFn: () => notificationsApi.getUnreadCount(),
+    queryFn: () => notificationsApi.getUnreadCount().then(res => res.data),
   });
 }
 

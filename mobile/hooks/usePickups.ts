@@ -14,7 +14,7 @@ export const pickupKeys = {
 export function useMyPickups() {
   return useQuery({
     queryKey: pickupKeys.myPickups(),
-    queryFn: () => pickupsApi.getMyPickups(),
+    queryFn: () => pickupsApi.getMyPickups().then(res => res.data),
   });
 }
 
@@ -22,7 +22,7 @@ export function useMyPickups() {
 export function usePickupDetail(id: string) {
   return useQuery({
     queryKey: pickupKeys.detail(id),
-    queryFn: () => pickupsApi.getDetail(id),
+    queryFn: () => pickupsApi.getDetail(id).then(res => res.data),
     enabled: !!id,
   });
 }
