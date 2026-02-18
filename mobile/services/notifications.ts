@@ -4,22 +4,32 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { notificationsApi } from './api';
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Check if running in Expo Go (push notifications removed in SDK 53+)
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Configure notification behavior (only in dev builds)
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 /**
  * Register for push notifications
  * Returns the Expo push token
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
+  if (isExpoGo) {
+    console.log('Push notifications are not supported in Expo Go (SDK 53+). Use a development build.');
+    return null;
+  }
+
   let token: string | null = null;
 
   if (Platform.OS === 'android') {
@@ -34,35 +44,35 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   if (Device.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    
+
     if (finalStatus !== 'granted') {
       console.log('Failed to get push token for push notification!');
       return null;
     }
-    
+
     try {
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
       if (!projectId) {
-        console.error('EAS project ID not configured in app.json extra.eas.projectId');
+        console.warn('EAS project ID not configured in app.json extra.eas.projectId');
         return null;
       }
       const pushToken = await Notifications.getExpoPushTokenAsync({
         projectId,
       });
       token = pushToken.data;
-      
+
       // Register token with backend
       await notificationsApi.registerPushToken({
         token,
         deviceType: Platform.OS === 'ios' ? 'ios' : 'android',
       });
     } catch (error) {
-      console.error('Error getting push token:', error);
+      console.warn('Error getting push token:', error);
     }
   } else {
     console.log('Must use physical device for Push Notifications');
@@ -89,6 +99,11 @@ export function setupNotificationListeners(
   onNotificationReceived?: (notification: Notifications.Notification) => void,
   onNotificationResponse?: (response: Notifications.NotificationResponse) => void
 ) {
+  if (isExpoGo) {
+    // Return no-op cleanup in Expo Go
+    return () => {};
+  }
+
   // Listener for incoming notifications
   const receivedSubscription = Notifications.addNotificationReceivedListener(notification => {
     console.log('Notification received:', notification);
@@ -112,6 +127,7 @@ export function setupNotificationListeners(
  * Get badge count
  */
 export async function getBadgeCountAsync(): Promise<number> {
+  if (isExpoGo) return 0;
   return await Notifications.getBadgeCountAsync();
 }
 
@@ -119,5 +135,6 @@ export async function getBadgeCountAsync(): Promise<number> {
  * Set badge count
  */
 export async function setBadgeCountAsync(count: number): Promise<void> {
+  if (isExpoGo) return;
   await Notifications.setBadgeCountAsync(count);
 }
