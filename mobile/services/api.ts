@@ -64,105 +64,105 @@ api.interceptors.response.use(
 // Auth API
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post('/api/v1/auth/login', { email, password }),
-  
+    api.post('/auth/login', { email, password }),
+
   register: (data: { email: string; password: string; full_name: string; phone?: string }) =>
-    api.post('/api/v1/auth/register', data),
-  
+    api.post('/auth/register', data),
+
   refresh: (refreshToken: string) =>
-    api.post('/api/v1/auth/refresh', { refresh_token: refreshToken }),
-  
-  logout: () => api.post('/api/v1/auth/logout'),
-  
-  me: () => api.get('/api/v1/auth/me'),
+    api.post('/auth/refresh', { refresh_token: refreshToken }),
+
+  logout: () => api.post('/auth/logout'),
+
+  me: () => api.get('/auth/me'),
 };
 
 // Bookings API
 export const bookingsApi = {
-  getList: () => api.get('/api/v1/bookings'),
-  getMyBookings: () => api.get('/api/v1/bookings/my'),
-  getBooking: (id: string) => api.get(`/api/v1/bookings/${id}`),
-  create: (data: any) => api.post('/api/v1/bookings', data),
-  cancel: (id: string) => api.patch(`/api/v1/bookings/${id}/cancel`),
-  getSlots: (date: string) => api.get(`/api/v1/bookings/slots?date=${date}`),
+  getList: () => api.get('/bookings'),
+  getMyBookings: () => api.get('/bookings/my'),
+  getBooking: (id: string) => api.get(`/bookings/${id}`),
+  create: (data: any) => api.post('/bookings', data),
+  cancel: (id: string) => api.patch(`/bookings/${id}/cancel`),
+  getSlots: (date: string) => api.get(`/bookings/slots?date=${date}`),
 };
 
 // Donations API
 export const donationsApi = {
-  getList: () => api.get('/api/v1/donations'),
-  getMyDonations: () => api.get('/api/v1/donations/my'),
-  getDetail: (id: string) => api.get(`/api/v1/donations/${id}`),
-  create: (data: any) => api.post('/api/v1/donations', data),
+  getList: () => api.get('/donations'),
+  getMyDonations: () => api.get('/donations/my'),
+  getDetail: (id: string) => api.get(`/donations/${id}`),
+  create: (data: any) => api.post('/donations', data),
   uploadProof: (id: string, formData: FormData) =>
-    api.post(`/api/v1/donations/${id}/proof`, formData, {
+    api.post(`/donations/${id}/proof`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-  getSummary: () => api.get('/api/v1/donations/summary'),
+  getSummary: () => api.get('/donations/summary'),
 };
 
 // Equipment API
 export const equipmentApi = {
-  getList: () => api.get('/api/v1/equipment'),
-  getDetail: (id: string) => api.get(`/api/v1/equipment/${id}`),
-  getStats: () => api.get('/api/v1/equipment/stats'),
-  getMyLoans: () => api.get('/api/v1/equipment/loans/my'),
+  getList: () => api.get('/equipment'),
+  getDetail: (id: string) => api.get(`/equipment/${id}`),
+  getStats: () => api.get('/equipment/stats'),
+  getMyLoans: () => api.get('/equipment/loans/my'),
   requestLoan: (equipmentId: string, data: any) =>
-    api.post(`/api/v1/equipment/${equipmentId}/loans`, data),
+    api.post(`/equipment/${equipmentId}/loans`, data),
 };
 
 // Pickups API
 export const pickupsApi = {
-  getList: () => api.get('/api/v1/pickups'),
-  getMyPickups: () => api.get('/api/v1/pickups/my'),
-  getDetail: (id: string) => api.get(`/api/v1/pickups/${id}`),
-  create: (data: any) => api.post('/api/v1/pickups', data),
+  getList: () => api.get('/pickups'),
+  getMyPickups: () => api.get('/pickups/my'),
+  getDetail: (id: string) => api.get(`/pickups/${id}`),
+  create: (data: any) => api.post('/pickups', data),
   cancel: (id: string, reason?: string) =>
-    api.patch(`/api/v1/pickups/${id}/cancel`, { cancellation_reason: reason }),
+    api.patch(`/pickups/${id}/cancel`, { cancellation_reason: reason }),
 };
 
 // Content API
 export const programsApi = {
   getList: (params?: { limit?: number; sort?: string }) =>
-    api.get('/api/v1/content/programs', { params }),
-  getDetail: (id: string) => api.get(`/api/v1/content/programs/${id}`),
+    api.get('/content/programs', { params }),
+  getDetail: (id: string) => api.get(`/content/programs/${id}`),
 };
 
 export const newsApi = {
   getList: (params?: { category?: string; page?: number; limit?: number }) =>
-    api.get('/api/v1/content/news', { params }),
-  getDetail: (id: string) => api.get(`/api/v1/content/news/${id}`),
+    api.get('/content/news', { params }),
+  getDetail: (id: string) => api.get(`/content/news/${id}`),
 };
 
 // Phase 5: Auction API
 export const auctionsApi = {
   getList: (params?: { search?: string; skip?: number; limit?: number }) =>
-    api.get('/api/v1/auctions', { params }),
-  getMyBids: () => api.get('/api/v1/auctions/my-bids'),
-  getDetail: (id: string) => api.get(`/api/v1/auctions/${id}`),
+    api.get('/auctions', { params }),
+  getMyBids: () => api.get('/auctions/my-bids'),
+  getDetail: (id: string) => api.get(`/auctions/${id}`),
   placeBid: (id: string, data: { amount: number }) =>
-    api.post(`/api/v1/auctions/${id}/bid`, data),
+    api.post(`/auctions/${id}/bid`, data),
 };
 
 // Phase 5: Financial Reports API
 export const financialApi = {
-  getDashboard: () => api.get('/api/v1/financial/dashboard'),
+  getDashboard: () => api.get('/financial/dashboard'),
   getReports: (params?: { skip?: number; limit?: number }) =>
-    api.get('/api/v1/financial/reports', { params }),
-  getReport: (id: string) => api.get(`/api/v1/financial/reports/${id}`),
-  downloadPdf: (id: string) => api.get(`/api/v1/financial/reports/${id}/pdf`, { responseType: 'blob' }),
+    api.get('/financial/reports', { params }),
+  getReport: (id: string) => api.get(`/financial/reports/${id}`),
+  downloadPdf: (id: string) => api.get(`/financial/reports/${id}/pdf`, { responseType: 'blob' }),
 };
 
 // Phase 5: Notifications API
 export const notificationsApi = {
   getList: (params?: { limit?: number; offset?: number; includeRead?: boolean }) =>
-    api.get('/api/v1/notifications', { params }),
-  getUnreadCount: () => api.get('/api/v1/notifications/unread-count'),
-  markAsRead: (id: string) => api.patch(`/api/v1/notifications/${id}/read`),
-  markAllAsRead: () => api.patch('/api/v1/notifications/read-all'),
+    api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id: string) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
   registerPushToken: (data: { token: string; deviceType: string }) =>
-    api.post('/api/v1/notifications/push-token', data),
+    api.post('/notifications/push-token', data),
   removePushToken: (token: string) =>
-    api.delete('/api/v1/notifications/push-token', { params: { token } }),
+    api.delete('/notifications/push-token', { params: { token } }),
 };
 
 export default api;
