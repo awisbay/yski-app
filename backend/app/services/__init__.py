@@ -2,12 +2,12 @@
 Services package for business logic.
 """
 
-from app.services.user_service import UserService
-from app.services.booking_service import BookingService
-from app.services.equipment_service import EquipmentService
-from app.services.donation_service import DonationService
-from app.services.pickup_service import PickupService
-from app.services.content_service import ContentService
+from app.services.user import UserService
+from app.services.booking import BookingService
+from app.services.equipment import EquipmentService
+from app.services.donation import DonationService
+from app.services.pickup import PickupService
+from app.services.content import ContentService
 
 # Phase 5: Advanced Features
 from app.services.auction_service import AuctionService

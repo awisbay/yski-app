@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -7,8 +6,14 @@ import { notificationsApi } from './api';
 // Check if running in Expo Go (push notifications removed in SDK 53+)
 const isExpoGo = Constants.appOwnership === 'expo';
 
+// Lazy-load expo-notifications to avoid crash in Expo Go
+function getNotificationsModule() {
+  return require('expo-notifications') as typeof import('expo-notifications');
+}
+
 // Configure notification behavior (only in dev builds)
 if (!isExpoGo) {
+  const Notifications = getNotificationsModule();
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -30,6 +35,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     return null;
   }
 
+  const Notifications = getNotificationsModule();
   let token: string | null = null;
 
   if (Platform.OS === 'android') {
@@ -96,27 +102,25 @@ export async function unregisterPushNotificationsAsync(token: string): Promise<v
  * Set up notification listeners
  */
 export function setupNotificationListeners(
-  onNotificationReceived?: (notification: Notifications.Notification) => void,
-  onNotificationResponse?: (response: Notifications.NotificationResponse) => void
+  onNotificationReceived?: (notification: any) => void,
+  onNotificationResponse?: (response: any) => void
 ) {
   if (isExpoGo) {
-    // Return no-op cleanup in Expo Go
     return () => {};
   }
 
-  // Listener for incoming notifications
+  const Notifications = getNotificationsModule();
+
   const receivedSubscription = Notifications.addNotificationReceivedListener(notification => {
     console.log('Notification received:', notification);
     onNotificationReceived?.(notification);
   });
 
-  // Listener for user tapping on notification
   const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
     console.log('Notification response:', response);
     onNotificationResponse?.(response);
   });
 
-  // Return cleanup function
   return () => {
     receivedSubscription.remove();
     responseSubscription.remove();
@@ -128,7 +132,7 @@ export function setupNotificationListeners(
  */
 export async function getBadgeCountAsync(): Promise<number> {
   if (isExpoGo) return 0;
-  return await Notifications.getBadgeCountAsync();
+  return await getNotificationsModule().getBadgeCountAsync();
 }
 
 /**
@@ -136,5 +140,5 @@ export async function getBadgeCountAsync(): Promise<number> {
  */
 export async function setBadgeCountAsync(count: number): Promise<void> {
   if (isExpoGo) return;
-  await Notifications.setBadgeCountAsync(count);
+  await getNotificationsModule().setBadgeCountAsync(count);
 }
