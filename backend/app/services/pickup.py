@@ -6,7 +6,7 @@ import random
 import string
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, func
@@ -112,7 +112,7 @@ class PickupService:
         
         pickup.assigned_to = volunteer_id
         pickup.scheduled_by = scheduled_by
-        pickup.scheduled_at = datetime.utcnow()
+        pickup.scheduled_at = datetime.now(timezone.utc)
         
         if pickup.status == "pending":
             pickup.status = "scheduled"
@@ -145,7 +145,7 @@ class PickupService:
             raise HTTPException(status_code=400, detail="Pickup must be in progress to complete")
         
         pickup.status = "completed"
-        pickup.completed_at = datetime.utcnow()
+        pickup.completed_at = datetime.now(timezone.utc)
         pickup.collected_amount = data.collected_amount
         pickup.proof_url = proof_url
         

@@ -98,9 +98,11 @@ class BookingService:
                 detail=f"You already have {MAX_ACTIVE_BOOKINGS} active bookings"
             )
         
-        # Check if slot is already booked (Layer 2)
+        # Check if slot is already booked (Layer 2) with pessimistic locking
         existing = await self.db.scalar(
-            select(MovingBooking).where(
+            select(MovingBooking)
+            .with_for_update()
+            .where(
                 MovingBooking.booking_date == data.booking_date,
                 MovingBooking.time_slot == data.time_slot,
                 MovingBooking.status.notin_(["rejected", "cancelled"])
@@ -172,19 +174,36 @@ class BookingService:
             for slot in ALLOWED_SLOTS
         ]
     
-    async def update_status(self, booking_id: str, status: str, user_id: UUID) -> Optional[MovingBooking]:
-        """Update booking status."""
+    # Valid booking status transitions
+    VALID_TRANSITIONS = {
+        "pending": {"approved", "rejected", "cancelled"},
+        "approved": {"in_progress", "cancelled"},
+        "in_progress": {"completed", "cancelled"},
+        "rejected": set(),
+        "completed": set(),
+        "cancelled": set(),
+    }
+
+    async def update_status(self, booking_id: str, new_status: str, user_id: UUID) -> Optional[MovingBooking]:
+        """Update booking status with transition validation."""
         booking = await self.get_by_id(booking_id)
         if not booking:
             return None
-        
-        booking.status = status
-        
-        if status == "approved":
+
+        allowed = self.VALID_TRANSITIONS.get(booking.status, set())
+        if new_status not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot transition from '{booking.status}' to '{new_status}'",
+            )
+
+        booking.status = new_status
+
+        if new_status == "approved":
             booking.approved_by = user_id
-        elif status == "in_progress" or status == "completed":
+        elif new_status in ("in_progress", "completed"):
             booking.assigned_to = user_id
-        
+
         await self.db.flush()
         await self.db.refresh(booking)
         return booking

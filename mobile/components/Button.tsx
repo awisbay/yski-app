@@ -8,7 +8,10 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
+  isLoading?: boolean;
   icon?: keyof typeof MaterialIcons.glyphMap;
+  leftIcon?: keyof typeof MaterialIcons.glyphMap;
+  rightIcon?: keyof typeof MaterialIcons.glyphMap;
   className?: string;
 }
 
@@ -19,9 +22,13 @@ export function Button({
   size = 'md',
   disabled = false,
   loading = false,
+  isLoading,
   icon,
+  leftIcon,
+  rightIcon,
   className = '',
 }: ButtonProps) {
+  const isLoadingResolved = isLoading ?? loading;
   const baseStyles = 'flex-row items-center justify-center rounded-xl';
   
   const variantStyles = {
@@ -50,7 +57,10 @@ export function Button({
     lg: 'text-lg',
   };
 
-  const isDisabled = disabled || loading;
+  const isDisabled = disabled || isLoadingResolved;
+  const resolvedLeftIcon = leftIcon || icon;
+  const iconSize = size === 'sm' ? 16 : size === 'md' ? 20 : 24;
+  const iconColor = variant === 'primary' || variant === 'secondary' ? 'white' : '#10B981';
 
   return (
     <TouchableOpacity
@@ -64,15 +74,15 @@ export function Button({
         ${className}
       `}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'primary' || variant === 'secondary' ? 'white' : '#10B981'} />
+      {isLoadingResolved ? (
+        <ActivityIndicator color={iconColor} />
       ) : (
         <>
-          {icon && (
+          {resolvedLeftIcon && (
             <MaterialIcons
-              name={icon}
-              size={size === 'sm' ? 16 : size === 'md' ? 20 : 24}
-              color={variant === 'primary' || variant === 'secondary' ? 'white' : '#10B981'}
+              name={resolvedLeftIcon}
+              size={iconSize}
+              color={iconColor}
               style={{ marginRight: 8 }}
             />
           )}
@@ -85,6 +95,14 @@ export function Button({
           >
             {title}
           </Text>
+          {rightIcon && (
+            <MaterialIcons
+              name={rightIcon}
+              size={iconSize}
+              color={iconColor}
+              style={{ marginLeft: 8 }}
+            />
+          )}
         </>
       )}
     </TouchableOpacity>

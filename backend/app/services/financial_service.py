@@ -73,9 +73,9 @@ class FinancialService:
         result = await self.db.execute(
             select(Donation)
             .where(
-                Donation.status == "completed",
-                Donation.paid_at >= datetime.combine(period_start, datetime.min.time()),
-                Donation.paid_at <= datetime.combine(period_end, datetime.max.time()),
+                Donation.payment_status == "completed",
+                Donation.verified_at >= datetime.combine(period_start, datetime.min.time()),
+                Donation.verified_at <= datetime.combine(period_end, datetime.max.time()),
             )
         )
         donations = result.scalars().all()
@@ -94,7 +94,7 @@ class FinancialService:
                 description=f"Donasi {donation.donation_type} dari user",
                 reference_type="donation",
                 reference_id=str(donation.id),
-                entry_date=donation.paid_at.date(),
+                entry_date=donation.verified_at.date(),
             )
             self.db.add(entry)
     

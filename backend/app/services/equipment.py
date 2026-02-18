@@ -155,25 +155,31 @@ class EquipmentService:
         return loan
     
     async def approve_loan(self, loan_id: str, approved_by: UUID) -> Optional[EquipmentLoan]:
-        """Approve a loan request."""
+        """Approve a loan request with pessimistic locking on equipment stock."""
         loan = await self.get_loan_by_id(loan_id)
         if not loan:
             return None
-        
+
         if loan.status != "pending":
             raise HTTPException(status_code=400, detail="Loan is not pending")
-        
-        equipment = await self.get_by_id(str(loan.equipment_id))
-        if equipment.available_stock <= 0:
+
+        # Lock equipment row before decrementing stock
+        result = await self.db.execute(
+            select(MedicalEquipment)
+            .with_for_update()
+            .where(MedicalEquipment.id == loan.equipment_id)
+        )
+        equipment = result.scalar_one_or_none()
+        if not equipment or equipment.available_stock <= 0:
             raise HTTPException(status_code=400, detail="Equipment not available")
-        
+
         # Update loan status
         loan.status = "approved"
         loan.approved_by = approved_by
-        
+
         # Decrease available stock
         equipment.available_stock -= 1
-        
+
         await self.db.flush()
         await self.db.refresh(loan)
         return loan

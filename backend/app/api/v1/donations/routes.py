@@ -2,16 +2,20 @@
 Donation Routes
 """
 
+import uuid as uuid_mod
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_role
+from app.core.deps import get_current_user, get_optional_current_user, require_role
 from app.models.user import User
 from app.schemas.donation import DonationCreate, DonationResponse, DonationVerify
 from app.services.donation import DonationService
+
+ALLOWED_UPLOAD_TYPES = {"image/jpeg", "image/png", "application/pdf"}
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
 
 router = APIRouter()
 
@@ -78,7 +82,7 @@ async def get_donation(
 @router.post("", response_model=DonationResponse, status_code=status.HTTP_201_CREATED)
 async def create_donation(
     donation_data: DonationCreate,
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new donation (public or authenticated)."""
@@ -121,10 +125,26 @@ async def upload_payment_proof(
     
     if donation.donor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
+    # Validate file type
+    if file.content_type not in ALLOWED_UPLOAD_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type not allowed. Allowed: jpeg, png, pdf",
+        )
+
+    # Validate file size
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Max 5MB")
+    await file.seek(0)
+
+    # Generate safe filename to prevent path traversal
+    ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "bin"
+    safe_filename = f"{donation_id}_{uuid_mod.uuid4().hex}.{ext}"
+    proof_url = f"/uploads/proofs/{safe_filename}"
+
     # TODO: Implement file upload to MinIO and get URL
-    proof_url = f"/uploads/proofs/{donation_id}_{file.filename}"
-    
     donation = await service.upload_proof(str(donation_id), proof_url)
     return donation
 
@@ -135,7 +155,19 @@ async def handle_payment_webhook(
     payload: dict,
     db: AsyncSession = Depends(get_db)
 ):
-    """Handle payment gateway webhook."""
+    """Handle payment gateway webhook.
+
+    TODO: Add rate limiting middleware to this endpoint.
+    """
+    # Validate required payload fields
+    if not payload or "transaction_status" not in payload:
+        raise HTTPException(status_code=400, detail="Invalid webhook payload")
+
+    # TODO: Verify HMAC signature from payment gateway header
+    # signature = request.headers.get("X-Signature")
+    # if not verify_webhook_signature(payload, signature, settings.WEBHOOK_SECRET):
+    #     raise HTTPException(status_code=403, detail="Invalid signature")
+
     service = DonationService(db)
     donation = await service.handle_payment_callback(str(donation_id), payload)
     if not donation:

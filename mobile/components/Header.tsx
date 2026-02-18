@@ -1,3 +1,4 @@
+import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -10,6 +11,7 @@ interface HeaderProps {
     icon: keyof typeof MaterialIcons.glyphMap;
     onPress: () => void;
   };
+  rightElement?: React.ReactNode;
   transparent?: boolean;
 }
 
@@ -18,6 +20,7 @@ export function Header({
   showBackButton = true,
   onBackPress,
   rightAction,
+  rightElement,
   transparent = false,
 }: HeaderProps) {
   const router = useRouter();
@@ -53,7 +56,9 @@ export function Header({
         {title}
       </Text>
 
-      {rightAction ? (
+      {rightElement ? (
+        rightElement
+      ) : rightAction ? (
         <TouchableOpacity onPress={rightAction.onPress} className="p-2 -mr-2">
           <MaterialIcons
             name={rightAction.icon}

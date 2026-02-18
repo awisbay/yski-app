@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -78,7 +79,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.greeting}>Selamat Datang,</Text>
-          <Text style={styles.userName}>{user?.fullName || 'Pengguna'}</Text>
+          <Text style={styles.userName}>{user?.full_name || 'Pengguna'}</Text>
         </View>
         <TouchableOpacity 
           style={styles.notificationButton}
@@ -296,8 +297,6 @@ export default function HomeScreen() {
     </ScreenWrapper>
   );
 }
-
-import { useState } from 'react';
 
 const styles = StyleSheet.create({
   header: {

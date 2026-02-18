@@ -10,6 +10,8 @@ interface InputProps {
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad';
   icon?: keyof typeof MaterialIcons.glyphMap;
+  leftIcon?: keyof typeof MaterialIcons.glyphMap;
+  rightIcon?: keyof typeof MaterialIcons.glyphMap;
   multiline?: boolean;
   numberOfLines?: number;
 }
@@ -23,9 +25,13 @@ export function Input({
   secureTextEntry = false,
   keyboardType = 'default',
   icon,
+  leftIcon,
+  rightIcon,
   multiline = false,
   numberOfLines = 1,
 }: InputProps) {
+  const resolvedLeftIcon = leftIcon || icon;
+
   return (
     <View className="w-full">
       {label && (
@@ -40,9 +46,9 @@ export function Input({
           ${multiline ? 'py-3' : ''}
         `}
       >
-        {icon && (
+        {resolvedLeftIcon && (
           <MaterialIcons
-            name={icon}
+            name={resolvedLeftIcon}
             size={20}
             color="#9CA3AF"
             style={{ marginRight: 12 }}
@@ -62,6 +68,14 @@ export function Input({
           `}
           placeholderTextColor="#9CA3AF"
         />
+        {rightIcon && (
+          <MaterialIcons
+            name={rightIcon}
+            size={20}
+            color="#9CA3AF"
+            style={{ marginLeft: 12 }}
+          />
+        )}
       </View>
       {error && (
         <Text className="text-red-500 text-sm mt-1">{error}</Text>

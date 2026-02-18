@@ -5,7 +5,7 @@ Donation Service - Business logic for donation management
 import random
 import string
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
@@ -202,7 +202,7 @@ class DonationService:
         
         donation.payment_status = status
         donation.verified_by = verified_by
-        donation.verified_at = datetime.utcnow()
+        donation.verified_at = datetime.now(timezone.utc)
         
         await self.db.flush()
         await self.db.refresh(donation)

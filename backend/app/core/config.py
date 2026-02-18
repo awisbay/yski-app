@@ -2,6 +2,7 @@
 Application Configuration Settings
 """
 
+import json
 from typing import List
 from pydantic_settings import BaseSettings
 from pydantic import validator
@@ -9,22 +10,31 @@ from pydantic import validator
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
-    
+
     # App
     APP_ENV: str = "development"
-    APP_DEBUG: bool = True
-    
+    APP_DEBUG: bool = False
+
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://yski:changeme@localhost:5432/yski_db"
-    
+
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
-    
+
     # JWT
-    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    JWT_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    @validator("JWT_SECRET_KEY")
+    def jwt_secret_must_be_set(cls, v, values):
+        if not v and values.get("APP_ENV") != "development":
+            raise ValueError("JWT_SECRET_KEY must be set in non-development environments")
+        if not v:
+            # Provide a dev-only default so local dev still works
+            return "dev-only-insecure-key-do-not-use-in-prod"
+        return v
     
     # MinIO
     MINIO_ENDPOINT: str = "localhost:9000"
@@ -41,7 +51,7 @@ class Settings(BaseSettings):
             try:
                 import json
                 return json.loads(v)
-            except:
+            except (json.JSONDecodeError, ValueError):
                 return [i.strip() for i in v.split(",")]
         return v
     
