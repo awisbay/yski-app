@@ -30,8 +30,8 @@ class Clicky_Admin {
      */
     public function add_admin_menu() {
         add_options_page(
-            __('Clicky Foundation Settings', 'clicky-foundation'),
-            __('Clicky Foundation', 'clicky-foundation'),
+            __('Yayasan Sahabat Khairat Indonesia Settings', 'clicky-foundation'),
+            __('Yayasan Sahabat Khairat Indonesia', 'clicky-foundation'),
             'manage_options',
             'clicky-foundation',
             array($this, 'render_settings_page')

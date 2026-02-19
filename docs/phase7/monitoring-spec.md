@@ -1,6 +1,6 @@
 # Phase 7: Monitoring & Logging Specification
 
-> Observability stack for the Clicky Foundation production environment.
+> Observability stack for the Yayasan Sahabat Khairat Indonesia production environment.
 
 ---
 

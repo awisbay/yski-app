@@ -513,7 +513,7 @@ class Clicky_Sync_Service {
         $admin_email = get_option('admin_email');
         $subject = sprintf('[%s] Sync Failed %d times', get_bloginfo('name'), $failures);
         $message = sprintf(
-            "Clicky Foundation sync has failed %d consecutive times.\n\n" .
+            "Yayasan Sahabat Khairat Indonesia sync has failed %d consecutive times.\n\n" .
             "The circuit breaker has been activated for 5 minutes.\n\n" .
             "Please check the sync logs for more details: %s",
             $failures,

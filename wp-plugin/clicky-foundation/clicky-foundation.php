@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Clicky Foundation
+ * Plugin Name: Yayasan Sahabat Khairat Indonesia
  * Plugin URI: https://clickyfoundation.id
  * Description: Integrasi WordPress untuk Yayasan Sahabat Khairat - sinkronisasi konten, shortcodes, dan laporan keuangan.
  * Version: 1.0.0
@@ -36,7 +36,7 @@ function clicky_check_requirements() {
         deactivate_plugins(CLICKY_PLUGIN_BASENAME);
         wp_die(
             sprintf(
-                __('Clicky Foundation requires PHP 7.4 or higher. You are running PHP %s.', 'clicky-foundation'),
+                __('Yayasan Sahabat Khairat Indonesia requires PHP 7.4 or higher. You are running PHP %s.', 'clicky-foundation'),
                 esc_html($php_version)
             ),
             __('Plugin Activation Error', 'clicky-foundation'),
@@ -48,7 +48,7 @@ function clicky_check_requirements() {
         deactivate_plugins(CLICKY_PLUGIN_BASENAME);
         wp_die(
             sprintf(
-                __('Clicky Foundation requires WordPress 5.8 or higher. You are running WordPress %s.', 'clicky-foundation'),
+                __('Yayasan Sahabat Khairat Indonesia requires WordPress 5.8 or higher. You are running WordPress %s.', 'clicky-foundation'),
                 esc_html($wp_version)
             ),
             __('Plugin Activation Error', 'clicky-foundation'),
@@ -117,7 +117,7 @@ function clicky_admin_notice() {
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>
-                <?php _e('Clicky Foundation plugin is not fully configured.', 'clicky-foundation'); ?>
+                <?php _e('Yayasan Sahabat Khairat Indonesia plugin is not fully configured.', 'clicky-foundation'); ?>
                 <a href="<?php echo esc_url(admin_url('options-general.php?page=clicky-foundation')); ?>">
                     <?php _e('Configure Settings', 'clicky-foundation'); ?>
                 </a>

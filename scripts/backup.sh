@@ -1,5 +1,5 @@
 #!/bin/bash
-# Clicky Foundation - Database Backup Script
+# Yayasan Sahabat Khairat Indonesia - Database Backup Script
 # Run this script daily via cron: 0 2 * * * /opt/clicky-foundation/scripts/backup.sh
 
 set -e

@@ -1,507 +1,934 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  RefreshControl,
+  Image,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { 
-  Calendar, 
-  Package, 
-  Heart, 
-  Truck, 
-  ChevronRight,
+import { StatusBar } from 'expo-status-bar';
+import {
   Bell,
-  MapPin,
+  Calendar,
   Clock,
+  MapPin,
+  ChevronRight,
   TrendingUp,
-  Users
+  Heart,
+  Users,
+  Layers,
+  Plus,
+  Newspaper,
 } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
-import { Button } from '@/components/Button';
-import { Card } from '@/components/Card';
+import { Skeleton } from '@/components/ui';
 import { Badge } from '@/components/Badge';
 import { ProgressBar } from '@/components/ProgressBar';
-import { EmptyState } from '@/components/EmptyState';
 import { useAuthStore } from '@/stores/authStore';
-import { useBookingStore } from '@/stores/bookingStore';
-import { useDonationStore } from '@/stores/donationStore';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useMyBookings, useBookingSlots, usePrograms, useNews } from '@/hooks';
+import { useMyBookings, usePrograms, useNews } from '@/hooks';
 import { colors } from '@/constants/colors';
-import { typography } from '@/constants/typography';
-import { spacing } from '@/constants/spacing';
-
-const MENU_ITEMS = [
-  { icon: Calendar, label: 'Booking', route: '/booking', color: colors.primary[500] },
-  { icon: Package, label: 'Peralatan', route: '/equipment', color: colors.secondary[500] },
-  { icon: Heart, label: 'Donasi', route: '/donations', color: colors.success[500] },
-  { icon: Truck, label: 'Jemput', route: '/pickups', color: colors.warning[500] },
-];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
-  
+
   const { data: bookings, isLoading: bookingsLoading, refetch: refetchBookings } = useMyBookings();
-  const { data: programs, isLoading: programsLoading } = usePrograms({ limit: 3 });
-  const { data: news, isLoading: newsLoading } = useNews({ limit: 2 });
-  
+  const { data: programs, isLoading: programsLoading } = usePrograms({ limit: 4 });
+  const { data: news, isLoading: newsLoading } = useNews({ limit: 3 });
+
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchBookings()]);
+    await refetchBookings();
     setRefreshing(false);
   };
 
-  const activeBookings = bookings?.filter((b: any) => b.status === 'confirmed' || b.status === 'pending') || [];
+  const activeBookings = bookings?.filter(
+    (b: any) => b.status === 'confirmed' || b.status === 'pending'
+  ) || [];
   const nextBooking = activeBookings[0];
+  const featuredProgram = programs?.[0];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
 
-  const handleMenuPress = (route: string) => {
-    router.push(route);
-  };
+  const pct = (a: number, b: number) => Math.min(Math.round((a / b) * 100), 100);
 
   return (
-    <ScreenWrapper
-      refreshable
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Selamat Datang,</Text>
-          <Text style={styles.userName}>{user?.full_name || 'Pengguna'}</Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.notificationButton}
-          onPress={() => router.push('/notifications')}
-        >
-          <Bell size={24} color={colors.gray[700]} />
-          {unreadCount > 0 && (
-            <Badge 
-              label={unreadCount.toString()} 
-              variant="error" 
-              size="sm"
-              style={styles.notificationBadge}
+    <View style={styles.root}>
+      <StatusBar style="light" />
+
+      {/* ── Green Header ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.brandRow}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.headerLogo}
+              resizeMode="contain"
             />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Quick Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: colors.primary[100] }]}>
-            <Calendar size={20} color={colors.primary[600]} />
+            <View>
+              <Text style={styles.greetingLabel}>Selamat Datang,</Text>
+              <Text style={styles.userName} numberOfLines={1}>
+                {user?.full_name || 'Pengguna'}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.statValue}>{activeBookings.length}</Text>
-          <Text style={styles.statLabel}>Booking Aktif</Text>
-        </View>
-        <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: colors.success[100] }]}>
-            <Heart size={20} color={colors.success[600]} />
-          </View>
-          <Text style={styles.statValue}>12</Text>
-          <Text style={styles.statLabel}>Total Donasi</Text>
-        </View>
-        <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: colors.secondary[100] }]}>
-            <Package size={20} color={colors.secondary[600]} />
-          </View>
-          <Text style={styles.statValue}>3</Text>
-          <Text style={styles.statLabel}>Peminjaman</Text>
-        </View>
-      </View>
-
-      {/* Menu Grid */}
-      <View style={styles.menuContainer}>
-        {MENU_ITEMS.map((item) => (
           <TouchableOpacity
-            key={item.label}
-            style={styles.menuItem}
-            onPress={() => handleMenuPress(item.route)}
+            style={styles.notifBtn}
+            onPress={() => router.push('/notifications')}
           >
-            <View style={[styles.menuIcon, { backgroundColor: item.color + '15' }]}>
-              <item.icon size={28} color={item.color} />
-            </View>
-            <Text style={styles.menuLabel}>{item.label}</Text>
+            <Bell size={22} color={colors.white} />
+            {unreadCount > 0 && <View style={styles.notifDot} />}
           </TouchableOpacity>
-        ))}
+        </View>
+
+        {/* Stats strip */}
+        <View style={styles.statsStrip}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{activeBookings.length}</Text>
+            <Text style={styles.statLabel}>Booking{'\n'}Aktif</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statLabel}>Total{'\n'}Donasi</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>3</Text>
+            <Text style={styles.statLabel}>Alat{'\n'}Dipinjam</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>47</Text>
+            <Text style={styles.statLabel}>Program{'\n'}Aktif</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Next Booking */}
-      <SectionHeader 
-        title="Booking Berikutnya" 
-        right={
-          <TouchableOpacity onPress={() => router.push('/booking')}>
-            <Text style={styles.link}>Lihat Semua</Text>
-          </TouchableOpacity>
+      {/* ── White Content Panel ── */}
+      <ScrollView
+        style={styles.panel}
+        contentContainerStyle={[styles.panelContent, { paddingBottom: insets.bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary[600]}
+            colors={[colors.primary[600]]}
+          />
         }
-      />
-      
-      {bookingsLoading ? (
-        <Skeleton height={120} borderRadius={12} />
-      ) : nextBooking ? (
-        <Card style={styles.bookingCard}>
-          <View style={styles.bookingHeader}>
-            <Badge 
-              label={nextBooking.status} 
-              variant={nextBooking.status === 'confirmed' ? 'success' : 'warning'}
-            />
-            <Text style={styles.bookingId}>#{nextBooking.id.slice(-6).toUpperCase()}</Text>
-          </View>
-          <View style={styles.bookingInfo}>
-            <View style={styles.infoRow}>
-              <Calendar size={16} color={colors.gray[500]} />
-              <Text style={styles.infoText}>
-                {new Date(nextBooking.bookingDate).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Clock size={16} color={colors.gray[500]} />
-              <Text style={styles.infoText}>{nextBooking.timeSlot}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <MapPin size={16} color={colors.gray[500]} />
-              <Text style={styles.infoText} numberOfLines={1}>
-                {nextBooking.pickupAddress}
-              </Text>
-            </View>
-          </View>
-        </Card>
-      ) : (
-        <EmptyState
-          icon={Calendar}
-          title="Belum ada booking"
-          description="Mulai dengan membuat booking pertama Anda"
-          action={{
-            label: 'Buat Booking',
-            onPress: () => router.push('/booking/new'),
-          }}
-          compact
-        />
-      )}
+      >
 
-      {/* Featured Programs */}
-      <SectionHeader 
-        title="Program Unggulan"
-        right={
-          <TouchableOpacity onPress={() => router.push('/programs')}>
-            <Text style={styles.link}>Lihat Semua</Text>
-          </TouchableOpacity>
-        }
-      />
-      
-      {programsLoading ? (
-        <Skeleton height={200} borderRadius={12} />
-      ) : programs?.length > 0 ? (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.programsScroll}
-        >
-          {programs.map((program: any) => (
-            <TouchableOpacity
-              key={program.id}
-              style={styles.programCard}
-              onPress={() => router.push(`/programs/${program.id}`)}
-            >
-              <View style={styles.programImage}>
-                <Heart size={32} color={colors.primary[300]} />
+        {/* ── Featured Campaign ── */}
+        {programsLoading ? (
+          <Skeleton height={160} borderRadius={20} />
+        ) : featuredProgram ? (
+          <TouchableOpacity
+            style={styles.featuredCard}
+            onPress={() => router.push(`/programs/${featuredProgram.id}`)}
+            activeOpacity={0.9}
+          >
+            <View style={styles.featuredBadgeRow}>
+              <View style={styles.featuredBadge}>
+                <Heart size={11} color={colors.white} fill={colors.white} />
+                <Text style={styles.featuredBadgeText}>Kampanye Aktif</Text>
               </View>
-              <View style={styles.programContent}>
-                <Badge label={program.category} variant="primary" size="sm" />
-                <Text style={styles.programTitle} numberOfLines={2}>{program.title}</Text>
-                <Text style={styles.programDescription} numberOfLines={2}>
-                  {program.description}
-                </Text>
-                <ProgressBar 
-                  progress={program.collectedAmount / program.targetAmount}
-                  style={styles.programProgress}
+              <Text style={styles.featuredPct}>
+                {pct(featuredProgram.collectedAmount, featuredProgram.targetAmount)}%
+              </Text>
+            </View>
+            <Text style={styles.featuredTitle} numberOfLines={2}>
+              {featuredProgram.title}
+            </Text>
+            <ProgressBar
+              progress={featuredProgram.collectedAmount / featuredProgram.targetAmount}
+              style={styles.featuredBar}
+            />
+            <View style={styles.featuredFooter}>
+              <Text style={styles.featuredRaised}>
+                {formatCurrency(featuredProgram.collectedAmount)}
+              </Text>
+              <Text style={styles.featuredTarget}>
+                {' '}dari {formatCurrency(featuredProgram.targetAmount)}
+              </Text>
+              <View style={{ flex: 1 }} />
+              <View style={styles.featuredCta}>
+                <Text style={styles.featuredCtaText}>Donasi</Text>
+                <ChevronRight size={14} color={colors.primary[600]} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          /* Static impact card when no programs */
+          <View style={styles.impactCard}>
+            <View style={styles.impactRow}>
+              <View style={styles.impactItem}>
+                <View style={[styles.impactIcon, { backgroundColor: colors.primary[50] }]}>
+                  <Heart size={18} color={colors.primary[600]} fill={colors.primary[100]} />
+                </View>
+                <Text style={styles.impactValue}>Rp 124 Jt</Text>
+                <Text style={styles.impactLabel}>Dana Terkumpul</Text>
+              </View>
+              <View style={styles.impactItem}>
+                <View style={[styles.impactIcon, { backgroundColor: '#FFF1F2' }]}>
+                  <Users size={18} color="#E11D48" />
+                </View>
+                <Text style={styles.impactValue}>1.200+</Text>
+                <Text style={styles.impactLabel}>Keluarga Terbantu</Text>
+              </View>
+              <View style={styles.impactItem}>
+                <View style={[styles.impactIcon, { backgroundColor: colors.secondary[50] }]}>
+                  <Layers size={18} color={colors.secondary[600]} />
+                </View>
+                <Text style={styles.impactValue}>47</Text>
+                <Text style={styles.impactLabel}>Program Aktif</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ── Booking Berikutnya ── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Booking Berikutnya</Text>
+          <TouchableOpacity style={styles.seeAll} onPress={() => router.push('/booking')}>
+            <Text style={styles.seeAllText}>Lihat Semua</Text>
+            <ChevronRight size={13} color={colors.primary[600]} />
+          </TouchableOpacity>
+        </View>
+
+        {bookingsLoading ? (
+          <Skeleton height={130} borderRadius={18} />
+        ) : nextBooking ? (
+          <TouchableOpacity
+            style={styles.bookingCard}
+            onPress={() => router.push(`/booking/${nextBooking.id}`)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.bookingAccent} />
+            <View style={styles.bookingBody}>
+              <View style={styles.bookingTopRow}>
+                <Badge
+                  label={nextBooking.status}
+                  variant={nextBooking.status === 'confirmed' ? 'success' : 'warning'}
                 />
-                <View style={styles.programStats}>
-                  <Text style={styles.programRaised}>
-                    {formatCurrency(program.collectedAmount)}
+                <Text style={styles.bookingId}>#{nextBooking.id.slice(-6).toUpperCase()}</Text>
+              </View>
+              <View style={styles.bookingInfoList}>
+                <View style={styles.infoRow}>
+                  <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
+                    <Calendar size={13} color={colors.primary[600]} />
+                  </View>
+                  <Text style={styles.infoText}>
+                    {new Date(nextBooking.bookingDate).toLocaleDateString('id-ID', {
+                      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                    })}
                   </Text>
-                  <Text style={styles.programTarget}>
-                    dari {formatCurrency(program.targetAmount)}
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
+                    <Clock size={13} color={colors.primary[600]} />
+                  </View>
+                  <Text style={styles.infoText}>{nextBooking.timeSlot}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
+                    <MapPin size={13} color={colors.primary[600]} />
+                  </View>
+                  <Text style={styles.infoText} numberOfLines={1}>
+                    {nextBooking.pickupAddress}
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      ) : (
-        <EmptyState
-          icon={TrendingUp}
-          title="Belum ada program"
-          description="Program akan segera tersedia"
-          compact
-        />
-      )}
-
-      {/* Latest News */}
-      <SectionHeader 
-        title="Berita Terbaru"
-        right={
-          <TouchableOpacity onPress={() => router.push('/news')}>
-            <Text style={styles.link}>Lihat Semua</Text>
-          </TouchableOpacity>
-        }
-      />
-      
-      {newsLoading ? (
-        <>
-          <Skeleton height={80} borderRadius={12} />
-          <Skeleton height={80} borderRadius={12} />
-        </>
-      ) : news?.length > 0 ? (
-        news.map((item: any) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.newsItem}
-            onPress={() => router.push(`/news/${item.id}`)}
-          >
-            <View style={styles.newsImage} />
-            <View style={styles.newsContent}>
-              <Badge label={item.category} variant="secondary" size="sm" />
-              <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.newsDate}>
-                {new Date(item.publishedAt).toLocaleDateString('id-ID')}
-              </Text>
             </View>
           </TouchableOpacity>
-        ))
-      ) : (
-        <EmptyState
-          icon={TrendingUp}
-          title="Belum ada berita"
-          description="Berita akan segera tersedia"
-          compact
-        />
-      )}
-    </ScreenWrapper>
+        ) : (
+          <View style={styles.emptyBooking}>
+            <View style={styles.emptyBookingAccent} />
+            <View style={styles.emptyBookingBody}>
+              <View style={styles.emptyIconCircle}>
+                <Calendar size={26} color={colors.primary[600]} />
+              </View>
+              <Text style={styles.emptyTitle}>Belum ada jadwal booking</Text>
+              <Text style={styles.emptySubtitle}>
+                Mulai buat booking pertama Anda dan kami siap membantu
+              </Text>
+              <TouchableOpacity
+                style={styles.emptyBtn}
+                onPress={() => router.push('/booking/new')}
+                activeOpacity={0.85}
+              >
+                <Plus size={15} color={colors.white} />
+                <Text style={styles.emptyBtnText}>Buat Booking</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* ── Program Unggulan ── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Program Unggulan</Text>
+          <TouchableOpacity style={styles.seeAll} onPress={() => router.push('/programs')}>
+            <Text style={styles.seeAllText}>Lihat Semua</Text>
+            <ChevronRight size={13} color={colors.primary[600]} />
+          </TouchableOpacity>
+        </View>
+
+        {programsLoading ? (
+          <Skeleton height={180} borderRadius={18} />
+        ) : programs?.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.programsRow}
+          >
+            {programs.map((p: any, idx: number) => {
+              const CARD_COLORS = [
+                { from: colors.primary[600], to: colors.primary[400] },
+                { from: '#E11D48', to: '#FB7185' },
+                { from: colors.secondary[600], to: colors.secondary[400] },
+                { from: '#7C3AED', to: '#A78BFA' },
+              ];
+              const cc = CARD_COLORS[idx % CARD_COLORS.length];
+              const progress = pct(p.collectedAmount, p.targetAmount);
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  style={styles.programCard}
+                  onPress={() => router.push(`/programs/${p.id}`)}
+                  activeOpacity={0.85}
+                >
+                  {/* Colored header */}
+                  <View style={[styles.programHeader, { backgroundColor: cc.from }]}>
+                    <Heart size={34} color="rgba(255,255,255,0.35)" fill="rgba(255,255,255,0.2)" />
+                    <View style={styles.programPctBadge}>
+                      <Text style={styles.programPctText}>{progress}%</Text>
+                    </View>
+                  </View>
+                  {/* Content */}
+                  <View style={styles.programBody}>
+                    <Badge label={p.category} variant="primary" size="sm" />
+                    <Text style={styles.programTitle} numberOfLines={2}>{p.title}</Text>
+                    <ProgressBar
+                      progress={p.collectedAmount / p.targetAmount}
+                      style={styles.programBar}
+                    />
+                    <View style={styles.programAmountRow}>
+                      <Text style={[styles.programRaised, { color: cc.from }]}>
+                        {formatCurrency(p.collectedAmount)}
+                      </Text>
+                      <Text style={styles.programTarget}>
+                        {' '}/ {formatCurrency(p.targetAmount)}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        ) : (
+          <View style={styles.emptyProgram}>
+            <View style={[styles.emptyProgramIcon, { backgroundColor: '#FFF1F2' }]}>
+              <Heart size={26} color="#E11D48" />
+            </View>
+            <View style={styles.emptyProgramText}>
+              <Text style={styles.emptyTitle}>Belum ada program aktif</Text>
+              <Text style={styles.emptySubtitle}>Program unggulan akan segera hadir</Text>
+            </View>
+            <View style={styles.emptyProgramDots}>
+              {[0, 1, 2].map(i => (
+                <View
+                  key={i}
+                  style={[styles.dot, { backgroundColor: i === 0 ? colors.primary[400] : colors.gray[200] }]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── Berita Terbaru ── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Berita Terbaru</Text>
+          <TouchableOpacity style={styles.seeAll} onPress={() => router.push('/news')}>
+            <Text style={styles.seeAllText}>Lihat Semua</Text>
+            <ChevronRight size={13} color={colors.primary[600]} />
+          </TouchableOpacity>
+        </View>
+
+        {newsLoading ? (
+          <>
+            <Skeleton height={100} borderRadius={18} />
+            <Skeleton height={100} borderRadius={18} />
+          </>
+        ) : news?.length > 0 ? (
+          news.map((item: any) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.newsCard}
+              onPress={() => router.push(`/news/${item.id}`)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.newsThumb} />
+              <View style={styles.newsBody}>
+                <Badge label={item.category} variant="secondary" size="sm" />
+                <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.newsDate}>
+                  {new Date(item.publishedAt).toLocaleDateString('id-ID', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                  })}
+                </Text>
+              </View>
+              <View style={styles.newsArrow}>
+                <ChevronRight size={16} color={colors.gray[400]} />
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptyNews}>
+            <View style={[styles.emptyNewsThumb, { backgroundColor: colors.gray[100] }]}>
+              <Newspaper size={28} color={colors.gray[400]} />
+            </View>
+            <View style={styles.emptyNewsText}>
+              <Text style={styles.emptyTitle}>Belum ada berita</Text>
+              <Text style={styles.emptySubtitle}>Nantikan berita terbaru dari kami</Text>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  headerLeft: {
+  root: {
     flex: 1,
+    backgroundColor: colors.primary[700],
   },
-  greeting: {
-    ...typography.body2,
-    color: colors.gray[500],
+
+  // ── Header ──
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
   },
-  userName: {
-    ...typography.h3,
-    color: colors.gray[900],
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  notificationButton: {
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  headerLogo: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.gray[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statValue: {
-    ...typography.h3,
-    color: colors.gray[900],
-    marginBottom: 4,
-  },
-  statLabel: {
-    ...typography.caption,
-    color: colors.gray[500],
-  },
-  menuContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  menuItem: {
-    width: '23%',
-    alignItems: 'center',
-  },
-  menuIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  menuLabel: {
-    ...typography.caption,
-    color: colors.gray[700],
+  greetingLabel: {
+    fontSize: 12,
+    color: colors.primary[200],
     fontWeight: '500',
   },
-  link: {
-    ...typography.button,
-    color: colors.primary[600],
+  userName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.white,
   },
-  bookingCard: {
-    marginBottom: 24,
+  notifBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  bookingHeader: {
+  notifDot: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: colors.primary[700],
+  },
+
+  // ── Stats strip ──
+  statsStrip: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.white,
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: colors.primary[200],
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 13,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    marginVertical: 6,
+  },
+
+  // ── White panel ──
+  panel: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  panelContent: {
+    padding: 20,
+  },
+
+  // ── Section headers ──
+  sectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 28,
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.gray[900],
+  },
+  seeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[600],
+  },
+
+  // ── Featured campaign card ──
+  featuredCard: {
+    backgroundColor: colors.primary[50],
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    marginTop: 8,
+  },
+  featuredBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  featuredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.primary[600],
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  featuredBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  featuredPct: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.primary[700],
+  },
+  featuredTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.gray[900],
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  featuredBar: {
     marginBottom: 12,
   },
-  bookingId: {
-    ...typography.caption,
+  featuredFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featuredRaised: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary[700],
+  },
+  featuredTarget: {
+    fontSize: 12,
     color: colors.gray[500],
   },
-  bookingInfo: {
-    gap: 8,
+  featuredCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 2,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+  },
+  featuredCtaText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary[600],
+  },
+
+  // ── Impact card (fallback) ──
+  impactCard: {
+    backgroundColor: colors.gray[50],
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    marginTop: 8,
+  },
+  impactRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  impactItem: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  impactIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  impactValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.gray[900],
+  },
+  impactLabel: {
+    fontSize: 10,
+    color: colors.gray[500],
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+
+  // ── Booking card ──
+  bookingCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  bookingAccent: {
+    width: 4,
+    backgroundColor: colors.primary[500],
+  },
+  bookingBody: {
+    flex: 1,
+    padding: 16,
+  },
+  bookingTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  bookingId: {
+    fontSize: 12,
+    color: colors.gray[400],
+    fontWeight: '600',
+  },
+  bookingInfoList: {
+    gap: 10,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  infoText: {
-    ...typography.body2,
-    color: colors.gray[700],
-    flex: 1,
-  },
-  programsScroll: {
-    gap: 12,
-    paddingRight: 16,
-  },
-  programCard: {
-    width: 280,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  programImage: {
-    height: 120,
-    backgroundColor: colors.primary[50],
+  infoIconBox: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  programContent: {
-    padding: 12,
+  infoText: {
+    fontSize: 13,
+    color: colors.gray[700],
+    flex: 1,
+    lineHeight: 18,
+  },
+
+  // ── Program cards ──
+  programsRow: {
+    gap: 14,
+    paddingRight: 4,
+  },
+  programCard: {
+    width: 240,
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  programHeader: {
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  programPctBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  programPctText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  programBody: {
+    padding: 14,
   },
   programTitle: {
-    ...typography.body1,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.gray[900],
     marginTop: 8,
-    marginBottom: 4,
+    marginBottom: 10,
+    lineHeight: 18,
   },
-  programDescription: {
-    ...typography.body2,
-    color: colors.gray[500],
-    marginBottom: 12,
-  },
-  programProgress: {
+  programBar: {
     marginBottom: 8,
   },
-  programStats: {
+  programAmountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 4,
   },
   programRaised: {
-    ...typography.body2,
-    fontWeight: '600',
-    color: colors.success[600],
+    fontSize: 13,
+    fontWeight: '700',
   },
   programTarget: {
-    ...typography.caption,
-    color: colors.gray[500],
+    fontSize: 11,
+    color: colors.gray[400],
   },
-  newsItem: {
+
+  // ── News cards ──
+  newsCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: 12,
+    borderRadius: 18,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  newsImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+  newsThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
     backgroundColor: colors.gray[200],
     marginRight: 12,
   },
-  newsContent: {
+  newsBody: {
     flex: 1,
-    justifyContent: 'center',
+    gap: 4,
   },
   newsTitle: {
-    ...typography.body2,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.gray[900],
-    marginTop: 4,
-    marginBottom: 4,
+    lineHeight: 18,
   },
   newsDate: {
-    ...typography.caption,
+    fontSize: 11,
+    color: colors.gray[400],
+    fontWeight: '500',
+  },
+  newsArrow: {
+    paddingLeft: 4,
+  },
+
+  // ── Empty states ──
+  emptyBooking: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  emptyBookingAccent: {
+    width: 4,
+    backgroundColor: colors.primary[200],
+  },
+  emptyBookingBody: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  emptyIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: colors.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gray[800],
+  },
+  emptySubtitle: {
+    fontSize: 12,
     color: colors.gray[500],
+    lineHeight: 17,
+  },
+  emptyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primary[600],
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 12,
+    marginTop: 6,
+    shadowColor: colors.primary[700],
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  emptyBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  emptyProgram: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  emptyProgramIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyProgramText: {
+    flex: 1,
+    gap: 4,
+  },
+  emptyProgramDots: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  emptyNews: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  emptyNewsThumb: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyNewsText: {
+    flex: 1,
+    gap: 4,
   },
 });

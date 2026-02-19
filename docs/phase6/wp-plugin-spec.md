@@ -68,7 +68,7 @@ wp-plugin/clicky-foundation/
 ```php
 <?php
 /**
- * Plugin Name: Clicky Foundation
+ * Plugin Name: Yayasan Sahabat Khairat Indonesia
  * Plugin URI: https://clickyfoundation.id
  * Description: Integrasi WordPress untuk Yayasan Sahabat Khairat - sinkronisasi konten, shortcodes, dan laporan keuangan.
  * Version: 1.0.0

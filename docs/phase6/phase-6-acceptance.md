@@ -9,7 +9,7 @@
 - [ ] Plugin deactivation clears all scheduled cron events
 - [ ] Plugin uninstall removes all data (tables, options, transients, CPT posts)
 - [ ] Admin notice displays if API URL is not configured
-- [ ] Settings page is accessible at Settings > Clicky Foundation
+- [ ] Settings page is accessible at Settings > Yayasan Sahabat Khairat Indonesia
 
 ## Settings & Configuration
 

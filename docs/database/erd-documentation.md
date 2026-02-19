@@ -1,6 +1,6 @@
 # Database Entity Relationship Documentation
 
-> PostgreSQL 16 — Clicky Foundation
+> PostgreSQL 16 — Yayasan Sahabat Khairat Indonesia
 
 ---
 

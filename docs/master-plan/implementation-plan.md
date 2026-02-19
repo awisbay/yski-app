@@ -1,8 +1,8 @@
-# Clicky Foundation App - Implementation Plan
+# Yayasan Sahabat Khairat Indonesia App - Implementation Plan
 
 ## 1. Project Overview
 
-**Clicky Foundation** adalah aplikasi mobile untuk Yayasan "Sahabat Khairat" (YSKI) yang bertujuan mendigitalisasi layanan sosial yayasan. Aplikasi ini menjadi jembatan antara yayasan, relawan, dan masyarakat (sahabat) untuk mempermudah akses terhadap layanan pindahan, peminjaman alat kesehatan, donasi, pengumpulan zakat, lelang barang, dan transparansi keuangan.
+**Yayasan Sahabat Khairat Indonesia** adalah aplikasi mobile untuk Yayasan "Sahabat Khairat" (YSKI) yang bertujuan mendigitalisasi layanan sosial yayasan. Aplikasi ini menjadi jembatan antara yayasan, relawan, dan masyarakat (sahabat) untuk mempermudah akses terhadap layanan pindahan, peminjaman alat kesehatan, donasi, pengumpulan zakat, lelang barang, dan transparansi keuangan.
 
 ### Fitur Utama
 

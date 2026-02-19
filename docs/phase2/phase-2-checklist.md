@@ -1,6 +1,6 @@
 # Phase 2: Backend Core Features - Checklist
 
-> Yayasan Sahabat Khairat (Clicky Foundation)
+> Yayasan Sahabat Khairat (Yayasan Sahabat Khairat Indonesia)
 > Stack: FastAPI, PostgreSQL, Redis, MinIO
 
 ## Booking Engine (Armada Pindahan)

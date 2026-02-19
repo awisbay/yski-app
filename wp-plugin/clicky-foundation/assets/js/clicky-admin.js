@@ -1,5 +1,5 @@
 /**
- * Clicky Foundation - Admin Scripts
+ * Yayasan Sahabat Khairat Indonesia - Admin Scripts
  */
 (function($) {
     'use strict';

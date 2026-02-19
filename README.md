@@ -1,4 +1,4 @@
-# Clicky Foundation App (YSKI)
+# Yayasan Sahabat Khairat Indonesia App (YSKI)
 
 Aplikasi mobile untuk Yayasan Sahabat Khairat (YSKI) yang mendigitalisasi layanan sosial yayasan.
 

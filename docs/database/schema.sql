@@ -1,5 +1,5 @@
 -- ============================================================
--- Clicky Foundation - Database Schema
+-- Yayasan Sahabat Khairat Indonesia - Database Schema
 -- Yayasan Sahabat Khairat (sahabatkhairat.or.id)
 -- PostgreSQL 16
 -- ============================================================

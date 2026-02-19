@@ -1,6 +1,6 @@
 /**
  * Design System Color Tokens
- * Clicky Foundation - YSKI App
+ * Yayasan Sahabat Khairat Indonesia - YSKI App
  */
 
 export const colors = {

@@ -1,5 +1,5 @@
 /**
- * Clicky Foundation - Public Scripts
+ * Yayasan Sahabat Khairat Indonesia - Public Scripts
  */
 (function($) {
     'use strict';

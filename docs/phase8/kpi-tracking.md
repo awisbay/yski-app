@@ -199,7 +199,7 @@ The admin screen at `/(admin)/index.tsx` displays:
 ## 4. Weekly Report Template
 
 ```markdown
-# Clicky Foundation - Laporan Mingguan
+# Yayasan Sahabat Khairat Indonesia - Laporan Mingguan
 
 ## Periode: [Tanggal Mulai] - [Tanggal Selesai]
 

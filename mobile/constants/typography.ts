@@ -1,6 +1,6 @@
 /**
  * Typography Configuration
- * Clicky Foundation - YSKI App
+ * Yayasan Sahabat Khairat Indonesia - YSKI App
  */
 
 import { TextStyle } from 'react-native';

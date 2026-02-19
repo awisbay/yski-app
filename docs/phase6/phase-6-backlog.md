@@ -10,7 +10,7 @@
 
 ### US-6.01: Plugin Activation & Setup
 **Sebagai** admin WordPress,
-**Saya ingin** menginstall dan mengaktifkan plugin Clicky Foundation,
+**Saya ingin** menginstall dan mengaktifkan plugin Yayasan Sahabat Khairat Indonesia,
 **Agar** website WordPress bisa terkoneksi dengan backend FastAPI.
 
 **Acceptance Criteria:**
@@ -25,10 +25,10 @@
 ### US-6.02: Settings Page
 **Sebagai** admin WordPress,
 **Saya ingin** mengkonfigurasi koneksi API dan sync settings,
-**Agar** plugin bisa berkomunikasi dengan backend Clicky Foundation.
+**Agar** plugin bisa berkomunikasi dengan backend Yayasan Sahabat Khairat Indonesia.
 
 **Acceptance Criteria:**
-- [ ] Settings page tersedia di Settings > Clicky Foundation
+- [ ] Settings page tersedia di Settings > Yayasan Sahabat Khairat Indonesia
 - [ ] Field API Base URL dengan validasi URL format
 - [ ] Field API Key dengan input type password (masked)
 - [ ] Field Webhook Secret dengan input type password

@@ -1,6 +1,6 @@
 # Phase 7: Testing Strategy
 
-> Comprehensive testing approach for the Clicky Foundation application.
+> Comprehensive testing approach for the Yayasan Sahabat Khairat Indonesia application.
 
 ---
 

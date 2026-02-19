@@ -1,6 +1,6 @@
-# Clicky Foundation App - Phase-by-Phase Checklist
+# Yayasan Sahabat Khairat Indonesia App - Phase-by-Phase Checklist
 
-Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundation (Yayasan Sahabat Khairat).
+Checklist implementasi untuk setiap phase pengembangan aplikasi Yayasan Sahabat Khairat Indonesia (Yayasan Sahabat Khairat).
 
 ---
 
@@ -334,7 +334,7 @@ Checklist implementasi untuk setiap phase pengembangan aplikasi Clicky Foundatio
 - [x] Implementasi `register_activation_hook()` -- buat custom tables, set default options
 - [ ] Implementasi `register_deactivation_hook()` -- clear cron events
 - [ ] Implementasi `register_uninstall_hook()` -- drop tables, delete options
-- [ ] Buat settings page di WP Admin (Settings > Clicky Foundation)
+- [ ] Buat settings page di WP Admin (Settings > Yayasan Sahabat Khairat Indonesia)
 - [ ] Register admin menu item dengan icon custom
 - [ ] Buat `includes/` directory structure
 - [ ] Set minimum requirements check (PHP 7.4+, WP 5.8+)

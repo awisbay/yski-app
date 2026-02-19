@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-> Step-by-step guide for deploying Clicky Foundation to production.
+> Step-by-step guide for deploying Yayasan Sahabat Khairat Indonesia to production.
 
 ---
 

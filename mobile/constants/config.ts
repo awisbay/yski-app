@@ -1,6 +1,6 @@
 /**
  * App Configuration
- * Clicky Foundation - YSKI App
+ * Yayasan Sahabat Khairat Indonesia - YSKI App
  */
 
 import Constants from 'expo-constants';
@@ -14,7 +14,7 @@ export const config = {
   },
   // App Info
   app: {
-    name: 'Clicky Foundation',
+    name: 'Yayasan Sahabat Khairat Indonesia',
     version: Constants.expoConfig?.version || '1.0.0',
     buildNumber: Constants.expoConfig?.ios?.buildNumber || '1',
   },

@@ -14,7 +14,7 @@
 - [ ] Implementasi `register_activation_hook()` -- buat custom tables, set default options, flush rewrite rules
 - [ ] Implementasi `register_deactivation_hook()` -- clear cron events, flush rewrite rules
 - [ ] Implementasi `register_uninstall_hook()` -- drop tables, delete options, clean transients
-- [ ] Buat settings page di WP Admin (Settings > Clicky Foundation)
+- [ ] Buat settings page di WP Admin (Settings > Yayasan Sahabat Khairat Indonesia)
 - [ ] Register admin menu item dengan icon custom
 - [ ] Buat `includes/` directory structure
 - [ ] Implementasi autoloader untuk class-based architecture

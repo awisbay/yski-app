@@ -1,11 +1,11 @@
 #!/bin/bash
-# Clicky Foundation - Rollback Script
+# Yayasan Sahabat Khairat Indonesia - Rollback Script
 
 set -e
 
 BACKUP_DIR="/opt/clicky-foundation/backups"
 
-echo "=== Clicky Foundation Rollback ==="
+echo "=== Yayasan Sahabat Khairat Indonesia Rollback ==="
 echo "Available backups:"
 ls -lt "$BACKUP_DIR"/*.gz 2>/dev/null | head -20
 

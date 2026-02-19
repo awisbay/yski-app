@@ -1,6 +1,6 @@
 # Incident Response Procedure
 
-> Guidelines for responding to incidents in the Clicky Foundation production environment.
+> Guidelines for responding to incidents in the Yayasan Sahabat Khairat Indonesia production environment.
 
 ---
 

@@ -1,6 +1,6 @@
 # Phase 4: Screen Specifications
 
-Detailed UI/UX specifications for all 8 mockup screens based on the Clicky Foundation design mockups.
+Detailed UI/UX specifications for all 8 mockup screens based on the Yayasan Sahabat Khairat Indonesia design mockups.
 
 ---
 
@@ -172,7 +172,7 @@ const bookingSchema = z.object({
 
 ```
 ┌─────────────────────────────────┐
-│  ← Donasi Clicky Foundation     │
+│  ← Donasi Yayasan Sahabat Khairat Indonesia     │
 ├─────────────────────────────────┤
 │  LANGKAH 1 DARI 3  Pilih Nominal│
 │  ████████░░░░░░░░░░░░░░ (33%)   │
@@ -267,7 +267,7 @@ donationStore.setAmount(250000);
 
 ```
 ┌─────────────────────────────────┐
-│  🏠 Clicky Foundation       ✕   │
+│  🏠 Yayasan Sahabat Khairat Indonesia       ✕   │
 ├─────────────────────────────────┤
 │           ✅                     │
 │      Terima Kasih!              │
@@ -362,7 +362,7 @@ const pickupSchema = z.object({
 ```
 ┌─────────────────────────────────┐
 │  INVENTORY ALAT MEDIS    👤 ⚙️  │
-│  Clicky Foundation Dashboard    │
+│  Yayasan Sahabat Khairat Indonesia Dashboard    │
 ├─────────────────────────────────┤
 │  ┌─────┐ ┌─────┐               │
 │  │Total│ │Dipin│ ┌─────┐┌─────┐│

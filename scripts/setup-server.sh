@@ -1,10 +1,10 @@
 #!/bin/bash
-# Clicky Foundation - Server Setup Script
+# Yayasan Sahabat Khairat Indonesia - Server Setup Script
 # Run this on a fresh Ubuntu 22.04 server
 
 set -e
 
-echo "=== Clicky Foundation Server Setup ==="
+echo "=== Yayasan Sahabat Khairat Indonesia Server Setup ==="
 
 # Update system
 echo "Updating system packages..."

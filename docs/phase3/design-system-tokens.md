@@ -1,6 +1,6 @@
 # Design System Tokens
 
-Extracted from the 8 HTML/Tailwind mockups in the `mockup/` directory. These tokens define the visual language of the Clicky Foundation mobile app.
+Extracted from the 8 HTML/Tailwind mockups in the `mockup/` directory. These tokens define the visual language of the Yayasan Sahabat Khairat Indonesia mobile app.
 
 ---
 

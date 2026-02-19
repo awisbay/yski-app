@@ -1,6 +1,6 @@
 # Phase 8: Beta Launch Plan
 
-> Rencana detail peluncuran beta aplikasi Clicky Foundation.
+> Rencana detail peluncuran beta aplikasi Yayasan Sahabat Khairat Indonesia.
 
 ---
 
@@ -65,7 +65,7 @@ Week 4 (Beta Wrap-up)
 
 ### Pre-Launch Communication
 ```
-Subject: Undangan Beta Tester - Aplikasi Clicky Foundation 🎉
+Subject: Undangan Beta Tester - Aplikasi Yayasan Sahabat Khairat Indonesia 🎉
 
 Assalamu'alaikum,
 
@@ -85,7 +85,7 @@ menyempurnakan aplikasi sebelum rilis publik.
 [Link instalasi akan dikirim besok]
 
 Jazakallahu khairan,
-Tim Clicky Foundation
+Tim Yayasan Sahabat Khairat Indonesia
 ```
 
 ### Weekly Update Template
@@ -115,7 +115,7 @@ Silakan isi feedback form: [link]
 1. Buka email undangan dari TestFlight
 2. Install TestFlight dari App Store (jika belum ada)
 3. Tap "Accept" pada undangan
-4. Buka TestFlight → tap "Install" pada Clicky Foundation
+4. Buka TestFlight → tap "Install" pada Yayasan Sahabat Khairat Indonesia
 5. Tunggu download selesai → buka aplikasi
 6. Daftar akun baru atau login
 

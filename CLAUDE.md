@@ -1,8 +1,8 @@
-# Clicky Foundation - Project Conventions
+# Yayasan Sahabat Khairat Indonesia - Project Conventions
 
 ## Project Overview
 
-This is the **Clicky Foundation** mobile application for Yayasan Sahabat Khairat (YSKI), built with:
+This is the **Yayasan Sahabat Khairat Indonesia** mobile application for Yayasan Sahabat Khairat (YSKI), built with:
 - **Backend**: FastAPI + SQLAlchemy + PostgreSQL
 - **Mobile**: React Native + Expo SDK 52 + NativeWind v4
 - **Infrastructure**: Docker + Docker Compose

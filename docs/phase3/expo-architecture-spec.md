@@ -1,6 +1,6 @@
 # Expo + React Native Architecture Specification
 
-Technical architecture for the Clicky Foundation mobile app built with React Native, Expo SDK 52, NativeWind v4, Expo Router, and Zustand.
+Technical architecture for the Yayasan Sahabat Khairat Indonesia mobile app built with React Native, Expo SDK 52, NativeWind v4, Expo Router, and Zustand.
 
 ---
 
@@ -505,7 +505,7 @@ async function registerForPushNotifications() {
 ```json
 {
   "expo": {
-    "name": "Clicky Foundation",
+    "name": "Yayasan Sahabat Khairat Indonesia",
     "slug": "clicky-foundation",
     "version": "1.0.0",
     "scheme": "clicky",

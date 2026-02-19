@@ -103,7 +103,7 @@
   - [ ] Loading spinner during submission
   - [x] On success: navigate to `/donasi/sukses`
   - [ ] On error: show error toast
-- [x] Display security note: "Pembayaran Anda diproses secara aman oleh Clicky Foundation."
+- [x] Display security note: "Pembayaran Anda diproses secara aman oleh Yayasan Sahabat Khairat Indonesia."
 - [ ] Back navigation preserves form state
 
 ## Screen 5: Donasi Step 3 - Sukses
@@ -142,7 +142,7 @@
 - [x] Implement "Jadwal Penjemputan" section (Optional) - UI ONLY
   - [x] "Pilih Tanggal" date picker with calendar icon
   - [x] "Slot Waktu" time slot chips: 09:00-12:00, 13:00-15:00, 16:00-18:00
-- [x] Implement info banner: "Layanan penjemputan resmi dari Clicky Foundation. Aman dan Terpercaya."
+- [x] Implement info banner: "Layanan penjemputan resmi dari Yayasan Sahabat Khairat Indonesia. Aman dan Terpercaya."
 - [ ] Implement form validation (React Hook Form + Zod)
   - [ ] Required: donation_type, name, phone, address, coordinates
   - [ ] Phone: min 10 digits, Indonesian format

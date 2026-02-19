@@ -1,5 +1,5 @@
 """
-Clicky Foundation - YSKI App Backend
+Yayasan Sahabat Khairat Indonesia - YSKI App Backend
 FastAPI Application Entry Point
 """
 
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Clicky Foundation API",
+    title="Yayasan Sahabat Khairat Indonesia API",
     description="API for Yayasan Sahabat Khairat (YSKI) Mobile Application",
     version="1.0.0",
     lifespan=lifespan,
@@ -55,7 +55,7 @@ async def health_check():
 async def root():
     """Root endpoint."""
     return {
-        "message": "Welcome to Clicky Foundation API",
+        "message": "Welcome to Yayasan Sahabat Khairat Indonesia API",
         "docs": "/docs",
         "version": "1.0.0"
     }

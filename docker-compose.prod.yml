@@ -1,4 +1,4 @@
-# Production overrides for Clicky Foundation
+# Production overrides for Yayasan Sahabat Khairat Indonesia
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:

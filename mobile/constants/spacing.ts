@@ -1,6 +1,6 @@
 /**
  * Spacing Scale (4px grid system)
- * Clicky Foundation - YSKI App
+ * Yayasan Sahabat Khairat Indonesia - YSKI App
  */
 
 export const spacing = {
