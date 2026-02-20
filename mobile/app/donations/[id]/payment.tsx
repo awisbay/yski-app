@@ -141,13 +141,15 @@ export default function DonationPaymentScreen() {
               {donation.paymentStatus === 'paid' ? (
                 <>
                   <CircleCheckBig size={16} color={colors.success[600]} />
-                  <Text style={[styles.statusText, { color: colors.success[700] }]}>Donasi sudah terverifikasi</Text>
+                  <Text style={[styles.statusText, { color: colors.success[700] }]}>
+                    Donasi anda Diterima, Jazakumullah khairan, Barakallahu Fiik
+                  </Text>
                 </>
               ) : (
                 <>
                   <Clock3 size={16} color={colors.warning[600]} />
                   <Text style={[styles.statusText, { color: colors.warning[700] }]}>
-                    Status: {donation.paymentStatus === 'awaiting_verification' ? 'Menunggu verifikasi admin/pengurus' : 'Menunggu upload bukti transfer'}
+                    Menunggu Konfirmasi
                   </Text>
                 </>
               )}

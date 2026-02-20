@@ -6,6 +6,7 @@ function normalizeDonation(raw: any) {
   if (!raw) return raw;
   return {
     ...raw,
+    donationCode: raw.donationCode ?? raw.donation_code,
     donationType: raw.donationType ?? raw.donation_type,
     paymentStatus: raw.paymentStatus ?? raw.payment_status,
     donorName: raw.donorName ?? raw.donor_name,
@@ -30,6 +31,13 @@ export function useMyDonations() {
   return useQuery({
     queryKey: donationKeys.lists(),
     queryFn: () => donationsApi.getMyDonations().then(res => (res.data || []).map(normalizeDonation)),
+  });
+}
+
+export function useAllDonations() {
+  return useQuery({
+    queryKey: [...donationKeys.lists(), 'all'],
+    queryFn: () => donationsApi.getList().then((res) => (res.data || []).map(normalizeDonation)),
   });
 }
 
@@ -72,6 +80,20 @@ export function useUploadDonationProof() {
     onSuccess: (_res, vars) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.detail(vars.id) });
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
+    },
+  });
+}
+
+export function useVerifyDonation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'paid' | 'cancelled' }) =>
+      donationsApi.verify(id, status),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...donationKeys.lists(), 'all'] });
+      queryClient.invalidateQueries({ queryKey: donationKeys.detail(vars.id) });
+      queryClient.invalidateQueries({ queryKey: donationKeys.summary() });
     },
   });
 }

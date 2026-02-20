@@ -10,7 +10,15 @@ export {
   useRejectBooking,
   useUpdateBookingStatus,
 } from './useBookings';
-export { useMyDonations, useDonationDetail, useDonationSummary, useCreateDonation, useUploadDonationProof } from './useDonations';
+export {
+  useMyDonations,
+  useAllDonations,
+  useDonationDetail,
+  useDonationSummary,
+  useCreateDonation,
+  useUploadDonationProof,
+  useVerifyDonation,
+} from './useDonations';
 export {
   useEquipmentList,
   useEquipmentStats,

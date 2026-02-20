@@ -7,12 +7,16 @@ import { colors } from '@/constants/colors';
 
 function getDonationState(paymentStatus?: string) {
   if (paymentStatus === 'paid') {
-    return { label: 'Terverifikasi', color: colors.success[600], icon: CheckCircle2 };
+    return {
+      label: 'Donasi anda Diterima, Jazakumullah khairan, Barakallahu Fiik',
+      color: colors.success[600],
+      icon: CheckCircle2,
+    };
   }
-  if (paymentStatus === 'awaiting_verification') {
-    return { label: 'Menunggu Verifikasi', color: colors.warning[600], icon: Clock3 };
+  if (paymentStatus === 'awaiting_verification' || paymentStatus === 'pending') {
+    return { label: 'Menunggu Konfirmasi', color: colors.warning[600], icon: Clock3 };
   }
-  return { label: 'Menunggu Bukti Transfer', color: colors.error[600], icon: FileWarning };
+  return { label: 'Menunggu Konfirmasi', color: colors.error[600], icon: FileWarning };
 }
 
 export default function DonationsScreen() {
@@ -180,6 +184,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontWeight: '700',
+    maxWidth: 180,
   },
   itemMeta: {
     fontSize: 12,

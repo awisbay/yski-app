@@ -16,7 +16,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus, Camera, Image as ImageIcon } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
-import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus } from '@/hooks';
+import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus, useAllDonations, useVerifyDonation } from '@/hooks';
 import {
   useAllEquipmentLoans,
   useEquipmentList,
@@ -29,6 +29,7 @@ import {
   useUploadEquipmentPhoto,
 } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
+import { API_ORIGIN } from '@/constants/config';
 import { colors } from '@/constants/colors';
 
 const TITLE_MAP: Record<string, string> = {
@@ -280,6 +281,126 @@ function BookingEta({ booking }: { booking: any }) {
   return <Text style={styles.rowText}>{text}</Text>;
 }
 
+function normalizeDonationProofUrl(url?: string | null) {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/') && API_ORIGIN) return `${API_ORIGIN}${url}`;
+  return url;
+}
+
+function DonationManagementScreen() {
+  const user = useAuthStore((state) => state.user);
+  const canManage = ['admin', 'superadmin', 'pengurus'].includes(user?.role || '');
+  const { data: donations, isLoading, refetch } = useAllDonations();
+  const verifyDonation = useVerifyDonation();
+
+  if (!canManage) {
+    return (
+      <MainThemeLayout title="Manajemen Donasi" subtitle="Akses terbatas" showBackButton onBackPress={() => router.replace('/(admin)')}>
+        <View style={styles.centered}><Text style={styles.emptyText}>Hanya admin/pengurus yang dapat mengelola donasi.</Text></View>
+      </MainThemeLayout>
+    );
+  }
+
+  const incoming = (donations || []).filter((d: any) =>
+    d.paymentStatus === 'pending' || d.paymentStatus === 'awaiting_verification'
+  );
+
+  return (
+    <MainThemeLayout
+      title="Manajemen Donasi"
+      subtitle={`${incoming.length} donasi masuk menunggu konfirmasi`}
+      showBackButton
+      onBackPress={() => router.replace('/(admin)')}
+    >
+      <View style={styles.content}>
+        {isLoading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator color={colors.primary[600]} />
+          </View>
+        ) : (
+          <FlatList
+            data={incoming}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => {
+              const proofUrl = normalizeDonationProofUrl(item.proofUrl);
+              return (
+                <View style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.code}>#{String(item.donationCode || item.id).slice(-8).toUpperCase()}</Text>
+                    <Text style={[styles.status, styles.statusPending]}>
+                      Menunggu Konfirmasi
+                    </Text>
+                  </View>
+
+                  <View style={styles.row}>
+                    <Text style={styles.rowText}>Donatur: {item.donorName || '-'}</Text>
+                  </View>
+                  <View style={styles.row}>
+                    <Text style={styles.rowText}>Nominal: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(item.amount || 0))}</Text>
+                  </View>
+                  <View style={styles.row}>
+                    <Text style={styles.rowText}>Tanggal: {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}</Text>
+                  </View>
+
+                  {proofUrl ? (
+                    <View style={styles.donationProofWrap}>
+                      <Image source={{ uri: proofUrl }} style={styles.donationProofImage} />
+                      <Text style={styles.loanRequestMeta}>Bukti transfer terupload</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.loanRequestMeta}>Belum ada bukti transfer.</Text>
+                  )}
+
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.rejectBtn, verifyDonation.isPending && { opacity: 0.7 }]}
+                      disabled={verifyDonation.isPending}
+                      onPress={async () => {
+                        try {
+                          await verifyDonation.mutateAsync({ id: item.id, status: 'cancelled' });
+                          refetch();
+                        } catch (err: any) {
+                          Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menolak donasi.');
+                        }
+                      }}
+                    >
+                      <XCircle size={15} color={colors.error[600]} />
+                      <Text style={styles.rejectText}>Tolak</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.approveBtn, verifyDonation.isPending && { opacity: 0.7 }]}
+                      disabled={verifyDonation.isPending}
+                      onPress={async () => {
+                        try {
+                          await verifyDonation.mutateAsync({ id: item.id, status: 'paid' });
+                          refetch();
+                        } catch (err: any) {
+                          Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat mengkonfirmasi donasi.');
+                        }
+                      }}
+                    >
+                      <CheckCircle2 size={15} color={colors.success[700]} />
+                      <Text style={styles.approveText}>Konfirmasi</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            }}
+            ListEmptyComponent={
+              <View style={styles.centered}>
+                <Text style={styles.emptyText}>Belum ada donasi yang menunggu konfirmasi.</Text>
+              </View>
+            }
+          />
+        )}
+      </View>
+    </MainThemeLayout>
+  );
+}
+
 export default function AdminSectionScreen() {
   const user = useAuthStore((state) => state.user);
   const { section } = useLocalSearchParams<{ section: string }>();
@@ -297,6 +418,10 @@ export default function AdminSectionScreen() {
 
   if (key === 'equipment') {
     return <EquipmentManagementScreen />;
+  }
+
+  if (key === 'donations') {
+    return <DonationManagementScreen />;
   }
 
   return (
@@ -904,6 +1029,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.gray[600],
     marginBottom: 2,
+  },
+  donationProofWrap: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 10,
+    padding: 8,
+    backgroundColor: colors.white,
+    gap: 6,
+  },
+  donationProofImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    backgroundColor: colors.gray[100],
   },
   stockCard: {
     borderWidth: 1,

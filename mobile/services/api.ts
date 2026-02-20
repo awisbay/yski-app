@@ -103,6 +103,8 @@ export const donationsApi = {
   getMyDonations: () => api.get('/donations/my'),
   getDetail: (id: string) => api.get(`/donations/${id}`),
   create: (data: any) => api.post('/donations', data),
+  verify: (id: string, status: 'paid' | 'cancelled') =>
+    api.patch(`/donations/${id}/verify`, { status }),
   uploadProof: (id: string, formData: FormData) =>
     api.post(`/donations/${id}/upload-proof`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
