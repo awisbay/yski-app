@@ -2,7 +2,6 @@
 Donation Routes
 """
 
-import uuid as uuid_mod
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
@@ -11,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_optional_current_user, require_role
+from app.core.media import save_upload_file
 from app.core.rate_limit import enforce_rate_limit
 from app.core.security import verify_hmac_signature
 from app.models.user import User
@@ -129,25 +129,12 @@ async def upload_payment_proof(
     if donation.donor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    # Validate file type
-    if file.content_type not in ALLOWED_UPLOAD_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File type not allowed. Allowed: jpeg, png, pdf",
-        )
-
-    # Validate file size
-    contents = await file.read()
-    if len(contents) > MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=400, detail="File too large. Max 5MB")
-    await file.seek(0)
-
-    # Generate safe filename to prevent path traversal
-    ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "bin"
-    safe_filename = f"{donation_id}_{uuid_mod.uuid4().hex}.{ext}"
-    proof_url = f"/uploads/proofs/{safe_filename}"
-
-    # TODO: Implement file upload to MinIO and get URL
+    proof_url = await save_upload_file(
+        file=file,
+        subdir="donations/proofs",
+        allowed_types=ALLOWED_UPLOAD_TYPES,
+        max_size_bytes=MAX_UPLOAD_SIZE,
+    )
     donation = await service.upload_proof(str(donation_id), proof_url)
     return donation
 

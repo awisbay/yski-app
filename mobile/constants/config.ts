@@ -50,3 +50,12 @@ export type Config = typeof config;
 // Direct exports for convenience
 export const API_BASE_URL = config.api.baseUrl;
 export const GOOGLE_PLACES_API_KEY = config.maps.googlePlacesApiKey;
+
+let resolvedOrigin = '';
+try {
+  resolvedOrigin = new URL(API_BASE_URL).origin;
+} catch {
+  resolvedOrigin = '';
+}
+
+export const API_ORIGIN = resolvedOrigin;

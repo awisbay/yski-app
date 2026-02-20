@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     MINIO_ROOT_USER: str = "minioadmin"
     MINIO_ROOT_PASSWORD: str = "minioadmin"
     MINIO_BUCKET: str = "yski-uploads"
+
+    # Local media storage
+    MEDIA_ROOT: str = "media"
+    MEDIA_URL_PREFIX: str = "/media"
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:8081", "http://localhost:3000"]

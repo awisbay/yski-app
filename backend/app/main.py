@@ -5,7 +5,9 @@ FastAPI Application Entry Point
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.database import engine, Base
@@ -43,6 +45,11 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
+
+# Serve uploaded media files from local filesystem
+media_root = Path(settings.MEDIA_ROOT).resolve()
+media_root.mkdir(parents=True, exist_ok=True)
+app.mount(settings.MEDIA_URL_PREFIX, StaticFiles(directory=str(media_root)), name="media")
 
 
 @app.get("/health", tags=["Health"])

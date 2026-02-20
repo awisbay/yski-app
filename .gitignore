@@ -95,3 +95,7 @@ htmlcov/
 .coverage.*
 coverage.xml
 *.cover
+
+# Local media uploads
+backend/media/*
+!backend/media/.gitkeep

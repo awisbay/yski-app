@@ -4,16 +4,20 @@ Equipment Routes
 
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
+from app.core.media import save_upload_file
 from app.models.user import User
 from app.schemas.equipment import EquipmentCreate, EquipmentResponse, EquipmentUpdate, EquipmentLoanCreate, EquipmentLoanResponse
 from app.services.equipment import EquipmentService
 
 router = APIRouter()
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_IMAGE_SIZE = 8 * 1024 * 1024  # 8MB
 
 
 @router.get("", response_model=List[EquipmentResponse])
@@ -86,6 +90,21 @@ async def create_equipment(
     service = EquipmentService(db)
     equipment = await service.create_equipment(equipment_data)
     return equipment
+
+
+@router.post("/upload-photo")
+async def upload_equipment_photo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role("admin", "pengurus")),
+):
+    """Upload equipment photo and return media URL."""
+    media_url = await save_upload_file(
+        file=file,
+        subdir="equipment/photos",
+        allowed_types=ALLOWED_IMAGE_TYPES,
+        max_size_bytes=MAX_IMAGE_SIZE,
+    )
+    return {"photo_url": media_url}
 
 
 @router.put("/{equipment_id}", response_model=EquipmentResponse)

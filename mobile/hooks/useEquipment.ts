@@ -1,5 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { equipmentApi } from '@/services/api';
+import { API_ORIGIN } from '@/constants/config';
+
+function resolveMediaUrl(url?: string | null) {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/') && API_ORIGIN) return `${API_ORIGIN}${url}`;
+  return url;
+}
 
 function normalizeEquipment(raw: any) {
   if (!raw) return raw;
@@ -7,7 +15,7 @@ function normalizeEquipment(raw: any) {
     ...raw,
     totalStock: raw.totalStock ?? raw.total_stock,
     availableStock: raw.availableStock ?? raw.available_stock,
-    photoUrl: raw.photoUrl ?? raw.photo_url,
+    photoUrl: resolveMediaUrl(raw.photoUrl ?? raw.photo_url),
     isActive: raw.isActive ?? raw.is_active,
   };
 }
@@ -136,5 +144,11 @@ export function useCreateEquipment() {
       queryClient.invalidateQueries({ queryKey: equipmentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: equipmentKeys.stats() });
     },
+  });
+}
+
+export function useUploadEquipmentPhoto() {
+  return useMutation({
+    mutationFn: (formData: FormData) => equipmentApi.uploadPhoto(formData),
   });
 }

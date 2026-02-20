@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Image,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus, Camera, Image as ImageIcon } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
 import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus } from '@/hooks';
-import { useAllEquipmentLoans, useEquipmentList, useApproveLoan, useRejectLoan, useUpdateEquipment, useCreateEquipment } from '@/hooks';
+import { useAllEquipmentLoans, useEquipmentList, useApproveLoan, useRejectLoan, useUpdateEquipment, useCreateEquipment, useUploadEquipmentPhoto } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 
@@ -36,6 +38,12 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const EQUIPMENT_CATEGORIES = ['kesehatan', 'elektronik', 'lain-lain'] as const;
+
+type PickedPhoto = {
+  uri: string;
+  mimeType: string;
+  fileName: string;
+};
 
 async function fetchRouteEstimate(booking: any): Promise<{ distanceKm: number; durationMin: number } | null> {
   if (
@@ -299,12 +307,13 @@ function EquipmentManagementScreen() {
   const rejectLoan = useRejectLoan();
   const updateEquipment = useUpdateEquipment();
   const createEquipment = useCreateEquipment();
+  const uploadEquipmentPhoto = useUploadEquipmentPhoto();
   const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState<(typeof EQUIPMENT_CATEGORIES)[number]>('kesehatan');
   const [newTotalStock, setNewTotalStock] = useState('1');
   const [newDescription, setNewDescription] = useState('');
-  const [newPhotoUrl, setNewPhotoUrl] = useState('');
+  const [newPhoto, setNewPhoto] = useState<PickedPhoto | null>(null);
 
   if (!canManage) {
     return (
@@ -327,6 +336,44 @@ function EquipmentManagementScreen() {
     }
   };
 
+  const toPickedPhoto = (asset: ImagePicker.ImagePickerAsset): PickedPhoto => {
+    const fallbackName = `equipment_${Date.now()}.jpg`;
+    return {
+      uri: asset.uri,
+      mimeType: asset.mimeType || 'image/jpeg',
+      fileName: asset.fileName || fallbackName,
+    };
+  };
+
+  const onPickFromCamera = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Izin dibutuhkan', 'Mohon izinkan akses kamera terlebih dahulu.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.75,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    setNewPhoto(toPickedPhoto(result.assets[0]));
+  };
+
+  const onPickFromLibrary = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Izin dibutuhkan', 'Mohon izinkan akses galeri terlebih dahulu.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.75,
+      allowsMultipleSelection: false,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    setNewPhoto(toPickedPhoto(result.assets[0]));
+  };
+
   const onCreateEquipment = async () => {
     const total = Number(newTotalStock || '0');
     if (!newName.trim()) {
@@ -338,18 +385,30 @@ function EquipmentManagementScreen() {
       return;
     }
     try {
+      let uploadedPhotoUrl: string | null = null;
+      if (newPhoto) {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: newPhoto.uri,
+          name: newPhoto.fileName,
+          type: newPhoto.mimeType,
+        } as any);
+        const uploadRes = await uploadEquipmentPhoto.mutateAsync(formData);
+        uploadedPhotoUrl = uploadRes?.data?.photo_url || null;
+      }
+
       await createEquipment.mutateAsync({
         name: newName.trim(),
         category: newCategory,
         description: newDescription.trim() || null,
-        photo_url: newPhotoUrl.trim() || null,
+        photo_url: uploadedPhotoUrl,
         total_stock: total,
         available_stock: total,
         condition: 'good',
       });
       setNewName('');
       setNewDescription('');
-      setNewPhotoUrl('');
+      setNewPhoto(null);
       setNewTotalStock('1');
       setNewCategory('kesehatan');
       Alert.alert('Berhasil', 'Peralatan baru berhasil ditambahkan.');
@@ -397,13 +456,24 @@ function EquipmentManagementScreen() {
             value={newTotalStock}
             onChangeText={(txt) => setNewTotalStock(txt.replace(/[^0-9]/g, ''))}
           />
-          <TextInput
-            style={styles.formInput}
-            placeholder="URL foto (opsional)"
-            placeholderTextColor={colors.gray[400]}
-            value={newPhotoUrl}
-            onChangeText={setNewPhotoUrl}
-          />
+          <View style={styles.photoActionRow}>
+            <TouchableOpacity style={styles.photoActionBtn} onPress={onPickFromCamera} activeOpacity={0.85}>
+              <Camera size={15} color={colors.primary[700]} />
+              <Text style={styles.photoActionText}>Ambil Kamera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.photoActionBtn} onPress={onPickFromLibrary} activeOpacity={0.85}>
+              <ImageIcon size={15} color={colors.primary[700]} />
+              <Text style={styles.photoActionText}>Pilih Galeri</Text>
+            </TouchableOpacity>
+          </View>
+          {newPhoto ? (
+            <View style={styles.previewWrap}>
+              <Image source={{ uri: newPhoto.uri }} style={styles.previewImage} />
+              <TouchableOpacity onPress={() => setNewPhoto(null)}>
+                <Text style={styles.previewRemove}>Hapus foto</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
           <TextInput
             style={[styles.formInput, { minHeight: 70 }]}
             placeholder="Deskripsi (opsional)"
@@ -414,12 +484,12 @@ function EquipmentManagementScreen() {
             textAlignVertical="top"
           />
           <TouchableOpacity
-            style={[styles.createBtn, createEquipment.isPending && { opacity: 0.75 }]}
+            style={[styles.createBtn, (createEquipment.isPending || uploadEquipmentPhoto.isPending) && { opacity: 0.75 }]}
             onPress={onCreateEquipment}
-            disabled={createEquipment.isPending}
+            disabled={createEquipment.isPending || uploadEquipmentPhoto.isPending}
             activeOpacity={0.85}
           >
-            {createEquipment.isPending ? (
+            {(createEquipment.isPending || uploadEquipmentPhoto.isPending) ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
               <>
@@ -570,6 +640,46 @@ const styles = StyleSheet.create({
   },
   categoryChipTextActive: {
     color: colors.white,
+  },
+  photoActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  photoActionBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    backgroundColor: colors.primary[50],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  photoActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary[700],
+  },
+  previewWrap: {
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 10,
+    padding: 8,
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  previewImage: {
+    width: '100%',
+    height: 140,
+    borderRadius: 8,
+    backgroundColor: colors.gray[100],
+  },
+  previewRemove: {
+    fontSize: 12,
+    color: colors.error[600],
+    fontWeight: '700',
   },
   createBtn: {
     height: 42,

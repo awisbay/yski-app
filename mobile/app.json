@@ -35,7 +35,14 @@
       "expo-router",
       "expo-secure-store",
       "expo-asset",
-      "expo-location"
+      "expo-location",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Izinkan akses galeri untuk memilih foto peralatan.",
+          "cameraPermission": "Izinkan akses kamera untuk mengambil foto peralatan."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false

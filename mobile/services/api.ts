@@ -104,7 +104,7 @@ export const donationsApi = {
   getDetail: (id: string) => api.get(`/donations/${id}`),
   create: (data: any) => api.post('/donations', data),
   uploadProof: (id: string, formData: FormData) =>
-    api.post(`/donations/${id}/proof`, formData, {
+    api.post(`/donations/${id}/upload-proof`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   getSummary: () => api.get('/donations/summary'),
@@ -116,6 +116,10 @@ export const equipmentApi = {
   getDetail: (id: string) => api.get(`/equipment/${id}`),
   getStats: () => api.get('/equipment/stats'),
   createEquipment: (data: any) => api.post('/equipment', data),
+  uploadPhoto: (formData: FormData) =>
+    api.post('/equipment/upload-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   getMyLoans: () => api.get('/equipment/my-loans'),
   getAllLoans: (params?: { status?: string }) => api.get('/equipment/loans/all', { params }),
   requestLoan: (equipmentId: string, data: any) =>
