@@ -32,6 +32,14 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useMyBookings, usePrograms, useNews } from '@/hooks';
 import { colors } from '@/constants/colors';
 
+const OPS_DASHBOARD_MENU = [
+  { key: 'users', label: 'User', route: '/admin/users', icon: Users, color: colors.primary[600], adminOnly: true },
+  { key: 'bookings', label: 'Booking', route: '/admin/bookings', icon: Calendar, color: colors.secondary[600] },
+  { key: 'equipment', label: 'Peralatan', route: '/admin/equipment', icon: Layers, color: colors.success[600] },
+  { key: 'donations', label: 'Donasi', route: '/admin/donations', icon: Heart, color: colors.warning[600] },
+  { key: 'pickups', label: 'Pickup', route: '/admin/pickups', icon: MapPin, color: colors.info[600] },
+];
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
@@ -43,6 +51,8 @@ export default function HomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const isOperationalRole = ['admin', 'pengurus', 'relawan', 'superadmin'].includes(user?.role || '');
+  const isAdminRole = ['admin', 'superadmin'].includes(user?.role || '');
+  const quickMenus = OPS_DASHBOARD_MENU.filter((item) => !item.adminOnly || isAdminRole);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -203,6 +213,29 @@ export default function HomeScreen() {
               </View>
             </View>
           </View>
+        )}
+
+        {isOperationalRole && (
+          <>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Akses Cepat</Text>
+            </View>
+            <View style={styles.quickGrid}>
+              {quickMenus.map((item) => (
+                <TouchableOpacity
+                  key={item.key}
+                  style={styles.quickItem}
+                  onPress={() => router.push(item.route)}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.quickIconWrap, { backgroundColor: `${item.color}18` }]}>
+                    <item.icon size={18} color={item.color} />
+                  </View>
+                  <Text style={styles.quickLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
         )}
 
         {!isOperationalRole && (
@@ -626,6 +659,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: colors.primary[600],
+  },
+
+  // ── Operational quick grid ──
+  quickGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 4,
+  },
+  quickItem: {
+    width: '31.6%',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  quickIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray[800],
   },
 
   // ── Impact card (fallback) ──
