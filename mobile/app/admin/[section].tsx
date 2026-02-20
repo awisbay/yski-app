@@ -524,11 +524,33 @@ function EquipmentManagementScreen() {
                 </Text>
                 {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
                 <View style={styles.actionRow}>
-                  <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={async () => { await rejectLoan.mutateAsync(item.id); refetch(); }}>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.rejectBtn, (rejectLoan.isPending || approveLoan.isPending) && { opacity: 0.7 }]}
+                    disabled={rejectLoan.isPending || approveLoan.isPending}
+                    onPress={async () => {
+                      try {
+                        await rejectLoan.mutateAsync(item.id);
+                        refetch();
+                      } catch (err: any) {
+                        Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menolak request saat ini.');
+                      }
+                    }}
+                  >
                     <XCircle size={15} color={colors.error[600]} />
                     <Text style={styles.rejectText}>Tolak</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.actionBtn, styles.approveBtn]} onPress={async () => { await approveLoan.mutateAsync(item.id); refetch(); }}>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.approveBtn, (approveLoan.isPending || rejectLoan.isPending) && { opacity: 0.7 }]}
+                    disabled={approveLoan.isPending || rejectLoan.isPending}
+                    onPress={async () => {
+                      try {
+                        await approveLoan.mutateAsync(item.id);
+                        refetch();
+                      } catch (err: any) {
+                        Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menyetujui request saat ini.');
+                      }
+                    }}
+                  >
                     <CheckCircle2 size={15} color={colors.success[700]} />
                     <Text style={styles.approveText}>Setujui</Text>
                   </TouchableOpacity>

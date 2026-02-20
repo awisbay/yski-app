@@ -232,7 +232,8 @@ class EquipmentService:
             reference_id=loan.id,
             send_push=True,
         )
-        return loan
+        loaded_loan = await self._get_loan_with_equipment(loan.id)
+        return loaded_loan or loan
     
     async def reject_loan(self, loan_id: str) -> Optional[EquipmentLoan]:
         """Reject a loan request."""
@@ -258,7 +259,8 @@ class EquipmentService:
             reference_id=loan.id,
             send_push=True,
         )
-        return loan
+        loaded_loan = await self._get_loan_with_equipment(loan.id)
+        return loaded_loan or loan
     
     async def mark_as_borrowed(self, loan_id: str) -> Optional[EquipmentLoan]:
         """Mark loan as borrowed (when item is picked up)."""
@@ -272,7 +274,8 @@ class EquipmentService:
         loan.status = "borrowed"
         await self.db.flush()
         await self.db.refresh(loan)
-        return loan
+        loaded_loan = await self._get_loan_with_equipment(loan.id)
+        return loaded_loan or loan
     
     async def mark_as_returned(self, loan_id: str) -> Optional[EquipmentLoan]:
         """Mark loan as returned."""
@@ -291,7 +294,8 @@ class EquipmentService:
         
         await self.db.flush()
         await self.db.refresh(loan)
-        return loan
+        loaded_loan = await self._get_loan_with_equipment(loan.id)
+        return loaded_loan or loan
     
     async def get_stats(self) -> dict:
         """Get equipment statistics."""
