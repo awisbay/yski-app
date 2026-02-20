@@ -1,382 +1,270 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Heart, Gift, Building, Moon, ChevronLeft, ChevronRight, Wallet, Info } from 'lucide-react-native';
+import { HandHeart, Info } from 'lucide-react-native';
 import { MainThemeLayout } from '@/components/ui';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import { Card } from '@/components/Card';
-import { Badge } from '@/components/Badge';
 import { useCreateDonation } from '@/hooks';
-import { donationAmountSchema, type DonationAmountFormData } from '@/lib/validation';
-import { useDonationStore } from '@/stores/donationStore';
+import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
-import { typography } from '@/constants/typography';
-
-const DONATION_TYPES = [
-  { key: 'infaq', label: 'Infaq', icon: Gift, description: 'Infak untuk kegiatan sosial', color: colors.primary[500] },
-  { key: 'sedekah', label: 'Sedekah', icon: Heart, description: 'Sedekah untuk yang membutuhkan', color: colors.success[500] },
-  { key: 'wakaf', label: 'Wakaf', icon: Building, description: 'Wakaf untuk pembangunan', color: colors.secondary[500] },
-  { key: 'zakat', label: 'Zakat', icon: Moon, description: 'Zakat mal/fitrah', color: colors.warning[500] },
-];
 
 const PRESET_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 export default function NewDonationScreen() {
-  const [step, setStep] = useState(1);
-  const donationStore = useDonationStore();
-  const createMutation = useCreateDonation();
+  const user = useAuthStore((state) => state.user);
+  const createDonation = useCreateDonation();
+  const [amount, setAmount] = useState<number>(100000);
+  const [customAmount, setCustomAmount] = useState('');
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<DonationAmountFormData>({
-    resolver: zodResolver(donationAmountSchema),
-    defaultValues: {
-      donationType: (donationStore.selectedType || 'infaq') as 'infaq' | 'sedekah' | 'wakaf' | 'zakat',
-      amount: donationStore.selectedAmount || 100000,
-    },
-  });
+  const displayAmount = useMemo(() => {
+    if (customAmount.trim().length > 0) {
+      return Number(customAmount.replace(/[^0-9]/g, '') || '0');
+    }
+    return amount;
+  }, [amount, customAmount]);
 
-  const selectedType = watch('donationType');
-  const selectedAmount = watch('amount');
-  const customAmount = !PRESET_AMOUNTS.includes(selectedAmount);
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(value || 0);
 
-  const onSubmit = async (data: DonationAmountFormData) => {
-    if (step === 1) {
-      donationStore.setSelectedType(data.donationType);
-      donationStore.setSelectedAmount(data.amount);
-      setStep(2);
+  const onSubmit = async () => {
+    if (!displayAmount || displayAmount < 10000) {
+      Alert.alert('Validasi', 'Minimal donasi Rp 10.000.');
       return;
     }
 
     try {
-      const result = await createMutation.mutateAsync({
-        donation_type: data.donationType,
-        amount: data.amount,
+      const res = await createDonation.mutateAsync({
+        donation_type: 'sedekah',
+        amount: displayAmount,
+        donor_name: user?.full_name || 'Hamba Allah',
+        donor_email: user?.email || null,
+        donor_phone: user?.phone || null,
         payment_method: 'manual_transfer',
       });
-      
-      // Navigate to payment instructions
-      router.push(`/donations/${result.data.id}/payment`);
-    } catch (error) {
-      console.error('Donation failed:', error);
+      router.replace(`/donations/${res.data.id}/payment`);
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat membuat donasi saat ini.');
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   return (
-    <MainThemeLayout
-      title="Donasi Baru"
-      subtitle="Lengkapi donasi Anda"
-      showBackButton
-      onBackPress={() => {
-        if (step > 1) {
-          setStep(step - 1);
-        } else {
-          router.back();
-        }
-      }}
-    >
+    <MainThemeLayout title="Nominal Donasi" subtitle="Transfer manual (sementara)" showBackButton>
       <KeyboardAvoidingView
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-      >
-        {step === 1 && (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Pilih Jenis Donasi</Text>
-            <Text style={styles.stepDescription}>
-              Pilih jenis donasi yang ingin Anda berikan
-            </Text>
-
-            <Controller
-              control={control}
-              name="donationType"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.typesGrid}>
-                  {DONATION_TYPES.map((type) => (
-                    <TouchableOpacity
-                      key={type.key}
-                      style={[
-                        styles.typeCard,
-                        value === type.key && { borderColor: type.color, backgroundColor: type.color + '08' },
-                      ]}
-                      onPress={() => onChange(type.key)}
-                    >
-                      <View style={[styles.typeIcon, { backgroundColor: type.color + '15' }]}>
-                        <type.icon size={24} color={type.color} />
-                      </View>
-                      <Text style={[styles.typeLabel, value === type.key && { color: type.color }]}>
-                        {type.label}
-                      </Text>
-                      <Text style={styles.typeDescription} numberOfLines={2}>
-                        {type.description}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            />
-
-            <Text style={styles.sectionTitle}>Pilih Nominal</Text>
-
-            <Controller
-              control={control}
-              name="amount"
-              render={({ field: { onChange, value } }) => (
-                <>
-                  <View style={styles.amountsGrid}>
-                    {PRESET_AMOUNTS.map((amount) => (
-                      <TouchableOpacity
-                        key={amount}
-                        style={[
-                          styles.amountButton,
-                          value === amount && styles.amountButtonSelected,
-                        ]}
-                        onPress={() => onChange(amount)}
-                      >
-                        <Text
-                          style={[
-                            styles.amountText,
-                            value === amount && styles.amountTextSelected,
-                          ]}
-                        >
-                          {formatCurrency(amount)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <View style={styles.customAmountContainer}>
-                    <Text style={styles.customAmountLabel}>Atau masukkan nominal lain</Text>
-                    <Input
-                      placeholder="Rp 0"
-                      keyboardType="number-pad"
-                      value={customAmount ? value.toString() : ''}
-                      onChangeText={(text) => {
-                        const num = parseInt(text.replace(/[^0-9]/g, '')) || 0;
-                        onChange(num);
-                      }}
-                      leftIcon={<Wallet size={20} color={colors.gray[400]} />}
-                      error={errors.amount?.message}
-                    />
-                  </View>
-                </>
-              )}
-            />
-          </View>
-        )}
-
-        {step === 2 && (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Konfirmasi Donasi</Text>
-            <Text style={styles.stepDescription}>
-              Periksa kembali detail donasi Anda
-            </Text>
-
-            <Card style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Detail Donasi</Text>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Jenis Donasi</Text>
-                <Text style={styles.summaryValue}>
-                  {DONATION_TYPES.find(t => t.key === selectedType)?.label}
-                </Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Nominal</Text>
-                <Text style={[styles.summaryValue, styles.amountValue]}>
-                  {formatCurrency(selectedAmount)}
-                </Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Metode Pembayaran</Text>
-                <Text style={styles.summaryValue}>Transfer Manual</Text>
-              </View>
-            </Card>
-
-            <View style={styles.infoBox}>
-              <Info size={20} color={colors.primary[600]} />
-              <Text style={styles.infoText}>
-                Setelah konfirmasi, Anda akan mendapatkan instruksi pembayaran melalui transfer bank.
-              </Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.heroCard}>
+            <View style={styles.heroIcon}>
+              <HandHeart size={22} color={colors.primary[600]} />
             </View>
+            <Text style={styles.heroTitle}>Masukkan Nominal Donasi</Text>
+            <Text style={styles.heroSub}>Kategori donasi disederhanakan, langsung ke nominal.</Text>
           </View>
-        )}
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title={step === 2 ? 'Konfirmasi Donasi' : 'Lanjut'}
-            onPress={handleSubmit(onSubmit as any)}
-            isLoading={createMutation.isPending}
-            rightIcon={step < 2 ? <ChevronRight size={20} color={colors.white} /> : undefined}
+          <View style={styles.grid}>
+            {PRESET_AMOUNTS.map((value) => {
+              const selected = customAmount.trim().length === 0 && amount === value;
+              return (
+                <TouchableOpacity
+                  key={value}
+                  style={[styles.amountBtn, selected && styles.amountBtnActive]}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    setCustomAmount('');
+                    setAmount(value);
+                  }}
+                >
+                  <Text style={[styles.amountText, selected && styles.amountTextActive]}>
+                    {formatCurrency(value)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.label}>Atau nominal lain</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Contoh: 150000"
+            placeholderTextColor={colors.gray[400]}
+            keyboardType="number-pad"
+            value={customAmount}
+            onChangeText={(txt) => setCustomAmount(txt.replace(/[^0-9]/g, ''))}
           />
+
+          <View style={styles.totalCard}>
+            <Text style={styles.totalLabel}>Total Donasi</Text>
+            <Text style={styles.totalValue}>{formatCurrency(displayAmount)}</Text>
+          </View>
+
+          <View style={styles.infoBox}>
+            <Info size={16} color={colors.primary[700]} />
+            <Text style={styles.infoText}>
+              Setelah lanjut, Anda akan melihat instruksi transfer dan upload bukti pembayaran untuk diverifikasi admin/pengurus.
+            </Text>
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.submitBtn, createDonation.isPending && { opacity: 0.75 }]}
+            onPress={onSubmit}
+            disabled={createDonation.isPending}
+            activeOpacity={0.85}
+          >
+            {createDonation.isPending ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Text style={styles.submitText}>Lanjut Konfirmasi Transfer</Text>
+            )}
+          </TouchableOpacity>
         </View>
-      </ScrollView>
       </KeyboardAvoidingView>
     </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
+  content: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 120, gap: 12 },
+  heroCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.primary[50],
+    padding: 14,
   },
-  stepContent: {
-    padding: 16,
-  },
-  stepTitle: {
-    ...typography.h3,
-    marginBottom: 8,
-  },
-  stepDescription: {
-    ...typography.body2,
-    color: colors.gray[500],
-    marginBottom: 24,
-  },
-  typesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  typeCard: {
-    width: '48%',
+  heroIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  typeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    marginBottom: 10,
   },
-  typeLabel: {
-    ...typography.body1,
-    fontWeight: '600',
+  heroTitle: {
+    fontSize: 17,
+    fontWeight: '800',
     color: colors.gray[900],
     marginBottom: 4,
   },
-  typeDescription: {
-    ...typography.caption,
-    color: colors.gray[500],
+  heroSub: {
+    fontSize: 12,
+    color: colors.gray[600],
   },
-  sectionTitle: {
-    ...typography.body1,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  amountsGrid: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
+    justifyContent: 'space-between',
+    gap: 10,
   },
-  amountButton: {
-    width: '31%',
-    paddingVertical: 16,
-    backgroundColor: colors.gray[100],
+  amountBtn: {
+    width: '48.5%',
+    height: 48,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    backgroundColor: colors.white,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  amountButtonSelected: {
-    backgroundColor: colors.primary[500],
+  amountBtnActive: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[600],
   },
   amountText: {
-    ...typography.body2,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '700',
     color: colors.gray[700],
   },
-  amountTextSelected: {
+  amountTextActive: {
     color: colors.white,
   },
-  customAmountContainer: {
-    marginBottom: 24,
+  label: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.gray[700],
   },
-  customAmountLabel: {
-    ...typography.body2,
+  input: {
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    paddingHorizontal: 12,
+    color: colors.gray[800],
+    fontSize: 14,
+    backgroundColor: colors.white,
+  },
+  totalCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    backgroundColor: colors.white,
+    padding: 12,
+  },
+  totalLabel: {
+    fontSize: 12,
     color: colors.gray[500],
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  summaryCard: {
-    marginBottom: 16,
-  },
-  summaryTitle: {
-    ...typography.body1,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    ...typography.body2,
-    color: colors.gray[500],
-  },
-  summaryValue: {
-    ...typography.body2,
-    fontWeight: '500',
-    color: colors.gray[900],
-  },
-  amountValue: {
-    color: colors.success[600],
-    fontSize: 18,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.gray[200],
-    marginVertical: 12,
+  totalValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.primary[700],
   },
   infoBox: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: colors.primary[50],
-    padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.primary[50],
+    padding: 12,
+    flexDirection: 'row',
+    gap: 8,
   },
   infoText: {
     flex: 1,
-    ...typography.body2,
+    fontSize: 12,
     color: colors.gray[700],
+    lineHeight: 18,
   },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
+  footer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: 18,
+  },
+  submitBtn: {
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: colors.primary[600],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.white,
   },
 });

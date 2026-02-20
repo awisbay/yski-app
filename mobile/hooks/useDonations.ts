@@ -2,6 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { donationsApi } from '@/services/api';
 import { useDonationStore } from '@/stores/donationStore';
 
+function normalizeDonation(raw: any) {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    donationType: raw.donationType ?? raw.donation_type,
+    paymentStatus: raw.paymentStatus ?? raw.payment_status,
+    donorName: raw.donorName ?? raw.donor_name,
+    donorEmail: raw.donorEmail ?? raw.donor_email,
+    donorPhone: raw.donorPhone ?? raw.donor_phone,
+    proofUrl: raw.proofUrl ?? raw.proof_url,
+    createdAt: raw.createdAt ?? raw.created_at,
+    updatedAt: raw.updatedAt ?? raw.updated_at,
+  };
+}
+
 // Query keys
 export const donationKeys = {
   all: ['donations'] as const,
@@ -14,7 +29,7 @@ export const donationKeys = {
 export function useMyDonations() {
   return useQuery({
     queryKey: donationKeys.lists(),
-    queryFn: () => donationsApi.getMyDonations().then(res => res.data),
+    queryFn: () => donationsApi.getMyDonations().then(res => (res.data || []).map(normalizeDonation)),
   });
 }
 
@@ -22,7 +37,7 @@ export function useMyDonations() {
 export function useDonationDetail(id: string) {
   return useQuery({
     queryKey: donationKeys.detail(id),
-    queryFn: () => donationsApi.getDetail(id).then(res => res.data),
+    queryFn: () => donationsApi.getDetail(id).then(res => normalizeDonation(res.data)),
     enabled: !!id,
   });
 }
@@ -45,6 +60,18 @@ export function useCreateDonation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
       clearDonationForm();
+    },
+  });
+}
+
+export function useUploadDonationProof() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
+      donationsApi.uploadProof(id, formData),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: donationKeys.detail(vars.id) });
+      queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
     },
   });
 }
