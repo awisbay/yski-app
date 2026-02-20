@@ -18,7 +18,7 @@ from app.schemas.booking import BookingCreate, BookingUpdate
 
 ALLOWED_SLOTS = ["08:00", "10:00", "13:00", "15:00"]
 MAX_ADVANCE_DAYS = 30
-MAX_ACTIVE_BOOKINGS = 2
+MAX_SLOTS_PER_DAY_PER_USER = len(ALLOWED_SLOTS)
 
 
 def generate_booking_code() -> str:
@@ -91,17 +91,18 @@ class BookingService:
                 detail=f"Cannot book more than {MAX_ADVANCE_DAYS} days ahead"
             )
         
-        # Check active booking limit
-        active_count = await self.db.scalar(
+        # A user can reserve multiple slots in the same day (up to all available slots).
+        same_day_count = await self.db.scalar(
             select(func.count()).select_from(MovingBooking).where(
                 MovingBooking.requester_id == requester_id,
-                MovingBooking.status.in_(["pending", "approved"])
+                MovingBooking.booking_date == data.booking_date,
+                MovingBooking.status.in_(["pending", "approved", "in_progress"])
             )
         )
-        if active_count >= MAX_ACTIVE_BOOKINGS:
+        if same_day_count >= MAX_SLOTS_PER_DAY_PER_USER:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"You already have {MAX_ACTIVE_BOOKINGS} active bookings"
+                detail=f"Anda sudah memesan seluruh slot untuk tanggal {data.booking_date}"
             )
         
         # Check if slot is already booked (Layer 2) with pessimistic locking

@@ -113,8 +113,21 @@ export default function NewBookingScreen() {
   const dateString    = selectedDate.toISOString().split('T')[0];
 
   const { data: slotsData } = useBookingSlots(dateString);
-  const availableSlots: Record<string, boolean> = slotsData?.slots
-    ?? TIME_SLOTS.reduce((a, s) => ({ ...a, [s]: true }), {});
+  const availableSlots: Record<string, boolean> = useMemo(() => {
+    const mapped = TIME_SLOTS.reduce<Record<string, boolean>>((acc, slot) => {
+      acc[slot] = true;
+      return acc;
+    }, {});
+    const slots = slotsData?.slots;
+    if (Array.isArray(slots)) {
+      slots.forEach((entry: any) => {
+        if (entry?.time) {
+          mapped[entry.time] = entry.available !== false;
+        }
+      });
+    }
+    return mapped;
+  }, [slotsData]);
 
   // wizard
   const [step, setStep] = useState(1);
@@ -185,18 +198,35 @@ export default function NewBookingScreen() {
       if (!ok) return;
       // Final submit
       try {
-        await createMutation.mutateAsync({
-          booking_date:    watch('bookingDate').toISOString().split('T')[0],
-          time_slot:       watch('timeSlots')[0],
-          pickup_address:  watch('pickupAddress'),
-          pickup_lat:      pickupLoc?.latitude,
-          pickup_lng:      pickupLoc?.longitude,
-          dropoff_address: watch('dropoffAddress'),
-          dropoff_lat:     dropoffLoc?.latitude,
-          dropoff_lng:     dropoffLoc?.longitude,
-          purpose:         watch('purpose'),
-          notes:           watch('notes'),
-        });
+        const slots = watch('timeSlots');
+        if (!slots.length) {
+          setSubmitError('Pilih minimal 1 slot waktu.');
+          return;
+        }
+
+        const failures: string[] = [];
+        for (const slot of slots) {
+          try {
+            await createMutation.mutateAsync({
+              booking_date:    watch('bookingDate').toISOString().split('T')[0],
+              time_slot:       slot,
+              pickup_address:  watch('pickupAddress'),
+              pickup_lat:      pickupLoc?.latitude,
+              pickup_lng:      pickupLoc?.longitude,
+              dropoff_address: watch('dropoffAddress'),
+              dropoff_lat:     dropoffLoc?.latitude,
+              dropoff_lng:     dropoffLoc?.longitude,
+              purpose:         watch('purpose'),
+              notes:           watch('notes'),
+            });
+          } catch {
+            failures.push(slot);
+          }
+        }
+        if (failures.length > 0) {
+          setSubmitError(`Beberapa slot gagal dipesan: ${failures.join(', ')}`);
+          return;
+        }
         router.replace('/booking');
       } catch (err: any) {
         const detail = err?.response?.data?.detail;
@@ -215,10 +245,10 @@ export default function NewBookingScreen() {
   const toggleSlot = (slot: string) => {
     const current = watch('timeSlots');
     if (current.includes(slot)) {
-      setValue('timeSlots', [], { shouldValidate: true });
+      setValue('timeSlots', current.filter((s) => s !== slot), { shouldValidate: true });
       return;
     }
-    setValue('timeSlots', [slot], { shouldValidate: true });
+    setValue('timeSlots', [...current, slot], { shouldValidate: true });
   };
 
   const goBack = () => {
@@ -451,7 +481,7 @@ export default function NewBookingScreen() {
                   <Text style={styles.sectionTitle}>Pilih Waktu</Text>
                 </View>
                 <Text style={styles.slotHint}>
-                  Pilih satu slot waktu
+                  Pilih satu atau beberapa slot waktu
                 </Text>
                 <View style={styles.slotsGrid}>
                   {TIME_SLOTS.map(slot => {
@@ -489,7 +519,7 @@ export default function NewBookingScreen() {
                   <View style={styles.slotSummary}>
                     <Clock size={13} color={colors.primary[600]} />
                     <Text style={styles.slotSummaryText}>
-                      Dipilih: {selectedSlots[0]}
+                      Dipilih: {selectedSlots.join(', ')}
                     </Text>
                   </View>
                 )}
@@ -583,7 +613,7 @@ export default function NewBookingScreen() {
                     </View>
                     <View style={styles.summaryTextCol}>
                       <Text style={styles.summaryLbl}>Waktu</Text>
-                      <Text style={styles.summaryVal}>{selectedSlots[0]}</Text>
+                      <Text style={styles.summaryVal}>{selectedSlots.join(', ')}</Text>
                     </View>
                   </View>
 
