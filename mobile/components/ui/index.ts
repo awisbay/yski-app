@@ -6,3 +6,4 @@ export { MapPreview } from './MapPreview';
 export { Skeleton, BookingCardSkeleton, ProgramCardSkeleton } from './Skeleton';
 export { TabBar } from './TabBar';
 export { MainThemeLayout } from './MainThemeLayout';
+export { RoutePlaceholderScreen } from './RoutePlaceholderScreen';

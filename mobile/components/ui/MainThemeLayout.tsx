@@ -37,7 +37,7 @@ export function MainThemeLayout({
           {showBackButton ? (
             <TouchableOpacity
               style={styles.backButton}
-              onPress={onBackPress || (() => router.back())}
+              onPress={onBackPress || (() => (router.canGoBack() ? router.back() : router.replace('/(tabs)')))}
               activeOpacity={0.85}
             >
               <ChevronLeft size={22} color={colors.white} />

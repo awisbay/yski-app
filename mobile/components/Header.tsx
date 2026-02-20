@@ -29,7 +29,11 @@ export function Header({
     if (onBackPress) {
       onBackPress();
     } else {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)');
+      }
     }
   };
 
