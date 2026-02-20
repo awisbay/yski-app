@@ -125,6 +125,31 @@ export function useRejectLoan() {
   });
 }
 
+export function useMarkLoanBorrowed() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (loanId: string) => equipmentApi.markLoanBorrowed(loanId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.allLoans() });
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.loans() });
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.stats() });
+    },
+  });
+}
+
+export function useMarkLoanReturned() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (loanId: string) => equipmentApi.markLoanReturned(loanId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.allLoans() });
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.loans() });
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.stats() });
+    },
+  });
+}
+
 export function useUpdateEquipment() {
   const queryClient = useQueryClient();
   return useMutation({

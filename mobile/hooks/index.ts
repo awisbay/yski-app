@@ -20,6 +20,8 @@ export {
   useRequestLoan,
   useApproveLoan,
   useRejectLoan,
+  useMarkLoanBorrowed,
+  useMarkLoanReturned,
   useUpdateEquipment,
   useCreateEquipment,
   useUploadEquipmentPhoto,

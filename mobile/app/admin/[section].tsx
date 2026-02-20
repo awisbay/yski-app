@@ -17,7 +17,17 @@ import * as ImagePicker from 'expo-image-picker';
 import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus, Camera, Image as ImageIcon } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
 import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus } from '@/hooks';
-import { useAllEquipmentLoans, useEquipmentList, useApproveLoan, useRejectLoan, useUpdateEquipment, useCreateEquipment, useUploadEquipmentPhoto } from '@/hooks';
+import {
+  useAllEquipmentLoans,
+  useEquipmentList,
+  useApproveLoan,
+  useRejectLoan,
+  useMarkLoanBorrowed,
+  useMarkLoanReturned,
+  useUpdateEquipment,
+  useCreateEquipment,
+  useUploadEquipmentPhoto,
+} from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 
@@ -307,6 +317,8 @@ function EquipmentManagementScreen() {
   const { data: loans, isLoading: loanLoading, refetch } = useAllEquipmentLoans();
   const approveLoan = useApproveLoan();
   const rejectLoan = useRejectLoan();
+  const markLoanBorrowed = useMarkLoanBorrowed();
+  const markLoanReturned = useMarkLoanReturned();
   const updateEquipment = useUpdateEquipment();
   const createEquipment = useCreateEquipment();
   const uploadEquipmentPhoto = useUploadEquipmentPhoto();
@@ -316,6 +328,7 @@ function EquipmentManagementScreen() {
   const [newTotalStock, setNewTotalStock] = useState('1');
   const [newDescription, setNewDescription] = useState('');
   const [newPhoto, setNewPhoto] = useState<PickedPhoto | null>(null);
+  const [activeTab, setActiveTab] = useState<'posting' | 'approval' | 'active'>('approval');
 
   if (!canManage) {
     return (
@@ -326,6 +339,9 @@ function EquipmentManagementScreen() {
   }
 
   const pendingLoans = (loans || []).filter((l: any) => l.status === 'pending');
+  const activeBorrowLoans = (loans || []).filter((l: any) =>
+    l.status === 'approved' || l.status === 'borrowed'
+  );
 
   const onAdjustStock = async (item: any, delta: number) => {
     const current = Number(stockDrafts[item.id] ?? item.availableStock ?? 0);
@@ -422,7 +438,7 @@ function EquipmentManagementScreen() {
   return (
     <MainThemeLayout
       title="Manajemen Peralatan"
-      subtitle={`${pendingLoans.length} request menunggu approval`}
+      subtitle={`${pendingLoans.length} menunggu approval · ${activeBorrowLoans.length} aktif`}
       showBackButton
       onBackPress={() => router.replace('/(admin)')}
     >
@@ -431,173 +447,289 @@ function EquipmentManagementScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-        <Text style={styles.sectionSmall}>Tambah Peralatan</Text>
-        <View style={styles.createCard}>
-          <TextInput
-            style={styles.formInput}
-            placeholder="Nama peralatan"
-            placeholderTextColor={colors.gray[400]}
-            value={newName}
-            onChangeText={setNewName}
-          />
-          <View style={styles.categoryRow}>
-            {EQUIPMENT_CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[styles.categoryChip, newCategory === category && styles.categoryChipActive]}
-                onPress={() => setNewCategory(category)}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.categoryChipText, newCategory === category && styles.categoryChipTextActive]}>
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <TextInput
-            style={styles.formInput}
-            placeholder="Total stok"
-            placeholderTextColor={colors.gray[400]}
-            keyboardType="number-pad"
-            value={newTotalStock}
-            onChangeText={(txt) => setNewTotalStock(txt.replace(/[^0-9]/g, ''))}
-          />
-          <View style={styles.photoActionRow}>
-            <TouchableOpacity style={styles.photoActionBtn} onPress={onPickFromCamera} activeOpacity={0.85}>
-              <Camera size={15} color={colors.primary[700]} />
-              <Text style={styles.photoActionText}>Ambil Kamera</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.photoActionBtn} onPress={onPickFromLibrary} activeOpacity={0.85}>
-              <ImageIcon size={15} color={colors.primary[700]} />
-              <Text style={styles.photoActionText}>Pilih Galeri</Text>
-            </TouchableOpacity>
-          </View>
-          {newPhoto ? (
-            <View style={styles.previewWrap}>
-              <Image source={{ uri: newPhoto.uri }} style={styles.previewImage} />
-              <TouchableOpacity onPress={() => setNewPhoto(null)}>
-                <Text style={styles.previewRemove}>Hapus foto</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-          <TextInput
-            style={[styles.formInput, { minHeight: 70 }]}
-            placeholder="Deskripsi (opsional)"
-            placeholderTextColor={colors.gray[400]}
-            value={newDescription}
-            onChangeText={setNewDescription}
-            multiline
-            textAlignVertical="top"
-          />
+        <View style={styles.tabRow}>
           <TouchableOpacity
-            style={[styles.createBtn, (createEquipment.isPending || uploadEquipmentPhoto.isPending) && { opacity: 0.75 }]}
-            onPress={onCreateEquipment}
-            disabled={createEquipment.isPending || uploadEquipmentPhoto.isPending}
+            style={[styles.tabBtn, activeTab === 'posting' && styles.tabBtnActive]}
+            onPress={() => setActiveTab('posting')}
             activeOpacity={0.85}
           >
-            {(createEquipment.isPending || uploadEquipmentPhoto.isPending) ? (
-              <ActivityIndicator size="small" color={colors.white} />
-            ) : (
-              <>
-                <Plus size={15} color={colors.white} />
-                <Text style={styles.createBtnText}>Tambah Peralatan</Text>
-              </>
-            )}
+            <Text style={[styles.tabBtnText, activeTab === 'posting' && styles.tabBtnTextActive]}>
+              Posting Barang
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'approval' && styles.tabBtnActive]}
+            onPress={() => setActiveTab('approval')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.tabBtnText, activeTab === 'approval' && styles.tabBtnTextActive]}>
+              Approve Peminjaman
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'active' && styles.tabBtnActive]}
+            onPress={() => setActiveTab('active')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.tabBtnText, activeTab === 'active' && styles.tabBtnTextActive]}>
+              Sedang Dipinjam
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionSmall}>Request Peminjaman</Text>
-        {loanLoading ? (
-          <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
-        ) : (
-          <FlatList
-            data={pendingLoans}
-            keyExtractor={(item) => item.id}
-            style={{ maxHeight: 260 }}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <View style={styles.loanRequestCard}>
-                <Text style={styles.loanRequestTitle}>{item.equipment?.name || 'Peralatan'}</Text>
-                <Text style={styles.loanRequestMeta}>{item.borrowerName} · {item.borrowerPhone}</Text>
-                <Text style={styles.loanRequestMeta}>
-                  {new Date(item.borrowDate).toLocaleDateString('id-ID')} - {new Date(item.returnDate).toLocaleDateString('id-ID')}
-                </Text>
-                {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
-                <View style={styles.actionRow}>
+        {activeTab === 'posting' && (
+          <>
+            <Text style={styles.sectionSmall}>Tambah Peralatan</Text>
+            <View style={styles.createCard}>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Nama peralatan"
+                placeholderTextColor={colors.gray[400]}
+                value={newName}
+                onChangeText={setNewName}
+              />
+              <View style={styles.categoryRow}>
+                {EQUIPMENT_CATEGORIES.map((category) => (
                   <TouchableOpacity
-                    style={[styles.actionBtn, styles.rejectBtn, (rejectLoan.isPending || approveLoan.isPending) && { opacity: 0.7 }]}
-                    disabled={rejectLoan.isPending || approveLoan.isPending}
-                    onPress={async () => {
-                      try {
-                        await rejectLoan.mutateAsync(item.id);
-                        refetch();
-                      } catch (err: any) {
-                        Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menolak request saat ini.');
-                      }
-                    }}
+                    key={category}
+                    style={[styles.categoryChip, newCategory === category && styles.categoryChipActive]}
+                    onPress={() => setNewCategory(category)}
+                    activeOpacity={0.85}
                   >
-                    <XCircle size={15} color={colors.error[600]} />
-                    <Text style={styles.rejectText}>Tolak</Text>
+                    <Text style={[styles.categoryChipText, newCategory === category && styles.categoryChipTextActive]}>
+                      {category}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, styles.approveBtn, (approveLoan.isPending || rejectLoan.isPending) && { opacity: 0.7 }]}
-                    disabled={approveLoan.isPending || rejectLoan.isPending}
-                    onPress={async () => {
-                      try {
-                        await approveLoan.mutateAsync(item.id);
-                        refetch();
-                      } catch (err: any) {
-                        Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menyetujui request saat ini.');
-                      }
-                    }}
-                  >
-                    <CheckCircle2 size={15} color={colors.success[700]} />
-                    <Text style={styles.approveText}>Setujui</Text>
+                ))}
+              </View>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Total stok"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="number-pad"
+                value={newTotalStock}
+                onChangeText={(txt) => setNewTotalStock(txt.replace(/[^0-9]/g, ''))}
+              />
+              <View style={styles.photoActionRow}>
+                <TouchableOpacity style={styles.photoActionBtn} onPress={onPickFromCamera} activeOpacity={0.85}>
+                  <Camera size={15} color={colors.primary[700]} />
+                  <Text style={styles.photoActionText}>Ambil Kamera</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoActionBtn} onPress={onPickFromLibrary} activeOpacity={0.85}>
+                  <ImageIcon size={15} color={colors.primary[700]} />
+                  <Text style={styles.photoActionText}>Pilih Galeri</Text>
+                </TouchableOpacity>
+              </View>
+              {newPhoto ? (
+                <View style={styles.previewWrap}>
+                  <Image source={{ uri: newPhoto.uri }} style={styles.previewImage} />
+                  <TouchableOpacity onPress={() => setNewPhoto(null)}>
+                    <Text style={styles.previewRemove}>Hapus foto</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              ) : null}
+              <TextInput
+                style={[styles.formInput, { minHeight: 70 }]}
+                placeholder="Deskripsi (opsional)"
+                placeholderTextColor={colors.gray[400]}
+                value={newDescription}
+                onChangeText={setNewDescription}
+                multiline
+                textAlignVertical="top"
+              />
+              <TouchableOpacity
+                style={[styles.createBtn, (createEquipment.isPending || uploadEquipmentPhoto.isPending) && { opacity: 0.75 }]}
+                onPress={onCreateEquipment}
+                disabled={createEquipment.isPending || uploadEquipmentPhoto.isPending}
+                activeOpacity={0.85}
+              >
+                {(createEquipment.isPending || uploadEquipmentPhoto.isPending) ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <>
+                    <Plus size={15} color={colors.white} />
+                    <Text style={styles.createBtnText}>Tambah Peralatan</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.sectionSmall, { marginTop: 12 }]}>Update Ketersediaan Barang</Text>
+            {eqLoading ? (
+              <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
+            ) : (
+              <FlatList
+                data={equipment || []}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ paddingBottom: 90 }}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => {
+                  const draft = stockDrafts[item.id] ?? String(item.availableStock ?? 0);
+                  return (
+                    <View style={styles.stockCard}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Package size={16} color={colors.primary[700]} />
+                        <Text style={styles.stockName}>{item.name}</Text>
+                      </View>
+                      <Text style={styles.stockMeta}>Tersedia {draft} / Total {item.totalStock}</Text>
+                      <View style={styles.stockActionRow}>
+                        <TouchableOpacity style={styles.stockBtn} onPress={() => onAdjustStock(item, -1)}><Minus size={14} color={colors.primary[700]} /></TouchableOpacity>
+                        <TextInput
+                          style={styles.stockInput}
+                          keyboardType="number-pad"
+                          value={draft}
+                          onChangeText={(txt) => setStockDrafts((prev) => ({ ...prev, [item.id]: txt.replace(/[^0-9]/g, '') }))}
+                          onBlur={async () => {
+                            const parsed = Math.max(0, Math.min(Number(item.totalStock || 0), Number(stockDrafts[item.id] ?? item.availableStock ?? 0)));
+                            setStockDrafts((prev) => ({ ...prev, [item.id]: String(parsed) }));
+                            await updateEquipment.mutateAsync({ id: item.id, data: { available_stock: parsed } });
+                          }}
+                        />
+                        <TouchableOpacity style={styles.stockBtn} onPress={() => onAdjustStock(item, +1)}><Plus size={14} color={colors.primary[700]} /></TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                }}
+              />
             )}
-            ListEmptyComponent={<Text style={styles.emptyText}>Belum ada request pending.</Text>}
-          />
+          </>
         )}
 
-        <Text style={[styles.sectionSmall, { marginTop: 12 }]}>Update Ketersediaan Barang</Text>
-        {eqLoading ? (
-          <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
-        ) : (
-          <FlatList
-            data={equipment || []}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingBottom: 90 }}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => {
-              const draft = stockDrafts[item.id] ?? String(item.availableStock ?? 0);
-              return (
-                <View style={styles.stockCard}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Package size={16} color={colors.primary[700]} />
-                    <Text style={styles.stockName}>{item.name}</Text>
+        {activeTab === 'approval' && (
+          <>
+            <Text style={styles.sectionSmall}>Request Peminjaman</Text>
+            {loanLoading ? (
+              <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
+            ) : (
+              <FlatList
+                data={pendingLoans}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ paddingBottom: 90 }}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <View style={styles.loanRequestCard}>
+                    <Text style={styles.loanRequestTitle}>{item.equipment?.name || 'Peralatan'}</Text>
+                    <Text style={styles.loanRequestMeta}>{item.borrowerName} · {item.borrowerPhone}</Text>
+                    <Text style={styles.loanRequestMeta}>
+                      {new Date(item.borrowDate).toLocaleDateString('id-ID')} - {new Date(item.returnDate).toLocaleDateString('id-ID')}
+                    </Text>
+                    {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.rejectBtn, (rejectLoan.isPending || approveLoan.isPending) && { opacity: 0.7 }]}
+                        disabled={rejectLoan.isPending || approveLoan.isPending}
+                        onPress={async () => {
+                          try {
+                            await rejectLoan.mutateAsync(item.id);
+                            refetch();
+                          } catch (err: any) {
+                            Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menolak request saat ini.');
+                          }
+                        }}
+                      >
+                        <XCircle size={15} color={colors.error[600]} />
+                        <Text style={styles.rejectText}>Tolak</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.approveBtn, (approveLoan.isPending || rejectLoan.isPending) && { opacity: 0.7 }]}
+                        disabled={approveLoan.isPending || rejectLoan.isPending}
+                        onPress={async () => {
+                          try {
+                            await approveLoan.mutateAsync(item.id);
+                            refetch();
+                          } catch (err: any) {
+                            Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menyetujui request saat ini.');
+                          }
+                        }}
+                      >
+                        <CheckCircle2 size={15} color={colors.success[700]} />
+                        <Text style={styles.approveText}>Setujui</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.stockMeta}>Tersedia {draft} / Total {item.totalStock}</Text>
-                  <View style={styles.stockActionRow}>
-                    <TouchableOpacity style={styles.stockBtn} onPress={() => onAdjustStock(item, -1)}><Minus size={14} color={colors.primary[700]} /></TouchableOpacity>
-                    <TextInput
-                      style={styles.stockInput}
-                      keyboardType="number-pad"
-                      value={draft}
-                      onChangeText={(txt) => setStockDrafts((prev) => ({ ...prev, [item.id]: txt.replace(/[^0-9]/g, '') }))}
-                      onBlur={async () => {
-                        const parsed = Math.max(0, Math.min(Number(item.totalStock || 0), Number(stockDrafts[item.id] ?? item.availableStock ?? 0)));
-                        setStockDrafts((prev) => ({ ...prev, [item.id]: String(parsed) }));
-                        await updateEquipment.mutateAsync({ id: item.id, data: { available_stock: parsed } });
-                      }}
-                    />
-                    <TouchableOpacity style={styles.stockBtn} onPress={() => onAdjustStock(item, +1)}><Plus size={14} color={colors.primary[700]} /></TouchableOpacity>
+                )}
+                ListEmptyComponent={<Text style={styles.emptyText}>Belum ada request pending.</Text>}
+              />
+            )}
+          </>
+        )}
+
+        {activeTab === 'active' && (
+          <>
+            <Text style={styles.sectionSmall}>Barang Dipinjam Saat Ini</Text>
+            {loanLoading ? (
+              <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
+            ) : (
+              <FlatList
+                data={activeBorrowLoans}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ paddingBottom: 90 }}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <View style={styles.loanRequestCard}>
+                    <View style={styles.cardHeader}>
+                      <Text style={styles.loanRequestTitle}>{item.equipment?.name || 'Peralatan'}</Text>
+                      <Text style={[styles.status, item.status === 'borrowed' ? styles.statusNonPending : styles.statusPending]}>
+                        {item.status === 'borrowed' ? 'Dipinjam' : 'Disetujui'}
+                      </Text>
+                    </View>
+                    <Text style={styles.loanRequestMeta}>Peminjam: {item.borrowerName} · {item.borrowerPhone}</Text>
+                    <Text style={styles.loanRequestMeta}>
+                      Durasi: {new Date(item.borrowDate).toLocaleDateString('id-ID')} - {new Date(item.returnDate).toLocaleDateString('id-ID')}
+                    </Text>
+                    {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
+
+                    {item.status === 'approved' ? (
+                      <TouchableOpacity
+                        style={[styles.completeBtn, markLoanBorrowed.isPending && { opacity: 0.7 }]}
+                        disabled={markLoanBorrowed.isPending}
+                        onPress={async () => {
+                          try {
+                            await markLoanBorrowed.mutateAsync(item.id);
+                            refetch();
+                          } catch (err: any) {
+                            Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat mengubah status dipinjam.');
+                          }
+                        }}
+                      >
+                        {markLoanBorrowed.isPending ? (
+                          <ActivityIndicator size="small" color={colors.white} />
+                        ) : (
+                          <>
+                            <Flag size={15} color={colors.white} />
+                            <Text style={styles.completeText}>Tandai Sedang Dipinjam</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.completeBtn, markLoanReturned.isPending && { opacity: 0.7 }]}
+                        disabled={markLoanReturned.isPending}
+                        onPress={async () => {
+                          try {
+                            await markLoanReturned.mutateAsync(item.id);
+                            refetch();
+                          } catch (err: any) {
+                            Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat konfirmasi pengembalian.');
+                          }
+                        }}
+                      >
+                        {markLoanReturned.isPending ? (
+                          <ActivityIndicator size="small" color={colors.white} />
+                        ) : (
+                          <>
+                            <CheckCircle2 size={15} color={colors.white} />
+                            <Text style={styles.completeText}>Konfirmasi Dikembalikan</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    )}
                   </View>
-                </View>
-              );
-            }}
-          />
+                )}
+                ListEmptyComponent={<Text style={styles.emptyText}>Belum ada barang yang sedang dipinjam.</Text>}
+              />
+            )}
+          </>
         )}
       </KeyboardAvoidingView>
     </MainThemeLayout>
@@ -611,6 +743,35 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 100,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  tabBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    backgroundColor: colors.gray[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  tabBtnActive: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[600],
+  },
+  tabBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.gray[600],
+    textAlign: 'center',
+  },
+  tabBtnTextActive: {
+    color: colors.white,
   },
   centered: {
     paddingVertical: 28,

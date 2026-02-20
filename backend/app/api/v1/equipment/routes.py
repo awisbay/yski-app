@@ -209,7 +209,7 @@ async def reject_loan(
 @router.patch("/loans/{loan_id}/borrowed", response_model=EquipmentLoanResponse)
 async def mark_as_borrowed(
     loan_id: UUID,
-    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
+    current_user: User = Depends(require_role("admin", "pengurus")),
     db: AsyncSession = Depends(get_db)
 ):
     """Mark loan as borrowed."""
@@ -223,7 +223,7 @@ async def mark_as_borrowed(
 @router.patch("/loans/{loan_id}/returned", response_model=EquipmentLoanResponse)
 async def mark_as_returned(
     loan_id: UUID,
-    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
+    current_user: User = Depends(require_role("admin", "pengurus")),
     db: AsyncSession = Depends(get_db)
 ):
     """Mark loan as returned."""

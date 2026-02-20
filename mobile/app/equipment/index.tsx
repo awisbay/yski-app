@@ -65,6 +65,11 @@ export default function EquipmentScreen() {
             <Text style={styles.statValue}>{(myLoans || []).filter((l: any) => l.status !== 'rejected').length}</Text>
             <Text style={styles.statLabel}>Peminjaman Saya</Text>
           </View>
+          <View style={styles.statCard}>
+            <Package size={16} color={colors.warning[600]} />
+            <Text style={styles.statValue}>{stats?.borrowed_active ?? 0}</Text>
+            <Text style={styles.statLabel}>Barang Dipinjam</Text>
+          </View>
         </View>
 
         <View style={styles.chipsRow}>
@@ -109,11 +114,11 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'space-between',
     marginBottom: 14,
   },
   statCard: {
-    flex: 1,
+    width: '31.5%',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.gray[100],

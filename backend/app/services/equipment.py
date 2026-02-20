@@ -306,6 +306,9 @@ class EquipmentService:
         borrowed = await self.db.scalar(
             select(func.count()).select_from(EquipmentLoan).where(EquipmentLoan.status.in_(["approved", "borrowed"]))
         )
+        borrowed_active = await self.db.scalar(
+            select(func.count()).select_from(EquipmentLoan).where(EquipmentLoan.status == "borrowed")
+        )
         
         pending = await self.db.scalar(
             select(func.count()).select_from(EquipmentLoan).where(EquipmentLoan.status == "pending")
@@ -318,6 +321,7 @@ class EquipmentService:
         return {
             "total": total or 0,
             "borrowed": borrowed or 0,
+            "borrowed_active": borrowed_active or 0,
             "pending_requests": pending or 0,
             "available": available or 0
         }

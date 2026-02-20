@@ -126,6 +126,8 @@ export const equipmentApi = {
     api.post(`/equipment/${equipmentId}/loans`, data),
   approveLoan: (loanId: string) => api.patch(`/equipment/loans/${loanId}/approve`),
   rejectLoan: (loanId: string) => api.patch(`/equipment/loans/${loanId}/reject`),
+  markLoanBorrowed: (loanId: string) => api.patch(`/equipment/loans/${loanId}/borrowed`),
+  markLoanReturned: (loanId: string) => api.patch(`/equipment/loans/${loanId}/returned`),
   updateEquipment: (id: string, data: any) => api.put(`/equipment/${id}`, data),
 };
 
