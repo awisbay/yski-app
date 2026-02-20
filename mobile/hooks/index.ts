@@ -21,6 +21,7 @@ export {
   useApproveLoan,
   useRejectLoan,
   useUpdateEquipment,
+  useCreateEquipment,
 } from './useEquipment';
 export { useMyPickups, usePickupDetail, useCreatePickup, useCancelPickup } from './usePickups';
 export { usePrograms, useFeaturedPrograms, useProgramDetail } from './usePrograms';

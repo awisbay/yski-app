@@ -65,6 +65,7 @@ class EquipmentService:
             name=data.name,
             category=data.category,
             description=data.description,
+            photo_url=data.photo_url,
             total_stock=data.total_stock,
             available_stock=data.total_stock,  # Initially all stock is available
             condition=data.condition,

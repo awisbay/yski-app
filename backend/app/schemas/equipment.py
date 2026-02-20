@@ -3,15 +3,16 @@ Equipment Pydantic Schemas
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from uuid import UUID
 from pydantic import BaseModel
 
 
 class EquipmentBase(BaseModel):
     name: str
-    category: str
+    category: Literal["kesehatan", "elektronik", "lain-lain"]
     description: Optional[str] = None
+    photo_url: Optional[str] = None
     total_stock: int = 0
     available_stock: int = 0
     condition: str = "good"
@@ -23,7 +24,9 @@ class EquipmentCreate(EquipmentBase):
 
 class EquipmentUpdate(BaseModel):
     name: Optional[str] = None
+    category: Optional[Literal["kesehatan", "elektronik", "lain-lain"]] = None
     description: Optional[str] = None
+    photo_url: Optional[str] = None
     total_stock: Optional[int] = None
     available_stock: Optional[int] = None
     condition: Optional[str] = None

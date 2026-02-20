@@ -115,6 +115,7 @@ export const equipmentApi = {
   getList: () => api.get('/equipment'),
   getDetail: (id: string) => api.get(`/equipment/${id}`),
   getStats: () => api.get('/equipment/stats'),
+  createEquipment: (data: any) => api.post('/equipment', data),
   getMyLoans: () => api.get('/equipment/my-loans'),
   getAllLoans: (params?: { status?: string }) => api.get('/equipment/loans/all', { params }),
   requestLoan: (equipmentId: string, data: any) =>

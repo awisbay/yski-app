@@ -127,3 +127,14 @@ export function useUpdateEquipment() {
     },
   });
 }
+
+export function useCreateEquipment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => equipmentApi.createEquipment(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: equipmentKeys.stats() });
+    },
+  });
+}

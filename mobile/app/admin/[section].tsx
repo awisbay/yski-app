@@ -13,7 +13,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
 import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus } from '@/hooks';
-import { useAllEquipmentLoans, useEquipmentList, useApproveLoan, useRejectLoan, useUpdateEquipment } from '@/hooks';
+import { useAllEquipmentLoans, useEquipmentList, useApproveLoan, useRejectLoan, useUpdateEquipment, useCreateEquipment } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 
@@ -34,6 +34,8 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: 'Ditolak',
   cancelled: 'Dibatalkan',
 };
+
+const EQUIPMENT_CATEGORIES = ['kesehatan', 'elektronik', 'lain-lain'] as const;
 
 async function fetchRouteEstimate(booking: any): Promise<{ distanceKm: number; durationMin: number } | null> {
   if (
@@ -296,7 +298,13 @@ function EquipmentManagementScreen() {
   const approveLoan = useApproveLoan();
   const rejectLoan = useRejectLoan();
   const updateEquipment = useUpdateEquipment();
+  const createEquipment = useCreateEquipment();
   const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
+  const [newName, setNewName] = useState('');
+  const [newCategory, setNewCategory] = useState<(typeof EQUIPMENT_CATEGORIES)[number]>('kesehatan');
+  const [newTotalStock, setNewTotalStock] = useState('1');
+  const [newDescription, setNewDescription] = useState('');
+  const [newPhotoUrl, setNewPhotoUrl] = useState('');
 
   if (!canManage) {
     return (
@@ -319,6 +327,37 @@ function EquipmentManagementScreen() {
     }
   };
 
+  const onCreateEquipment = async () => {
+    const total = Number(newTotalStock || '0');
+    if (!newName.trim()) {
+      Alert.alert('Validasi', 'Nama peralatan wajib diisi.');
+      return;
+    }
+    if (!Number.isFinite(total) || total <= 0) {
+      Alert.alert('Validasi', 'Total stok harus lebih dari 0.');
+      return;
+    }
+    try {
+      await createEquipment.mutateAsync({
+        name: newName.trim(),
+        category: newCategory,
+        description: newDescription.trim() || null,
+        photo_url: newPhotoUrl.trim() || null,
+        total_stock: total,
+        available_stock: total,
+        condition: 'good',
+      });
+      setNewName('');
+      setNewDescription('');
+      setNewPhotoUrl('');
+      setNewTotalStock('1');
+      setNewCategory('kesehatan');
+      Alert.alert('Berhasil', 'Peralatan baru berhasil ditambahkan.');
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menambah peralatan.');
+    }
+  };
+
   return (
     <MainThemeLayout
       title="Manajemen Peralatan"
@@ -327,6 +366,70 @@ function EquipmentManagementScreen() {
       onBackPress={() => router.replace('/(admin)')}
     >
       <View style={styles.content}>
+        <Text style={styles.sectionSmall}>Tambah Peralatan</Text>
+        <View style={styles.createCard}>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Nama peralatan"
+            placeholderTextColor={colors.gray[400]}
+            value={newName}
+            onChangeText={setNewName}
+          />
+          <View style={styles.categoryRow}>
+            {EQUIPMENT_CATEGORIES.map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[styles.categoryChip, newCategory === category && styles.categoryChipActive]}
+                onPress={() => setNewCategory(category)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.categoryChipText, newCategory === category && styles.categoryChipTextActive]}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Total stok"
+            placeholderTextColor={colors.gray[400]}
+            keyboardType="number-pad"
+            value={newTotalStock}
+            onChangeText={(txt) => setNewTotalStock(txt.replace(/[^0-9]/g, ''))}
+          />
+          <TextInput
+            style={styles.formInput}
+            placeholder="URL foto (opsional)"
+            placeholderTextColor={colors.gray[400]}
+            value={newPhotoUrl}
+            onChangeText={setNewPhotoUrl}
+          />
+          <TextInput
+            style={[styles.formInput, { minHeight: 70 }]}
+            placeholder="Deskripsi (opsional)"
+            placeholderTextColor={colors.gray[400]}
+            value={newDescription}
+            onChangeText={setNewDescription}
+            multiline
+            textAlignVertical="top"
+          />
+          <TouchableOpacity
+            style={[styles.createBtn, createEquipment.isPending && { opacity: 0.75 }]}
+            onPress={onCreateEquipment}
+            disabled={createEquipment.isPending}
+            activeOpacity={0.85}
+          >
+            {createEquipment.isPending ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <>
+                <Plus size={15} color={colors.white} />
+                <Text style={styles.createBtnText}>Tambah Peralatan</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.sectionSmall}>Request Peminjaman</Text>
         {loanLoading ? (
           <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
@@ -423,6 +526,64 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.gray[700],
     marginBottom: 8,
+  },
+  createCard: {
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    padding: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: colors.gray[800],
+    backgroundColor: colors.white,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  categoryChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 999,
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: colors.gray[50],
+  },
+  categoryChipActive: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[600],
+  },
+  categoryChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray[600],
+  },
+  categoryChipTextActive: {
+    color: colors.white,
+  },
+  createBtn: {
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: colors.primary[600],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  createBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.white,
   },
   loanRequestCard: {
     borderWidth: 1,

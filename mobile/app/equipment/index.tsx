@@ -9,9 +9,9 @@ import { colors } from '@/constants/colors';
 
 const CATEGORIES = [
   { key: 'all', label: 'Semua' },
-  { key: 'vehicle', label: 'Kendaraan' },
-  { key: 'tools', label: 'Peralatan' },
-  { key: 'electronics', label: 'Elektronik' },
+  { key: 'kesehatan', label: 'Kesehatan' },
+  { key: 'elektronik', label: 'Elektronik' },
+  { key: 'lain-lain', label: 'Lain-lain' },
 ];
 
 export default function EquipmentScreen() {
