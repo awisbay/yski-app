@@ -2,17 +2,28 @@
 Authentication Routes
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.security import create_access_token, create_refresh_token, verify_password
-from app.schemas.auth import Token, LoginRequest, RefreshRequest
+from app.schemas.auth import (
+    Token,
+    LoginRequest,
+    RefreshRequest,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+)
 from app.schemas.user import UserCreate, UserResponse
+from app.services.password_reset import PasswordResetService, send_password_reset_email
 from app.services.user import UserService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -128,3 +139,56 @@ async def get_current_user_info(
 ):
     """Get current authenticated user info."""
     return current_user
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    payload: PasswordResetRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Request password reset.
+    Always returns success to avoid email enumeration.
+    """
+    user_service = UserService(db)
+    reset_service = PasswordResetService(db)
+
+    user = await user_service.get_by_email(payload.email)
+    response = {
+        "message": "Jika email terdaftar, instruksi reset password akan dikirim."
+    }
+
+    if user and user.is_active:
+        raw_token, reset_url = await reset_service.issue_token(user)
+        email_sent = False
+        try:
+            email_sent = send_password_reset_email(user.email, reset_url)
+        except Exception:
+            logger.exception("Failed sending password-reset email to %s", user.email)
+
+        # Dev fallback when email provider is not configured.
+        if settings.APP_ENV == "development" or settings.APP_DEBUG:
+            response["debug_reset_url"] = reset_url
+            if not email_sent:
+                response["debug_reset_token"] = raw_token
+
+        logger.info("Password reset requested for user_id=%s", user.id)
+
+    return response
+
+
+@router.post("/reset-password")
+async def reset_password(
+    payload: PasswordResetConfirm,
+    db: AsyncSession = Depends(get_db),
+):
+    """Reset password using one-time token."""
+    reset_service = PasswordResetService(db)
+    success = await reset_service.reset_password(payload.token, payload.new_password)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token reset tidak valid atau sudah kedaluwarsa",
+        )
+
+    return {"message": "Password berhasil diubah"}

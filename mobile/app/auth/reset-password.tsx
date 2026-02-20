@@ -1,45 +1,49 @@
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mail, CheckCircle2 } from 'lucide-react-native';
+import { Lock, CheckCircle2 } from 'lucide-react-native';
+import { useState } from 'react';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/hooks';
 import { colors } from '@/constants/colors';
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Email tidak valid'),
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, 'Password minimal 6 karakter'),
+  confirmPassword: z.string(),
+}).refine((v) => v.password === v.confirmPassword, {
+  message: 'Konfirmasi password tidak cocok',
+  path: ['confirmPassword'],
 });
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
-export default function ForgotPasswordScreen() {
+export default function ResetPasswordScreen() {
   const insets = useSafeAreaInsets();
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [debugToken, setDebugToken] = useState('');
-  const { forgotPassword, isLoading, error } = useAuth();
+  const params = useLocalSearchParams<{ token?: string }>();
+  const token = String(params.token || '');
+  const [isDone, setIsDone] = useState(false);
+  const { resetPassword, isLoading, error } = useAuth();
 
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      email: '',
+      password: '',
+      confirmPassword: '',
     },
   });
 
-  const onSubmit = async (data: ForgotPasswordFormData) => {
-    const response = await forgotPassword(data.email);
-    const token = response?.debug_reset_token || '';
-    setDebugToken(token);
-    setIsSubmitted(true);
+  const onSubmit = async (data: ResetPasswordFormData) => {
+    await resetPassword({ token, newPassword: data.password });
+    setIsDone(true);
   };
 
   return (
@@ -47,8 +51,8 @@ export default function ForgotPasswordScreen() {
       <StatusBar style="light" />
 
       <View style={[styles.header, { paddingTop: insets.top + 28 }]}>
-        <Text style={styles.title}>Reset Password</Text>
-        <Text style={styles.subtitle}>Masukkan email untuk menerima instruksi reset</Text>
+        <Text style={styles.title}>Password Baru</Text>
+        <Text style={styles.subtitle}>Masukkan password baru untuk akun Anda</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -60,20 +64,20 @@ export default function ForgotPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {isSubmitted ? (
+          {!token ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>Token reset tidak ditemukan.</Text>
+            </View>
+          ) : null}
+
+          {isDone ? (
             <View style={styles.successBox}>
               <CheckCircle2 size={46} color={colors.success[500]} />
-              <Text style={styles.successTitle}>Instruksi dikirim</Text>
+              <Text style={styles.successTitle}>Password berhasil diubah</Text>
               <Text style={styles.successText}>
-                Jika email terdaftar, instruksi reset password akan dikirimkan ke email Anda.
+                Silakan masuk kembali menggunakan password baru Anda.
               </Text>
-              {debugToken ? (
-                <Button
-                  title="Lanjut Reset (Dev)"
-                  onPress={() => router.push(`/auth/reset-password?token=${encodeURIComponent(debugToken)}`)}
-                />
-              ) : null}
-              <Button title="Kembali ke Login" onPress={() => router.replace('/auth/login')} />
+              <Button title="Ke Halaman Login" onPress={() => router.replace('/auth/login')} />
             </View>
           ) : (
             <>
@@ -85,26 +89,43 @@ export default function ForgotPasswordScreen() {
 
               <Controller
                 control={control}
-                name="email"
+                name="password"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
-                    placeholder="Email"
-                    keyboardType="email-address"
+                    placeholder="Password baru"
+                    secureTextEntry
                     autoCapitalize="none"
-                    autoCorrect={false}
-                    leftIcon={<Mail size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
-                    error={errors.email?.message}
+                    leftIcon={<Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
+                    error={errors.password?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Konfirmasi password baru"
+                    secureTextEntry
+                    autoCapitalize="none"
+                    leftIcon={<Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
+                    error={errors.confirmPassword?.message}
                   />
                 )}
               />
 
               <Button
-                title={isLoading ? 'Memproses...' : 'Kirim Instruksi Reset'}
+                title={isLoading ? 'Memproses...' : 'Simpan Password Baru'}
                 onPress={handleSubmit(onSubmit)}
                 isLoading={isLoading}
+                disabled={!token}
               />
             </>
           )}
@@ -143,19 +164,6 @@ const styles = StyleSheet.create({
   formContent: {
     padding: 28,
   },
-  errorBanner: {
-    backgroundColor: colors.error[50],
-    borderWidth: 1,
-    borderColor: colors.error[200],
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 20,
-  },
-  errorBannerText: {
-    fontSize: 14,
-    color: colors.error[600],
-    textAlign: 'center',
-  },
   successBox: {
     alignItems: 'center',
     gap: 12,
@@ -172,5 +180,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 21,
     marginBottom: 6,
+  },
+  errorBanner: {
+    backgroundColor: colors.error[50],
+    borderWidth: 1,
+    borderColor: colors.error[200],
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+  },
+  errorBannerText: {
+    fontSize: 14,
+    color: colors.error[600],
+    textAlign: 'center',
   },
 });

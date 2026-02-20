@@ -75,6 +75,12 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
 
   me: () => api.get('/auth/me'),
+
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/auth/reset-password', { token, new_password: newPassword }),
 };
 
 // Bookings API

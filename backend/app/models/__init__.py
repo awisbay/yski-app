@@ -10,3 +10,4 @@ from app.models.content import Program, NewsArticle
 from app.models.auction import AuctionItem, AuctionImage, AuctionBid
 from app.models.financial import FinancialReport, FinancialEntry
 from app.models.notification import Notification, PushToken
+from app.models.password_reset import PasswordResetToken

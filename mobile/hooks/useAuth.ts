@@ -40,6 +40,15 @@ export function useAuth() {
     },
   });
 
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (email: string) => authApi.forgotPassword(email).then((res) => res.data),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ token, newPassword }: { token: string; newPassword: string }) =>
+      authApi.resetPassword(token, newPassword).then((res) => res.data),
+  });
+
   const userQuery = useQuery({
     queryKey: authKeys.user(),
     queryFn: () => authApi.me().then((res) => res.data),
@@ -48,10 +57,20 @@ export function useAuth() {
 
   return {
     user: userQuery.data,
-    isLoading: loginMutation.isPending || registerMutation.isPending,
-    error: loginMutation.error?.message || registerMutation.error?.message,
+    isLoading:
+      loginMutation.isPending ||
+      registerMutation.isPending ||
+      forgotPasswordMutation.isPending ||
+      resetPasswordMutation.isPending,
+    error:
+      loginMutation.error?.message ||
+      registerMutation.error?.message ||
+      forgotPasswordMutation.error?.message ||
+      resetPasswordMutation.error?.message,
     login: loginMutation.mutateAsync,
     register: registerMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
+    forgotPassword: forgotPasswordMutation.mutateAsync,
+    resetPassword: resetPasswordMutation.mutateAsync,
   };
 }

@@ -27,6 +27,18 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Password reset
+    PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
+    PASSWORD_RESET_URL_BASE: str = "yski://auth/reset-password"
+
+    # Email (optional SMTP)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+    EMAIL_FROM: str = "no-reply@yski.local"
+
     @validator("JWT_SECRET_KEY")
     def jwt_secret_must_be_set(cls, v, values):
         if not v and values.get("APP_ENV") != "development":

@@ -13,6 +13,7 @@ from app.services.content import ContentService
 from app.services.auction_service import AuctionService
 from app.services.financial_service import FinancialService
 from app.services.notification_service import NotificationService
+from app.services.password_reset import PasswordResetService
 
 __all__ = [
     "UserService",
@@ -24,4 +25,5 @@ __all__ = [
     "AuctionService",
     "FinancialService",
     "NotificationService",
+    "PasswordResetService",
 ]
