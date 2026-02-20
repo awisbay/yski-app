@@ -10,7 +10,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import MovingBooking
@@ -148,6 +148,24 @@ class BookingService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="This slot was just booked by someone else"
+            )
+        except ProgrammingError as exc:
+            await self.db.rollback()
+            error_text = str(exc).lower()
+            if "purpose" in error_text and "moving_bookings" in error_text:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Database booking belum update. Jalankan migrasi Alembic terbaru (revision 004).",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Terjadi kesalahan struktur database saat membuat booking.",
+            )
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Terjadi kesalahan database saat membuat booking.",
             )
         
         return booking
