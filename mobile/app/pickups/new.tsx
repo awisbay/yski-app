@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -107,7 +107,17 @@ export default function NewPickupScreen() {
         ))}
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+      >
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      >
         {step === 1 && (
           <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>Pilih Jenis Penjemputan</Text>
@@ -315,6 +325,7 @@ export default function NewPickupScreen() {
           />
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </MainThemeLayout>
   );
 }

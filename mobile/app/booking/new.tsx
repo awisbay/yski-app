@@ -8,6 +8,9 @@ import {
   TextInput,
   ActivityIndicator,
   BackHandler,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -132,6 +135,7 @@ export default function NewBookingScreen() {
   // wizard
   const [step, setStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // calendar navigation
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
@@ -255,6 +259,15 @@ export default function NewBookingScreen() {
     });
     return () => sub.remove();
   }, [step]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // ── calendar render ──
   const calYear  = calMonth.getFullYear();
@@ -389,11 +402,19 @@ export default function NewBookingScreen() {
       </View>
 
       {/* ── White Panel ── */}
-      <View style={styles.panel}>
+      <KeyboardAvoidingView
+        style={styles.panel}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+      >
         <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: keyboardVisible ? insets.bottom + 24 : insets.bottom + 100 },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         >
 
           {/* ════ STEP 1 ════ */}
@@ -708,10 +729,11 @@ export default function NewBookingScreen() {
             </View>
           )}
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
 
       {/* ── Sticky Footer ── */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+      {!keyboardVisible && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         {step > 1 && (
           <TouchableOpacity
             style={styles.footerSecondaryBtn}
@@ -742,7 +764,8 @@ export default function NewBookingScreen() {
         <Text style={styles.footerNote}>
           Layanan pickup gratis — didukung YSKI
         </Text>
-      </View>
+        </View>
+      )}
 
       {/* ── MapPicker Modal ── */}
       <MapPicker

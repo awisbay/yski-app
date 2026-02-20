@@ -9,6 +9,8 @@ import {
   Alert,
   TextInput,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -424,7 +426,11 @@ function EquipmentManagementScreen() {
       showBackButton
       onBackPress={() => router.replace('/(admin)')}
     >
-      <View style={styles.content}>
+      <KeyboardAvoidingView
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+      >
         <Text style={styles.sectionSmall}>Tambah Peralatan</Text>
         <View style={styles.createCard}>
           <TextInput
@@ -508,6 +514,7 @@ function EquipmentManagementScreen() {
             data={pendingLoans}
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 260 }}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <View style={styles.loanRequestCard}>
                 <Text style={styles.loanRequestTitle}>{item.equipment?.name || 'Peralatan'}</Text>
@@ -540,6 +547,7 @@ function EquipmentManagementScreen() {
             data={equipment || []}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 90 }}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => {
               const draft = stockDrafts[item.id] ?? String(item.availableStock ?? 0);
               return (
@@ -569,7 +577,7 @@ function EquipmentManagementScreen() {
             }}
           />
         )}
-      </View>
+      </KeyboardAvoidingView>
     </MainThemeLayout>
   );
 }

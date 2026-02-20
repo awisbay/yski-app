@@ -1,7 +1,19 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainThemeLayout } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useRequestLoan } from '@/hooks';
@@ -10,6 +22,7 @@ import { colors } from '@/constants/colors';
 const DURATIONS = [1, 3, 7, 14, 30];
 
 export default function EquipmentLoanScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const user = useAuthStore((state) => state.user);
   const requestLoan = useRequestLoan();
@@ -84,7 +97,17 @@ export default function EquipmentLoanScreen() {
 
   return (
     <MainThemeLayout title="Form Peminjaman" subtitle="Lengkapi data peminjaman" showBackButton>
-      <View style={styles.content}>
+      <KeyboardAvoidingView
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+      >
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 28 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      >
         <Text style={styles.label}>Durasi Peminjaman</Text>
         <View style={styles.durationWrap}>
           {DURATIONS.map((d) => (
@@ -135,13 +158,15 @@ export default function EquipmentLoanScreen() {
         >
           {requestLoan.isPending ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Submit Peminjaman</Text>}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, paddingHorizontal: 20 },
+  content: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 28 },
   label: { fontSize: 13, fontWeight: '700', color: colors.gray[700], marginBottom: 8, marginTop: 8 },
   durationWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   durationBtn: {

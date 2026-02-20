@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Package, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { MainThemeLayout } from '@/components/ui';
 import { useEquipmentDetail } from '@/hooks';
 import { colors } from '@/constants/colors';
 
 export default function EquipmentDetailScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: item, isLoading } = useEquipmentDetail(id || '');
 
@@ -18,7 +20,10 @@ export default function EquipmentDetailScreen() {
           <View style={styles.centered}><Text style={styles.muted}>Peralatan tidak ditemukan.</Text></View>
         ) : (
           <>
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 122 }]}
+              showsVerticalScrollIndicator={false}
+            >
               <View style={styles.photoWrap}>
                 {item.photoUrl ? (
                   <Image source={{ uri: item.photoUrl }} style={styles.photo} />
@@ -47,14 +52,16 @@ export default function EquipmentDetailScreen() {
 
             {item.availableStock > 0 ? (
               <TouchableOpacity
-                style={styles.borrowBtn}
+                style={[styles.borrowBtn, { bottom: insets.bottom + 12 }]}
                 onPress={() => router.push(`/equipment/${item.id}/loan`)}
                 activeOpacity={0.85}
               >
                 <Text style={styles.borrowBtnText}>Pinjam</Text>
               </TouchableOpacity>
             ) : (
-              <View style={styles.unavailableBox}><Text style={styles.unavailableText}>Stok sedang kosong</Text></View>
+              <View style={[styles.unavailableBox, { bottom: insets.bottom + 12 }]}>
+                <Text style={styles.unavailableText}>Stok sedang kosong</Text>
+              </View>
             )}
           </>
         )}
@@ -67,7 +74,7 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 20 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   muted: { color: colors.gray[500] },
-  scrollContent: { paddingBottom: 110 },
+  scrollContent: { paddingBottom: 122 },
   photoWrap: {
     height: 170,
     borderRadius: 16,
