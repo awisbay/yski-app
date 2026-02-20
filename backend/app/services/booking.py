@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import MovingBooking
 from app.schemas.booking import BookingCreate, BookingUpdate
 
-ALLOWED_SLOTS = ["08:00", "10:00", "13:00", "15:00"]
+ALLOWED_SLOTS = ["08:00", "10:00", "13:00", "15:00", "17:00", "19:00", "21:00"]
 MAX_ADVANCE_DAYS = 30
 MAX_SLOTS_PER_DAY_PER_USER = len(ALLOWED_SLOTS)
 

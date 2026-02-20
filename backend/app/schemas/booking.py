@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 class BookingBase(BaseModel):
     booking_date: date
-    time_slot: str = Field(..., pattern=r"^(08:00|10:00|13:00|15:00)$")
+    time_slot: str = Field(..., pattern=r"^(08:00|10:00|13:00|15:00|17:00|19:00|21:00)$")
     pickup_address: str
     pickup_lat: Optional[Decimal] = None
     pickup_lng: Optional[Decimal] = None

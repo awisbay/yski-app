@@ -33,7 +33,7 @@ import { useCreateBooking, useBookingSlots } from '@/hooks';
 import { bookingSchema, type BookingFormData } from '@/lib/validation';
 import { colors } from '@/constants/colors';
 
-const TIME_SLOTS = ['08:00', '10:00', '13:00', '15:00'];
+const TIME_SLOTS = ['08:00', '10:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
 const DAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 const MONTHS = [
   'Januari','Februari','Maret','April','Mei','Juni',
