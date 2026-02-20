@@ -12,7 +12,9 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.equipment import MedicalEquipment, EquipmentLoan
+from app.models.user import User
 from app.schemas.equipment import EquipmentCreate, EquipmentUpdate, EquipmentLoanCreate, EquipmentLoanUpdate
+from app.services.notification_service import NotificationService
 
 
 def generate_loan_code() -> str:
@@ -146,12 +148,34 @@ class EquipmentService:
             borrower_phone=data.borrower_phone,
             borrow_date=data.borrow_date,
             return_date=data.return_date,
+            borrow_location=data.borrow_location,
+            borrow_lat=data.borrow_lat,
+            borrow_lng=data.borrow_lng,
             status="pending",
             notes=data.notes
         )
         self.db.add(loan)
         await self.db.flush()
         await self.db.refresh(loan)
+
+        # Notify admin + pengurus for incoming loan request.
+        staff_result = await self.db.execute(
+            select(User.id).where(
+                User.role.in_(["admin", "pengurus"]),
+                User.is_active == True,  # noqa: E712
+            )
+        )
+        staff_ids = [row[0] for row in staff_result.all()]
+        if staff_ids:
+            notif = NotificationService(self.db)
+            await notif.create_bulk_notifications(
+                user_ids=staff_ids,
+                title="Permintaan Peminjaman Baru",
+                body=f"{data.borrower_name} mengajukan pinjam {equipment.name}.",
+                type="info",
+                reference_type="loan",
+                reference_id=loan.id,
+            )
         return loan
     
     async def approve_loan(self, loan_id: str, approved_by: UUID) -> Optional[EquipmentLoan]:
@@ -182,6 +206,18 @@ class EquipmentService:
 
         await self.db.flush()
         await self.db.refresh(loan)
+
+        # Notify borrower that request is approved.
+        notif = NotificationService(self.db)
+        await notif.create_notification(
+            user_id=loan.borrower_id,
+            title="Peminjaman Disetujui",
+            body=f"Permintaan pinjam {equipment.name} telah disetujui.",
+            type="success",
+            reference_type="loan",
+            reference_id=loan.id,
+            send_push=True,
+        )
         return loan
     
     async def reject_loan(self, loan_id: str) -> Optional[EquipmentLoan]:
@@ -196,6 +232,18 @@ class EquipmentService:
         loan.status = "rejected"
         await self.db.flush()
         await self.db.refresh(loan)
+
+        # Notify borrower that request is rejected.
+        notif = NotificationService(self.db)
+        await notif.create_notification(
+            user_id=loan.borrower_id,
+            title="Peminjaman Ditolak",
+            body="Permintaan peminjaman peralatan Anda ditolak.",
+            type="warning",
+            reference_type="loan",
+            reference_id=loan.id,
+            send_push=True,
+        )
         return loan
     
     async def mark_as_borrowed(self, loan_id: str) -> Optional[EquipmentLoan]:
@@ -238,7 +286,7 @@ class EquipmentService:
         )
         
         borrowed = await self.db.scalar(
-            select(func.count()).select_from(EquipmentLoan).where(EquipmentLoan.status == "borrowed")
+            select(func.count()).select_from(EquipmentLoan).where(EquipmentLoan.status.in_(["approved", "borrowed"]))
         )
         
         pending = await self.db.scalar(

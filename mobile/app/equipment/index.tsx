@@ -1,15 +1,11 @@
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Package, Search, Filter, ChevronRight, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
-import { MainThemeLayout, SectionHeader, FilterTabBar, Skeleton } from '@/components/ui';
-import { Button } from '@/components/Button';
-import { Card } from '@/components/Card';
+import { Package, CheckCircle2, Clock3 } from 'lucide-react-native';
+import { MainThemeLayout, Skeleton } from '@/components/ui';
 import { Badge } from '@/components/Badge';
-import { EmptyState } from '@/components/EmptyState';
 import { useEquipmentList, useEquipmentStats, useMyLoans } from '@/hooks';
 import { colors } from '@/constants/colors';
-import { typography } from '@/constants/typography';
 
 const CATEGORIES = [
   { key: 'all', label: 'Semua' },
@@ -24,138 +20,81 @@ export default function EquipmentScreen() {
   const { data: stats } = useEquipmentStats();
   const { data: myLoans } = useMyLoans();
 
-  const filteredEquipment = equipment?.filter((item: any) => {
-    if (activeCategory === 'all') return true;
-    return item.category === activeCategory;
-  }) || [];
-
-  const renderEquipmentItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/equipment/${item.id}`)}
-      activeOpacity={0.7}
-    >
-      <Card style={styles.equipmentCard}>
-        <View style={styles.equipmentHeader}>
-          <View style={[styles.equipmentIcon, { backgroundColor: colors.secondary[100] }]}>
-            <Package size={24} color={colors.secondary[600]} />
-          </View>
-          <View style={styles.equipmentInfo}>
-            <Text style={styles.equipmentName}>{item.name}</Text>
-            <Text style={styles.equipmentCategory}>{item.category}</Text>
-          </View>
-          <Badge
-            label={item.availableStock > 0 ? 'Tersedia' : 'Kosong'}
-            variant={item.availableStock > 0 ? 'success' : 'error'}
-            size="sm"
-          />
-        </View>
-        
-        <View style={styles.equipmentFooter}>
-          <Text style={styles.stockText}>
-            Stok: {item.availableStock}/{item.totalStock}
-          </Text>
-          {item.availableStock > 0 && (
-            <Button
-              title="Pinjam"
-              size="sm"
-              onPress={() => router.push(`/equipment/${item.id}/loan`)}
-            />
-          )}
-        </View>
-      </Card>
-    </TouchableOpacity>
+  const filteredEquipment = useMemo(
+    () => (equipment || []).filter((item: any) => activeCategory === 'all' || item.category === activeCategory),
+    [equipment, activeCategory]
   );
 
+  const renderItem = ({ item }: { item: any }) => {
+    const available = (item.availableStock ?? 0) > 0;
+
+    return (
+      <TouchableOpacity style={styles.itemCard} onPress={() => router.push(`/equipment/${item.id}`)} activeOpacity={0.85}>
+        <View style={styles.thumbWrap}>
+          {item.photoUrl ? (
+            <Image source={{ uri: item.photoUrl }} style={styles.thumb} />
+          ) : (
+            <View style={styles.thumbFallback}>
+              <Package size={26} color={colors.secondary[600]} />
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.itemCategory} numberOfLines={1}>{item.category}</Text>
+
+        <View style={styles.metaRow}>
+          <Badge label={available ? 'Tersedia' : 'Kosong'} variant={available ? 'success' : 'error'} size="sm" />
+          <Text style={styles.stockText}>{item.availableStock}/{item.totalStock}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <MainThemeLayout
-      title="Peralatan"
-      subtitle="Pinjam alat yang tersedia"
-      showBackButton
-      rightElement={
-        <TouchableOpacity style={styles.searchButton}>
-          <Search size={20} color={colors.white} />
-        </TouchableOpacity>
-      }
-    >
+    <MainThemeLayout title="Peralatan" subtitle="Pinjam peralatan yang tersedia" showBackButton>
       <View style={styles.content}>
-        {stats && (
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.totalEquipment || 0}</Text>
-              <Text style={styles.statLabel}>Total Item</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.availableCount || 0}</Text>
-              <Text style={styles.statLabel}>Tersedia</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{myLoans?.length || 0}</Text>
-              <Text style={styles.statLabel}>Dipinjam</Text>
-            </View>
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <CheckCircle2 size={16} color={colors.primary[600]} />
+            <Text style={styles.statValue}>{stats?.available ?? 0}</Text>
+            <Text style={styles.statLabel}>Stok Tersedia</Text>
           </View>
-        )}
+          <View style={styles.statCard}>
+            <Clock3 size={16} color={colors.secondary[600]} />
+            <Text style={styles.statValue}>{(myLoans || []).filter((l: any) => l.status !== 'rejected').length}</Text>
+            <Text style={styles.statLabel}>Peminjaman Saya</Text>
+          </View>
+        </View>
 
-        {myLoans && myLoans.length > 0 && (
-          <>
-            <SectionHeader title="Peminjaman Saya" />
-            {myLoans.slice(0, 2).map((loan: any) => (
-              <Card key={loan.id} style={styles.loanCard}>
-                <View style={styles.loanHeader}>
-                  <Text style={styles.loanEquipment}>{loan.equipmentName}</Text>
-                  <Badge
-                    label={loan.status}
-                    variant={loan.status === 'active' ? 'primary' : loan.status === 'returned' ? 'success' : 'warning'}
-                    size="sm"
-                  />
-                </View>
-                <View style={styles.loanInfo}>
-                  <View style={styles.infoRow}>
-                    <Clock size={14} color={colors.gray[400]} />
-                    <Text style={styles.infoText}>
-                      {new Date(loan.loanDate).toLocaleDateString('id-ID')}
-                    </Text>
-                  </View>
-                  {loan.dueDate && (
-                    <View style={styles.infoRow}>
-                      <AlertCircle size={14} color={colors.warning[500]} />
-                      <Text style={[styles.infoText, { color: colors.warning[600] }]}>
-                        Jatuh tempo: {new Date(loan.dueDate).toLocaleDateString('id-ID')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </Card>
-            ))}
-          </>
-        )}
-
-        <SectionHeader title="Daftar Peralatan" />
-
-        <FilterTabBar
-          tabs={CATEGORIES}
-          activeTab={activeCategory}
-          onChange={setActiveCategory}
-        />
+        <View style={styles.chipsRow}>
+          {CATEGORIES.map((c) => (
+            <TouchableOpacity
+              key={c.key}
+              onPress={() => setActiveCategory(c.key)}
+              style={[styles.chip, activeCategory === c.key && styles.chipActive]}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.chipText, activeCategory === c.key && styles.chipTextActive]}>{c.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {isLoading ? (
-          <>
-            <Skeleton height={140} borderRadius={12} />
-            <Skeleton height={140} borderRadius={12} />
-            <Skeleton height={140} borderRadius={12} />
-          </>
-        ) : filteredEquipment.length > 0 ? (
+          <View style={{ gap: 10, marginTop: 10 }}>
+            <Skeleton height={150} borderRadius={14} />
+            <Skeleton height={150} borderRadius={14} />
+          </View>
+        ) : (
           <FlatList
             data={filteredEquipment}
-            renderItem={renderEquipmentItem}
+            renderItem={renderItem}
             keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrap}
+            contentContainerStyle={styles.gridContent}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-          />
-        ) : (
-          <EmptyState
-            icon={Package}
-            title="Tidak ada peralatan"
-            description="Belum ada peralatan yang tersedia di kategori ini"
+            ListEmptyComponent={<Text style={styles.emptyText}>Belum ada peralatan di kategori ini.</Text>}
           />
         )}
       </View>
@@ -166,112 +105,110 @@ export default function EquipmentScreen() {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
+    paddingHorizontal: 20,
   },
-  searchButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  statsContainer: {
+  statsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 14,
   },
   statCard: {
     flex: 1,
     backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
     borderRadius: 12,
-    padding: 16,
+    paddingVertical: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    ...typography.h3,
-    color: colors.gray[900],
-    marginBottom: 4,
-  },
-  statLabel: {
-    ...typography.caption,
-    color: colors.gray[500],
-  },
-  loanCard: {
-    marginBottom: 12,
-  },
-  loanHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  loanEquipment: {
-    ...typography.body1,
-    fontWeight: '600',
-    color: colors.gray[900],
-  },
-  loanInfo: {
     gap: 4,
   },
-  infoRow: {
+  statValue: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.gray[900],
+  },
+  statLabel: {
+    fontSize: 11,
+    color: colors.gray[500],
+    fontWeight: '600',
+  },
+  chipsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    flexWrap: 'wrap',
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.gray[100],
+  },
+  chipActive: {
+    backgroundColor: colors.primary[600],
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray[600],
+  },
+  chipTextActive: {
+    color: colors.white,
+  },
+  columnWrap: {
+    justifyContent: 'space-between',
+  },
+  gridContent: {
+    paddingBottom: 100,
+    gap: 10,
+  },
+  itemCard: {
+    width: '48%',
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    padding: 10,
     gap: 6,
   },
-  infoText: {
-    ...typography.caption,
-    color: colors.gray[500],
+  thumbWrap: {
+    height: 82,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: colors.gray[100],
   },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
+  thumb: {
+    width: '100%',
+    height: '100%',
   },
-  equipmentCard: {
-    marginBottom: 12,
-  },
-  equipmentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  equipmentIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  equipmentInfo: {
+  thumbFallback: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  equipmentName: {
-    ...typography.body1,
-    fontWeight: '600',
+  itemName: {
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.gray[900],
-    marginBottom: 4,
+    minHeight: 34,
   },
-  equipmentCategory: {
-    ...typography.caption,
+  itemCategory: {
+    fontSize: 11,
     color: colors.gray[500],
   },
-  equipmentFooter: {
+  metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
   },
   stockText: {
-    ...typography.body2,
+    fontSize: 11,
     color: colors.gray[600],
+    fontWeight: '700',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: colors.gray[500],
+    marginTop: 24,
   },
 });

@@ -52,6 +52,17 @@ async def get_my_loans(
     return loans
 
 
+@router.get("/loans/my", response_model=List[EquipmentLoanResponse])
+async def get_my_loans_alias(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Alias endpoint for mobile client compatibility."""
+    service = EquipmentService(db)
+    loans = await service.list_loans(borrower_id=str(current_user.id))
+    return loans
+
+
 @router.get("/{equipment_id}", response_model=EquipmentResponse)
 async def get_equipment(
     equipment_id: UUID,
@@ -130,6 +141,19 @@ async def request_loan(
     db: AsyncSession = Depends(get_db)
 ):
     """Request to borrow equipment."""
+    service = EquipmentService(db)
+    loan = await service.request_loan(str(equipment_id), loan_data, current_user.id)
+    return loan
+
+
+@router.post("/{equipment_id}/loans", response_model=EquipmentLoanResponse, status_code=status.HTTP_201_CREATED)
+async def request_loan_alias(
+    equipment_id: UUID,
+    loan_data: EquipmentLoanCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Alias endpoint for mobile client compatibility."""
     service = EquipmentService(db)
     loan = await service.request_loan(str(equipment_id), loan_data, current_user.id)
     return loan

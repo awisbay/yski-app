@@ -7,11 +7,13 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
 import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus } from '@/hooks';
+import { useAllEquipmentLoans, useEquipmentList, useApproveLoan, useRejectLoan, useUpdateEquipment } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 
@@ -271,6 +273,10 @@ export default function AdminSectionScreen() {
     return <BookingManagementScreen />;
   }
 
+  if (key === 'equipment') {
+    return <EquipmentManagementScreen />;
+  }
+
   return (
     <RoutePlaceholderScreen
       title={TITLE_MAP[key] || 'Admin'}
@@ -279,6 +285,119 @@ export default function AdminSectionScreen() {
       actionLabel="Kembali ke Dashboard"
       actionRoute="/(admin)"
     />
+  );
+}
+
+function EquipmentManagementScreen() {
+  const user = useAuthStore((state) => state.user);
+  const canManage = ['admin', 'superadmin', 'pengurus'].includes(user?.role || '');
+  const { data: equipment, isLoading: eqLoading } = useEquipmentList();
+  const { data: loans, isLoading: loanLoading, refetch } = useAllEquipmentLoans();
+  const approveLoan = useApproveLoan();
+  const rejectLoan = useRejectLoan();
+  const updateEquipment = useUpdateEquipment();
+  const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
+
+  if (!canManage) {
+    return (
+      <MainThemeLayout title="Manajemen Peralatan" subtitle="Akses terbatas" showBackButton onBackPress={() => router.replace('/(admin)')}>
+        <View style={styles.centered}><Text style={styles.emptyText}>Hanya admin/pengurus yang dapat mengelola peralatan.</Text></View>
+      </MainThemeLayout>
+    );
+  }
+
+  const pendingLoans = (loans || []).filter((l: any) => l.status === 'pending');
+
+  const onAdjustStock = async (item: any, delta: number) => {
+    const current = Number(stockDrafts[item.id] ?? item.availableStock ?? 0);
+    const next = Math.max(0, Math.min(Number(item.totalStock || 0), current + delta));
+    setStockDrafts((prev) => ({ ...prev, [item.id]: String(next) }));
+    try {
+      await updateEquipment.mutateAsync({ id: item.id, data: { available_stock: next } });
+    } catch {
+      Alert.alert('Gagal', 'Tidak dapat update stok saat ini.');
+    }
+  };
+
+  return (
+    <MainThemeLayout
+      title="Manajemen Peralatan"
+      subtitle={`${pendingLoans.length} request menunggu approval`}
+      showBackButton
+      onBackPress={() => router.replace('/(admin)')}
+    >
+      <View style={styles.content}>
+        <Text style={styles.sectionSmall}>Request Peminjaman</Text>
+        {loanLoading ? (
+          <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
+        ) : (
+          <FlatList
+            data={pendingLoans}
+            keyExtractor={(item) => item.id}
+            style={{ maxHeight: 260 }}
+            renderItem={({ item }) => (
+              <View style={styles.loanRequestCard}>
+                <Text style={styles.loanRequestTitle}>{item.equipment?.name || 'Peralatan'}</Text>
+                <Text style={styles.loanRequestMeta}>{item.borrowerName} · {item.borrowerPhone}</Text>
+                <Text style={styles.loanRequestMeta}>
+                  {new Date(item.borrowDate).toLocaleDateString('id-ID')} - {new Date(item.returnDate).toLocaleDateString('id-ID')}
+                </Text>
+                {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
+                <View style={styles.actionRow}>
+                  <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={async () => { await rejectLoan.mutateAsync(item.id); refetch(); }}>
+                    <XCircle size={15} color={colors.error[600]} />
+                    <Text style={styles.rejectText}>Tolak</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.actionBtn, styles.approveBtn]} onPress={async () => { await approveLoan.mutateAsync(item.id); refetch(); }}>
+                    <CheckCircle2 size={15} color={colors.success[700]} />
+                    <Text style={styles.approveText}>Setujui</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+            ListEmptyComponent={<Text style={styles.emptyText}>Belum ada request pending.</Text>}
+          />
+        )}
+
+        <Text style={[styles.sectionSmall, { marginTop: 12 }]}>Update Ketersediaan Barang</Text>
+        {eqLoading ? (
+          <View style={styles.centered}><ActivityIndicator color={colors.primary[600]} /></View>
+        ) : (
+          <FlatList
+            data={equipment || []}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingBottom: 90 }}
+            renderItem={({ item }) => {
+              const draft = stockDrafts[item.id] ?? String(item.availableStock ?? 0);
+              return (
+                <View style={styles.stockCard}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Package size={16} color={colors.primary[700]} />
+                    <Text style={styles.stockName}>{item.name}</Text>
+                  </View>
+                  <Text style={styles.stockMeta}>Tersedia {draft} / Total {item.totalStock}</Text>
+                  <View style={styles.stockActionRow}>
+                    <TouchableOpacity style={styles.stockBtn} onPress={() => onAdjustStock(item, -1)}><Minus size={14} color={colors.primary[700]} /></TouchableOpacity>
+                    <TextInput
+                      style={styles.stockInput}
+                      keyboardType="number-pad"
+                      value={draft}
+                      onChangeText={(txt) => setStockDrafts((prev) => ({ ...prev, [item.id]: txt.replace(/[^0-9]/g, '') }))}
+                      onBlur={async () => {
+                        const parsed = Math.max(0, Math.min(Number(item.totalStock || 0), Number(stockDrafts[item.id] ?? item.availableStock ?? 0)));
+                        setStockDrafts((prev) => ({ ...prev, [item.id]: String(parsed) }));
+                        await updateEquipment.mutateAsync({ id: item.id, data: { available_stock: parsed } });
+                      }}
+                    />
+                    <TouchableOpacity style={styles.stockBtn} onPress={() => onAdjustStock(item, +1)}><Plus size={14} color={colors.primary[700]} /></TouchableOpacity>
+                  </View>
+                </View>
+              );
+            }}
+          />
+        )}
+      </View>
+    </MainThemeLayout>
   );
 }
 
@@ -298,6 +417,77 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 13,
     color: colors.gray[500],
+  },
+  sectionSmall: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.gray[700],
+    marginBottom: 8,
+  },
+  loanRequestCard: {
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    padding: 12,
+    marginBottom: 8,
+  },
+  loanRequestTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gray[900],
+    marginBottom: 4,
+  },
+  loanRequestMeta: {
+    fontSize: 12,
+    color: colors.gray[600],
+    marginBottom: 2,
+  },
+  stockCard: {
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    padding: 12,
+    marginBottom: 8,
+  },
+  stockName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.gray[800],
+  },
+  stockMeta: {
+    marginTop: 6,
+    fontSize: 12,
+    color: colors.gray[500],
+  },
+  stockActionRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stockBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    backgroundColor: colors.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stockInput: {
+    flex: 1,
+    height: 36,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 8,
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.gray[800],
+    backgroundColor: colors.white,
   },
   card: {
     backgroundColor: colors.white,

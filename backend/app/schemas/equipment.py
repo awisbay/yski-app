@@ -45,6 +45,9 @@ class EquipmentLoanBase(BaseModel):
     equipment_id: UUID
     borrow_date: datetime
     return_date: datetime
+    borrow_location: Optional[str] = None
+    borrow_lat: Optional[str] = None
+    borrow_lng: Optional[str] = None
     notes: Optional[str] = None
 
 

@@ -115,9 +115,13 @@ export const equipmentApi = {
   getList: () => api.get('/equipment'),
   getDetail: (id: string) => api.get(`/equipment/${id}`),
   getStats: () => api.get('/equipment/stats'),
-  getMyLoans: () => api.get('/equipment/loans/my'),
+  getMyLoans: () => api.get('/equipment/my-loans'),
+  getAllLoans: (params?: { status?: string }) => api.get('/equipment/loans/all', { params }),
   requestLoan: (equipmentId: string, data: any) =>
     api.post(`/equipment/${equipmentId}/loans`, data),
+  approveLoan: (loanId: string) => api.patch(`/equipment/loans/${loanId}/approve`),
+  rejectLoan: (loanId: string) => api.patch(`/equipment/loans/${loanId}/reject`),
+  updateEquipment: (id: string, data: any) => api.put(`/equipment/${id}`, data),
 };
 
 // Pickups API

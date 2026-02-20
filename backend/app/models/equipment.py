@@ -75,6 +75,9 @@ class EquipmentLoan(Base):
     
     borrow_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     return_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    borrow_location: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    borrow_lat: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    borrow_lng: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, approved, borrowed, returned, rejected
     
