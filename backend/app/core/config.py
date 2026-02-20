@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     EMAIL_FROM: str = "no-reply@yski.local"
 
+    # Security hardening
+    DONATION_WEBHOOK_SECRET: str = ""
+    PASSWORD_RESET_DEBUG_EXPOSE: bool = False
+
     @validator("JWT_SECRET_KEY")
     def jwt_secret_must_be_set(cls, v, values):
         if not v and values.get("APP_ENV") != "development":

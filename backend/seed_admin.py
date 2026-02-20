@@ -21,8 +21,11 @@ from app.core.config import settings
 async def seed_admin():
     """Create admin user from environment variables."""
     admin_email = os.getenv("ADMIN_EMAIL", "admin@yski.org")
-    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+    admin_password = os.getenv("ADMIN_PASSWORD")
     admin_name = os.getenv("ADMIN_FULL_NAME", "System Administrator")
+
+    if not admin_password or len(admin_password) < 12:
+        raise RuntimeError("ADMIN_PASSWORD must be set and at least 12 characters")
     
     # Create engine
     engine = create_async_engine(settings.DATABASE_URL, echo=True)

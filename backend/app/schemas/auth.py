@@ -20,6 +20,7 @@ class TokenPayload(BaseModel):
     role: str
     exp: int
     type: str  # access or refresh
+    jti: str | None = None
 
 
 class LoginRequest(BaseModel):

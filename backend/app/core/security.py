@@ -2,6 +2,9 @@
 Security utilities - JWT tokens, password hashing
 """
 
+import hmac
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 from jose import JWTError, jwt
@@ -36,11 +39,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
-def create_refresh_token(data: dict) -> str:
+def generate_token_id() -> str:
+    """Generate random token identifier (JTI)."""
+    return secrets.token_urlsafe(24)
+
+
+def create_refresh_token(data: dict, jti: Optional[str] = None) -> str:
     """Create JWT refresh token."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
+    to_encode.update({"exp": expire, "type": "refresh", "jti": jti or generate_token_id()})
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
 
@@ -52,3 +60,9 @@ def decode_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+
+def verify_hmac_signature(payload_bytes: bytes, signature: str, secret: str) -> bool:
+    """Verify hex digest HMAC-SHA256 signature."""
+    expected = hmac.new(secret.encode("utf-8"), payload_bytes, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)

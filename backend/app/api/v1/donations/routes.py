@@ -5,11 +5,14 @@ Donation Routes
 import uuid as uuid_mod
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_optional_current_user, require_role
+from app.core.rate_limit import enforce_rate_limit
+from app.core.security import verify_hmac_signature
 from app.models.user import User
 from app.schemas.donation import DonationCreate, DonationResponse, DonationVerify
 from app.services.donation import DonationService
@@ -152,6 +155,7 @@ async def upload_payment_proof(
 @router.post("/webhook/{donation_id}")
 async def handle_payment_webhook(
     donation_id: UUID,
+    request: Request,
     payload: dict,
     db: AsyncSession = Depends(get_db)
 ):
@@ -159,14 +163,23 @@ async def handle_payment_webhook(
 
     TODO: Add rate limiting middleware to this endpoint.
     """
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"donation:webhook:ip:{client_ip}", max_requests=60, window_seconds=60)
+
     # Validate required payload fields
     if not payload or "transaction_status" not in payload:
         raise HTTPException(status_code=400, detail="Invalid webhook payload")
 
-    # TODO: Verify HMAC signature from payment gateway header
-    # signature = request.headers.get("X-Signature")
-    # if not verify_webhook_signature(payload, signature, settings.WEBHOOK_SECRET):
-    #     raise HTTPException(status_code=403, detail="Invalid signature")
+    if not settings.DONATION_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Webhook secret not configured")
+
+    signature = request.headers.get("X-Signature", "").strip()
+    if not signature:
+        raise HTTPException(status_code=401, detail="Missing webhook signature")
+
+    raw_body = await request.body()
+    if not verify_hmac_signature(raw_body, signature, settings.DONATION_WEBHOOK_SECRET):
+        raise HTTPException(status_code=403, detail="Invalid webhook signature")
 
     service = DonationService(db)
     donation = await service.handle_payment_callback(str(donation_id), payload)

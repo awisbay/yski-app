@@ -32,6 +32,7 @@ class User(Base):
     # Role: admin, pengurus, relawan, sahabat
     role: Mapped[str] = mapped_column(String(20), default="sahabat", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    current_refresh_jti: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

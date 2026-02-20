@@ -68,6 +68,7 @@ class PasswordResetService:
 
         token_row, user = row
         user.password_hash = get_password_hash(new_password)
+        user.current_refresh_jti = None
         token_row.used_at = now
 
         await self.db.execute(

@@ -4,13 +4,20 @@ Authentication Routes
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.security import create_access_token, create_refresh_token, verify_password
+from app.core.rate_limit import enforce_rate_limit
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    generate_token_id,
+    verify_password,
+)
+from app.models.user import User
 from app.schemas.auth import (
     Token,
     LoginRequest,
@@ -50,9 +57,14 @@ async def register(
 @router.post("/login", response_model=Token)
 async def login(
     login_data: LoginRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """Login with email and password."""
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:login:ip:{client_ip}", max_requests=20, window_seconds=60)
+    enforce_rate_limit(f"auth:login:email:{login_data.email.lower()}", max_requests=10, window_seconds=60)
+
     service = UserService(db)
     
     user = await service.get_by_email(login_data.email)
@@ -79,7 +91,9 @@ async def login(
     # Create tokens
     token_data = {"sub": str(user.id), "email": user.email, "role": user.role}
     access_token = create_access_token(token_data)
-    refresh_token = create_refresh_token(token_data)
+    refresh_jti = generate_token_id()
+    refresh_token = create_refresh_token(token_data, jti=refresh_jti)
+    user.current_refresh_jti = refresh_jti
     
     return {
         "access_token": access_token,
@@ -92,9 +106,13 @@ async def login(
 @router.post("/refresh", response_model=Token)
 async def refresh(
     refresh_data: RefreshRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """Refresh access token."""
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:refresh:ip:{client_ip}", max_requests=30, window_seconds=60)
+
     from app.core.security import decode_token
     
     payload = decode_token(refresh_data.refresh_token)
@@ -105,6 +123,7 @@ async def refresh(
         )
     
     user_id = payload.get("sub")
+    token_jti = payload.get("jti")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -119,11 +138,19 @@ async def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive"
         )
+
+    if not token_jti or user.current_refresh_jti != token_jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token revoked or rotated"
+        )
     
     # Create new tokens (token rotation)
     token_data = {"sub": str(user.id), "email": user.email, "role": user.role}
     access_token = create_access_token(token_data)
-    refresh_token = create_refresh_token(token_data)
+    new_refresh_jti = generate_token_id()
+    refresh_token = create_refresh_token(token_data, jti=new_refresh_jti)
+    user.current_refresh_jti = new_refresh_jti
     
     return {
         "access_token": access_token,
@@ -144,6 +171,7 @@ async def get_current_user_info(
 @router.post("/forgot-password")
 async def forgot_password(
     payload: PasswordResetRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -167,7 +195,7 @@ async def forgot_password(
             logger.exception("Failed sending password-reset email to %s", user.email)
 
         # Dev fallback when email provider is not configured.
-        if settings.APP_ENV == "development" or settings.APP_DEBUG:
+        if (settings.APP_ENV == "development" or settings.APP_DEBUG) and settings.PASSWORD_RESET_DEBUG_EXPOSE:
             response["debug_reset_url"] = reset_url
             if not email_sent:
                 response["debug_reset_token"] = raw_token
@@ -180,9 +208,13 @@ async def forgot_password(
 @router.post("/reset-password")
 async def reset_password(
     payload: PasswordResetConfirm,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """Reset password using one-time token."""
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:reset:ip:{client_ip}", max_requests=10, window_seconds=60)
+
     reset_service = PasswordResetService(db)
     success = await reset_service.reset_password(payload.token, payload.new_password)
     if not success:
@@ -192,3 +224,15 @@ async def reset_password(
         )
 
     return {"message": "Password berhasil diubah"}
+
+
+@router.post("/logout")
+async def logout(
+    current_user: User = Depends(get_current_user),
+):
+    """Revoke active refresh token for current user session."""
+    current_user.current_refresh_jti = None
+    return {"message": "Logged out successfully"}
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:forgot:ip:{client_ip}", max_requests=10, window_seconds=60)
+    enforce_rate_limit(f"auth:forgot:email:{payload.email.lower()}", max_requests=5, window_seconds=60)
