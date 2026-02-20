@@ -215,7 +215,9 @@ class DonationService:
             return None
         
         donation.proof_url = proof_url
-        donation.payment_status = "awaiting_verification"
+        # Keep status value compatible with existing DB column length.
+        # Proof presence indicates waiting admin/pengurus confirmation.
+        donation.payment_status = "pending"
         
         await self.db.flush()
         await self.db.refresh(donation)

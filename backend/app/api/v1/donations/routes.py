@@ -17,7 +17,15 @@ from app.models.user import User
 from app.schemas.donation import DonationCreate, DonationResponse, DonationVerify
 from app.services.donation import DonationService
 
-ALLOWED_UPLOAD_TYPES = {"image/jpeg", "image/png", "application/pdf"}
+ALLOWED_UPLOAD_TYPES = {
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+    "application/pdf",
+}
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
 
 router = APIRouter()

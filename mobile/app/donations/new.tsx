@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { HandHeart, Info } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainThemeLayout } from '@/components/ui';
 import { useCreateDonation } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,10 +22,11 @@ import { colors } from '@/constants/colors';
 const PRESET_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 export default function NewDonationScreen() {
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const createDonation = useCreateDonation();
   const [amount, setAmount] = useState<number>(100000);
-  const [customAmount, setCustomAmount] = useState('');
+  const [customAmount, setCustomAmount] = useState(''); // keep digits only
 
   const displayAmount = useMemo(() => {
     if (customAmount.trim().length > 0) {
@@ -39,6 +41,13 @@ export default function NewDonationScreen() {
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(value || 0);
+
+  const formatThousands = (value: string) => {
+    if (!value) return '';
+    const numeric = value.replace(/\D/g, '');
+    if (!numeric) return '';
+    return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
 
   const onSubmit = async () => {
     if (!displayAmount || displayAmount < 10000) {
@@ -69,7 +78,7 @@ export default function NewDonationScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 128 }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           showsVerticalScrollIndicator={false}
@@ -109,7 +118,7 @@ export default function NewDonationScreen() {
             placeholder="Contoh: 150000"
             placeholderTextColor={colors.gray[400]}
             keyboardType="number-pad"
-            value={customAmount}
+            value={formatThousands(customAmount)}
             onChangeText={(txt) => setCustomAmount(txt.replace(/[^0-9]/g, ''))}
           />
 
@@ -126,7 +135,7 @@ export default function NewDonationScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { bottom: insets.bottom + 10 }]}>
           <TouchableOpacity
             style={[styles.submitBtn, createDonation.isPending && { opacity: 0.75 }]}
             onPress={onSubmit}
