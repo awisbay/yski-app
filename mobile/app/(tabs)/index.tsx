@@ -50,7 +50,11 @@ export default function HomeScreen() {
   };
 
   const activeBookings = bookings?.filter(
-    (b: any) => b.status === 'confirmed' || b.status === 'pending'
+    (b: any) =>
+      b.status === 'confirmed' ||
+      b.status === 'approved' ||
+      b.status === 'pending' ||
+      b.status === 'in_progress'
   ) || [];
   const nextBooking = activeBookings[0];
   const featuredProgram = programs?.[0];
@@ -221,8 +225,18 @@ export default function HomeScreen() {
             <View style={styles.bookingBody}>
               <View style={styles.bookingTopRow}>
                 <Badge
-                  label={nextBooking.status}
-                  variant={nextBooking.status === 'confirmed' ? 'success' : 'warning'}
+                  label={
+                    nextBooking.status === 'approved' ? 'disetujui' :
+                    nextBooking.status === 'in_progress' ? 'berjalan' :
+                    nextBooking.status
+                  }
+                  variant={
+                    nextBooking.status === 'confirmed' || nextBooking.status === 'approved'
+                      ? 'success'
+                      : nextBooking.status === 'in_progress'
+                      ? 'secondary'
+                      : 'warning'
+                  }
                 />
                 <Text style={styles.bookingId}>#{nextBooking.id.slice(-6).toUpperCase()}</Text>
               </View>

@@ -2,6 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingsApi } from '@/services/api';
 import { useBookingStore } from '@/stores/bookingStore';
 
+function normalizeBooking(raw: any) {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    bookingDate: raw.bookingDate ?? raw.booking_date,
+    timeSlot: raw.timeSlot ?? raw.time_slot,
+    pickupAddress: raw.pickupAddress ?? raw.pickup_address,
+    dropoffAddress: raw.dropoffAddress ?? raw.dropoff_address,
+    requesterName: raw.requesterName ?? raw.requester_name,
+    requesterPhone: raw.requesterPhone ?? raw.requester_phone,
+    createdAt: raw.createdAt ?? raw.created_at,
+    updatedAt: raw.updatedAt ?? raw.updated_at,
+    assignedTo: raw.assignedTo ?? raw.assigned_to,
+    approvedBy: raw.approvedBy ?? raw.approved_by,
+    reviewText: raw.reviewText ?? raw.review_text,
+  };
+}
+
 // Query keys
 export const bookingKeys = {
   all: ['bookings'] as const,
@@ -25,7 +43,7 @@ export function useBookingSlots(date: string) {
 export function useMyBookings() {
   return useQuery({
     queryKey: bookingKeys.lists(),
-    queryFn: () => bookingsApi.getMyBookings().then(res => res.data),
+    queryFn: () => bookingsApi.getMyBookings().then(res => (res.data || []).map(normalizeBooking)),
   });
 }
 
@@ -33,7 +51,7 @@ export function useMyBookings() {
 export function useBookingDetail(id: string) {
   return useQuery({
     queryKey: bookingKeys.detail(id),
-    queryFn: () => bookingsApi.getBooking(id).then(res => res.data),
+    queryFn: () => bookingsApi.getBooking(id).then(res => normalizeBooking(res.data)),
     enabled: !!id,
   });
 }
