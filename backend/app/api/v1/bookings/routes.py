@@ -191,15 +191,15 @@ async def update_booking_status(
     current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
     db: AsyncSession = Depends(get_db)
 ):
-    """Update booking status (Relawan assigned only)."""
+    """Update booking status (Admin/Pengurus/Relawan)."""
     service = BookingService(db)
     booking = await service.get_by_id(str(booking_id))
     
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     
-    # Relawan can only update their assigned bookings
-    if current_user.role == "relawan" and booking.assigned_to != current_user.id:
+    # Relawan can update booking when still unassigned, or already assigned to self.
+    if current_user.role == "relawan" and booking.assigned_to and booking.assigned_to != current_user.id:
         raise HTTPException(status_code=403, detail="Not assigned to this booking")
     
     booking = await service.update_status(str(booking_id), status, current_user.id)

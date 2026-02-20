@@ -9,9 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
-import { useAllBookings, useApproveBooking, useRejectBooking } from '@/hooks';
+import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 
@@ -25,6 +25,7 @@ const TITLE_MAP: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Menunggu',
+  confirmed: 'Dikonfirmasi',
   approved: 'Disetujui',
   in_progress: 'Diproses',
   completed: 'Selesai',
@@ -67,6 +68,7 @@ function BookingManagementScreen() {
   const { data: bookings, isLoading, refetch } = useAllBookings();
   const approveMutation = useApproveBooking();
   const rejectMutation = useRejectBooking();
+  const updateStatusMutation = useUpdateBookingStatus();
 
   const pendingCount = useMemo(
     () => (bookings || []).filter((b: any) => b.status === 'pending').length,
@@ -96,8 +98,22 @@ function BookingManagementScreen() {
     }
   };
 
+  const handleComplete = async (booking: any) => {
+    try {
+      if (booking.status === 'approved' || booking.status === 'confirmed') {
+        await updateStatusMutation.mutateAsync({ id: booking.id, status: 'in_progress' });
+      }
+      await updateStatusMutation.mutateAsync({ id: booking.id, status: 'completed' });
+      refetch();
+    } catch {
+      Alert.alert('Gagal', 'Tidak dapat mengonfirmasi booking selesai.');
+    }
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     const isPending = item.status === 'pending';
+    const canComplete =
+      item.status === 'approved' || item.status === 'confirmed' || item.status === 'in_progress';
 
     return (
       <View style={styles.card}>
@@ -162,6 +178,24 @@ function BookingManagementScreen() {
               )}
             </TouchableOpacity>
           </View>
+        )}
+
+        {canComplete && (
+          <TouchableOpacity
+            style={styles.completeBtn}
+            onPress={() => handleComplete(item)}
+            disabled={updateStatusMutation.isPending}
+            activeOpacity={0.85}
+          >
+            {updateStatusMutation.isPending ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <>
+                <Flag size={15} color={colors.white} />
+                <Text style={styles.completeText}>Konfirmasi Selesai</Text>
+              </>
+            )}
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -341,5 +375,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: colors.error[600],
+  },
+  completeBtn: {
+    marginTop: 10,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: colors.primary[600],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  completeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.white,
   },
 });

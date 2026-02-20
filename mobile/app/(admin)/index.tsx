@@ -16,6 +16,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { useAuthStore } from '@/stores/authStore';
+import { useAllBookings } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
@@ -30,6 +31,7 @@ const ADMIN_MENU = [
 export default function AdminDashboard() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { data: allBookings } = useAllBookings();
   const roleLabel =
     user?.role === 'pengurus' ? 'Pengurus' :
     user?.role === 'relawan' ? 'Relawan' :
@@ -37,6 +39,19 @@ export default function AdminDashboard() {
   const menuItems = user?.role === 'admin' || user?.role === 'superadmin'
     ? ADMIN_MENU
     : ADMIN_MENU.filter((item) => item.route !== '/admin/users');
+  const completedAchievement = String((allBookings || []).filter((b: any) => b.status === 'completed').length);
+  const bookingToday = String(
+    (allBookings || []).filter((b: any) => {
+      if (!b.bookingDate) return false;
+      const d = new Date(b.bookingDate);
+      const now = new Date();
+      return (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      );
+    }).length
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -79,7 +94,7 @@ export default function AdminDashboard() {
           />
           <StatCard
             title="Booking Hari Ini"
-            value="8"
+            value={bookingToday}
             icon={<Calendar size={24} color={colors.secondary[500]} />}
             color={colors.secondary[500]}
           />
@@ -90,8 +105,8 @@ export default function AdminDashboard() {
             color={colors.success[500]}
           />
           <StatCard
-            title="Penjemputan Pending"
-            value="5"
+            title="Achievement Selesai"
+            value={completedAchievement}
             icon={<Truck size={24} color={colors.warning[500]} />}
             color={colors.warning[500]}
           />

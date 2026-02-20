@@ -114,3 +114,14 @@ export function useRejectBooking() {
     },
   });
 }
+
+export function useUpdateBookingStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'in_progress' | 'completed' }) =>
+      bookingsApi.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
+    },
+  });
+}

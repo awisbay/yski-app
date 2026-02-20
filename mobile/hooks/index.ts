@@ -8,6 +8,7 @@ export {
   useCancelBooking,
   useApproveBooking,
   useRejectBooking,
+  useUpdateBookingStatus,
 } from './useBookings';
 export { useMyDonations, useDonationDetail, useDonationSummary, useCreateDonation } from './useDonations';
 export { useEquipmentList, useEquipmentStats, useEquipmentDetail, useMyLoans, useRequestLoan } from './useEquipment';

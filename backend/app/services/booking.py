@@ -203,6 +203,7 @@ class BookingService:
     VALID_TRANSITIONS = {
         "pending": {"approved", "rejected", "cancelled"},
         "approved": {"in_progress", "cancelled"},
+        "confirmed": {"in_progress", "cancelled"},
         "in_progress": {"completed", "cancelled"},
         "rejected": set(),
         "completed": set(),
