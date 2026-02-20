@@ -10,6 +10,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.equipment import MedicalEquipment, EquipmentLoan
 from app.models.user import User
@@ -110,7 +111,9 @@ class EquipmentService:
             return None
         
         result = await self.db.execute(
-            select(EquipmentLoan).where(EquipmentLoan.id == uuid_id)
+            select(EquipmentLoan)
+            .options(selectinload(EquipmentLoan.equipment))
+            .where(EquipmentLoan.id == uuid_id)
         )
         return result.scalar_one_or_none()
     
@@ -123,6 +126,7 @@ class EquipmentService:
     ) -> List[EquipmentLoan]:
         """List loans with filters."""
         query = select(EquipmentLoan)
+        query = query.options(selectinload(EquipmentLoan.equipment))
         
         if status:
             query = query.where(EquipmentLoan.status == status)
@@ -132,6 +136,14 @@ class EquipmentService:
         query = query.offset(skip).limit(limit).order_by(EquipmentLoan.created_at.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
+
+    async def _get_loan_with_equipment(self, loan_id: UUID) -> Optional[EquipmentLoan]:
+        result = await self.db.execute(
+            select(EquipmentLoan)
+            .options(selectinload(EquipmentLoan.equipment))
+            .where(EquipmentLoan.id == loan_id)
+        )
+        return result.scalar_one_or_none()
     
     async def request_loan(self, equipment_id: str, data: EquipmentLoanCreate, borrower_id: UUID) -> EquipmentLoan:
         """Create a loan request."""
@@ -177,7 +189,8 @@ class EquipmentService:
                 reference_type="loan",
                 reference_id=loan.id,
             )
-        return loan
+        loaded_loan = await self._get_loan_with_equipment(loan.id)
+        return loaded_loan or loan
     
     async def approve_loan(self, loan_id: str, approved_by: UUID) -> Optional[EquipmentLoan]:
         """Approve a loan request with pessimistic locking on equipment stock."""

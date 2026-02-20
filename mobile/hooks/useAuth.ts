@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -64,10 +65,10 @@ export function useAuth() {
       forgotPasswordMutation.isPending ||
       resetPasswordMutation.isPending,
     error:
-      loginMutation.error?.message ||
-      registerMutation.error?.message ||
-      forgotPasswordMutation.error?.message ||
-      resetPasswordMutation.error?.message,
+      getReadableError(loginMutation.error) ||
+      getReadableError(registerMutation.error) ||
+      getReadableError(forgotPasswordMutation.error) ||
+      getReadableError(resetPasswordMutation.error),
     login: loginMutation.mutateAsync,
     register: registerMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
@@ -75,3 +76,14 @@ export function useAuth() {
     resetPassword: resetPasswordMutation.mutateAsync,
   };
 }
+  const getReadableError = (err: unknown): string | undefined => {
+    const axiosErr = err as AxiosError<any> | undefined;
+    const detail = axiosErr?.response?.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+      return detail
+        .map((d: any) => d?.msg || d?.message || String(d))
+        .join(', ');
+    }
+    return axiosErr?.message;
+  };
