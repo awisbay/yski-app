@@ -31,6 +31,8 @@ export function useMyDonations() {
   return useQuery({
     queryKey: donationKeys.lists(),
     queryFn: () => donationsApi.getMyDonations().then(res => (res.data || []).map(normalizeDonation)),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -47,6 +49,8 @@ export function useDonationDetail(id: string) {
     queryKey: donationKeys.detail(id),
     queryFn: () => donationsApi.getDetail(id).then(res => normalizeDonation(res.data)),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 

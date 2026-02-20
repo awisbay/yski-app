@@ -145,6 +145,13 @@ export default function DonationPaymentScreen() {
                     Donasi anda Diterima, Jazakumullah khairan, Barakallahu Fiik
                   </Text>
                 </>
+              ) : donation.paymentStatus === 'cancelled' ? (
+                <>
+                  <Clock3 size={16} color={colors.error[600]} />
+                  <Text style={[styles.statusText, { color: colors.error[700] }]}>
+                    Donasi ditolak admin/pengurus
+                  </Text>
+                </>
               ) : (
                 <>
                   <Clock3 size={16} color={colors.warning[600]} />

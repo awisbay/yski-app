@@ -13,6 +13,13 @@ function getDonationState(paymentStatus?: string) {
       icon: CheckCircle2,
     };
   }
+  if (paymentStatus === 'cancelled') {
+    return {
+      label: 'Donasi ditolak admin/pengurus',
+      color: colors.error[600],
+      icon: FileWarning,
+    };
+  }
   if (paymentStatus === 'awaiting_verification' || paymentStatus === 'pending') {
     return { label: 'Menunggu Konfirmasi', color: colors.warning[600], icon: Clock3 };
   }
