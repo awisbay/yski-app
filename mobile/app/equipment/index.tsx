@@ -2,12 +2,11 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Package, Search, Filter, ChevronRight, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, FilterTabBar, Skeleton } from '@/components/ui';
+import { MainThemeLayout, SectionHeader, FilterTabBar, Skeleton } from '@/components/ui';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { useEquipmentList, useEquipmentStats, useMyLoans } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -68,111 +67,115 @@ export default function EquipmentScreen() {
   );
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Peralatan"
-        showBackButton
-        rightElement={
-          <TouchableOpacity style={styles.searchButton}>
-            <Search size={24} color={colors.gray[700]} />
-          </TouchableOpacity>
-        }
-      />
+    <MainThemeLayout
+      title="Peralatan"
+      subtitle="Pinjam alat yang tersedia"
+      showBackButton
+      rightElement={
+        <TouchableOpacity style={styles.searchButton}>
+          <Search size={20} color={colors.white} />
+        </TouchableOpacity>
+      }
+    >
+      <View style={styles.content}>
+        {stats && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.totalEquipment || 0}</Text>
+              <Text style={styles.statLabel}>Total Item</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.availableCount || 0}</Text>
+              <Text style={styles.statLabel}>Tersedia</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{myLoans?.length || 0}</Text>
+              <Text style={styles.statLabel}>Dipinjam</Text>
+            </View>
+          </View>
+        )}
 
-      {/* Stats */}
-      {stats && (
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.totalEquipment || 0}</Text>
-            <Text style={styles.statLabel}>Total Item</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.availableCount || 0}</Text>
-            <Text style={styles.statLabel}>Tersedia</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{myLoans?.length || 0}</Text>
-            <Text style={styles.statLabel}>Dipinjam</Text>
-          </View>
-        </View>
-      )}
-
-      {/* My Loans Section */}
-      {myLoans && myLoans.length > 0 && (
-        <>
-          <SectionHeader title="Peminjaman Saya" />
-          {myLoans.slice(0, 2).map((loan: any) => (
-            <Card key={loan.id} style={styles.loanCard}>
-              <View style={styles.loanHeader}>
-                <Text style={styles.loanEquipment}>{loan.equipmentName}</Text>
-                <Badge
-                  label={loan.status}
-                  variant={loan.status === 'active' ? 'primary' : loan.status === 'returned' ? 'success' : 'warning'}
-                  size="sm"
-                />
-              </View>
-              <View style={styles.loanInfo}>
-                <View style={styles.infoRow}>
-                  <Clock size={14} color={colors.gray[400]} />
-                  <Text style={styles.infoText}>
-                    {new Date(loan.loanDate).toLocaleDateString('id-ID')}
-                  </Text>
+        {myLoans && myLoans.length > 0 && (
+          <>
+            <SectionHeader title="Peminjaman Saya" />
+            {myLoans.slice(0, 2).map((loan: any) => (
+              <Card key={loan.id} style={styles.loanCard}>
+                <View style={styles.loanHeader}>
+                  <Text style={styles.loanEquipment}>{loan.equipmentName}</Text>
+                  <Badge
+                    label={loan.status}
+                    variant={loan.status === 'active' ? 'primary' : loan.status === 'returned' ? 'success' : 'warning'}
+                    size="sm"
+                  />
                 </View>
-                {loan.dueDate && (
+                <View style={styles.loanInfo}>
                   <View style={styles.infoRow}>
-                    <AlertCircle size={14} color={colors.warning[500]} />
-                    <Text style={[styles.infoText, { color: colors.warning[600] }]}>
-                      Jatuh tempo: {new Date(loan.dueDate).toLocaleDateString('id-ID')}
+                    <Clock size={14} color={colors.gray[400]} />
+                    <Text style={styles.infoText}>
+                      {new Date(loan.loanDate).toLocaleDateString('id-ID')}
                     </Text>
                   </View>
-                )}
-              </View>
-            </Card>
-          ))}
-        </>
-      )}
+                  {loan.dueDate && (
+                    <View style={styles.infoRow}>
+                      <AlertCircle size={14} color={colors.warning[500]} />
+                      <Text style={[styles.infoText, { color: colors.warning[600] }]}>
+                        Jatuh tempo: {new Date(loan.dueDate).toLocaleDateString('id-ID')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </Card>
+            ))}
+          </>
+        )}
 
-      <SectionHeader title="Daftar Peralatan" />
+        <SectionHeader title="Daftar Peralatan" />
 
-      <FilterTabBar
-        tabs={CATEGORIES}
-        activeTab={activeCategory}
-        onChange={setActiveCategory}
-      />
-
-      {isLoading ? (
-        <>
-          <Skeleton height={140} borderRadius={12} />
-          <Skeleton height={140} borderRadius={12} />
-          <Skeleton height={140} borderRadius={12} />
-        </>
-      ) : filteredEquipment.length > 0 ? (
-        <FlatList
-          data={filteredEquipment}
-          renderItem={renderEquipmentItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+        <FilterTabBar
+          tabs={CATEGORIES}
+          activeTab={activeCategory}
+          onChange={setActiveCategory}
         />
-      ) : (
-        <EmptyState
-          icon={Package}
-          title="Tidak ada peralatan"
-          description="Belum ada peralatan yang tersedia di kategori ini"
-        />
-      )}
-    </ScreenWrapper>
+
+        {isLoading ? (
+          <>
+            <Skeleton height={140} borderRadius={12} />
+            <Skeleton height={140} borderRadius={12} />
+            <Skeleton height={140} borderRadius={12} />
+          </>
+        ) : filteredEquipment.length > 0 ? (
+          <FlatList
+            data={filteredEquipment}
+            renderItem={renderEquipmentItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <EmptyState
+            icon={Package}
+            title="Tidak ada peralatan"
+            description="Belum ada peralatan yang tersedia di kategori ini"
+          />
+        )}
+      </View>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+  },
   searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -227,6 +230,7 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
   },
   listContent: {
+    paddingHorizontal: 20,
     paddingBottom: 100,
   },
   equipmentCard: {

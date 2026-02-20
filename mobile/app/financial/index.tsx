@@ -3,11 +3,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import { Wallet, TrendingUp, TrendingDown, FileText, ChevronRight, Calendar, Download } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, StatCard, Skeleton } from '@/components/ui';
+import { MainThemeLayout, SectionHeader, StatCard, Skeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { useFinancialDashboard, useFinancialReports } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -129,123 +128,124 @@ export default function FinancialScreen() {
 
   if (dashboardLoading) {
     return (
-      <ScreenWrapper>
-        <Header title="Laporan Keuangan" showBackButton />
-        <Skeleton height={200} borderRadius={12} />
-        <Skeleton height={200} borderRadius={12} />
-        <Skeleton height={140} borderRadius={12} />
-      </ScreenWrapper>
+      <MainThemeLayout title="Laporan Keuangan" subtitle="Transparansi dana yayasan" showBackButton>
+        <View style={styles.content}>
+          <Skeleton height={200} borderRadius={12} />
+          <Skeleton height={200} borderRadius={12} />
+          <Skeleton height={140} borderRadius={12} />
+        </View>
+      </MainThemeLayout>
     );
   }
 
   return (
-    <ScreenWrapper>
-      <Header title="Laporan Keuangan" showBackButton />
-
-      {/* Summary Stats */}
-      <View style={styles.statsContainer}>
-        <StatCard
-          title="Total Pemasukan"
-          value={formatCurrency(dashboard?.totalIncome || 0)}
-          icon={<TrendingUp size={24} color={colors.success[500]} />}
-          color={colors.success[500]}
-        />
-        <StatCard
-          title="Total Pengeluaran"
-          value={formatCurrency(dashboard?.totalExpense || 0)}
-          icon={<TrendingDown size={24} color={colors.error[500]} />}
-          color={colors.error[500]}
-        />
-        <StatCard
-          title="Saldo"
-          value={formatCurrency(dashboard?.balance || 0)}
-          icon={<Wallet size={24} color={colors.primary[500]} />}
-          color={colors.primary[500]}
-        />
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Income Breakdown */}
-        {incomePieData && (
-          <>
-            <SectionHeader title="Pemasukan per Kategori" />
-            <Card style={styles.chartCard}>
-              <PieChart
-                data={incomePieData}
-                width={300}
-                height={180}
-                chartConfig={chartConfig}
-                accessor="population"
-                backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
-              />
-              <View style={styles.legendContainer}>
-                {dashboard?.incomeByCategory?.map((item: any, index: number) => (
-                  <View key={item.category} style={styles.legendItem}>
-                    <View style={[styles.legendColor, { backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }]} />
-                    <Text style={styles.legendText}>{formatCategoryName(item.category)}</Text>
-                    <Text style={styles.legendValue}>{item.percentage}%</Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-          </>
-        )}
-
-        {/* Expense Breakdown */}
-        {expensePieData && (
-          <>
-            <SectionHeader title="Pengeluaran per Kategori" />
-            <Card style={styles.chartCard}>
-              <PieChart
-                data={expensePieData}
-                width={300}
-                height={180}
-                chartConfig={chartConfig}
-                accessor="population"
-                backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
-              />
-              <View style={styles.legendContainer}>
-                {dashboard?.expenseByCategory?.map((item: any, index: number) => (
-                  <View key={item.category} style={styles.legendItem}>
-                    <View style={[styles.legendColor, { backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }]} />
-                    <Text style={styles.legendText}>{formatCategoryName(item.category)}</Text>
-                    <Text style={styles.legendValue}>{item.percentage}%</Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-          </>
-        )}
-
-        {/* Reports List */}
-        <SectionHeader title="Laporan Bulanan" />
-        {reportsLoading ? (
-          <>
-            <Skeleton height={140} borderRadius={12} />
-            <Skeleton height={140} borderRadius={12} />
-          </>
-        ) : reportsData?.reports?.length > 0 ? (
-          reportsData.reports.map((item: any) => (
-            <View key={item.id}>{renderReportItem({ item })}</View>
-          ))
-        ) : (
-          <EmptyState
-            icon={FileText}
-            title="Belum ada laporan"
-            description="Laporan keuangan akan segera tersedia"
-            compact
+    <MainThemeLayout title="Laporan Keuangan" subtitle="Transparansi dana yayasan" showBackButton>
+      <View style={styles.content}>
+        <View style={styles.statsContainer}>
+          <StatCard
+            title="Total Pemasukan"
+            value={formatCurrency(dashboard?.totalIncome || 0)}
+            icon={<TrendingUp size={24} color={colors.success[500]} />}
+            color={colors.success[500]}
           />
-        )}
-      </ScrollView>
-    </ScreenWrapper>
+          <StatCard
+            title="Total Pengeluaran"
+            value={formatCurrency(dashboard?.totalExpense || 0)}
+            icon={<TrendingDown size={24} color={colors.error[500]} />}
+            color={colors.error[500]}
+          />
+          <StatCard
+            title="Saldo"
+            value={formatCurrency(dashboard?.balance || 0)}
+            icon={<Wallet size={24} color={colors.primary[500]} />}
+            color={colors.primary[500]}
+          />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {incomePieData && (
+            <>
+              <SectionHeader title="Pemasukan per Kategori" />
+              <Card style={styles.chartCard}>
+                <PieChart
+                  data={incomePieData}
+                  width={300}
+                  height={180}
+                  chartConfig={chartConfig}
+                  accessor="population"
+                  backgroundColor="transparent"
+                  paddingLeft="15"
+                  absolute
+                />
+                <View style={styles.legendContainer}>
+                  {dashboard?.incomeByCategory?.map((item: any, index: number) => (
+                    <View key={item.category} style={styles.legendItem}>
+                      <View style={[styles.legendColor, { backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }]} />
+                      <Text style={styles.legendText}>{formatCategoryName(item.category)}</Text>
+                      <Text style={styles.legendValue}>{item.percentage}%</Text>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            </>
+          )}
+
+          {expensePieData && (
+            <>
+              <SectionHeader title="Pengeluaran per Kategori" />
+              <Card style={styles.chartCard}>
+                <PieChart
+                  data={expensePieData}
+                  width={300}
+                  height={180}
+                  chartConfig={chartConfig}
+                  accessor="population"
+                  backgroundColor="transparent"
+                  paddingLeft="15"
+                  absolute
+                />
+                <View style={styles.legendContainer}>
+                  {dashboard?.expenseByCategory?.map((item: any, index: number) => (
+                    <View key={item.category} style={styles.legendItem}>
+                      <View style={[styles.legendColor, { backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }]} />
+                      <Text style={styles.legendText}>{formatCategoryName(item.category)}</Text>
+                      <Text style={styles.legendValue}>{item.percentage}%</Text>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            </>
+          )}
+
+          <SectionHeader title="Laporan Bulanan" />
+          {reportsLoading ? (
+            <>
+              <Skeleton height={140} borderRadius={12} />
+              <Skeleton height={140} borderRadius={12} />
+            </>
+          ) : reportsData?.reports?.length > 0 ? (
+            reportsData.reports.map((item: any) => (
+              <View key={item.id}>{renderReportItem({ item })}</View>
+            ))
+          ) : (
+            <EmptyState
+              icon={FileText}
+              title="Belum ada laporan"
+              description="Laporan keuangan akan segera tersedia"
+              compact
+            />
+          )}
+        </ScrollView>
+      </View>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   statsContainer: {
     marginBottom: 8,
   },

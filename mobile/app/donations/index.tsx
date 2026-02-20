@@ -1,13 +1,13 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Plus, Heart, Calendar, CheckCircle, Clock, ChevronRight } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, FilterTabBar, StatCard, Skeleton } from '@/components/ui';
-import { Button } from '@/components/Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { Plus, Heart, Calendar, CheckCircle, Clock, ChevronRight, Sparkles } from 'lucide-react-native';
+import { Skeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { useMyDonations, useDonationSummary } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -26,20 +26,32 @@ const DONATION_TYPES: Record<string, { label: string; color: string }> = {
 };
 
 export default function DonationsScreen() {
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('all');
   const { data: donations, isLoading } = useMyDonations();
   const { data: summary } = useDonationSummary();
 
-  const filteredDonations = donations?.filter((donation: any) => {
-    switch (activeTab) {
-      case 'pending':
-        return donation.status === 'pending';
-      case 'completed':
-        return donation.status === 'completed';
-      default:
-        return true;
-    }
-  }) || [];
+  const allDonations = donations || [];
+  const completedStatuses = ['completed', 'paid'];
+  const pendingStatuses = ['pending', 'unpaid'];
+
+  const stats = useMemo(() => {
+    const completedCount = allDonations.filter((item: any) => completedStatuses.includes(item.status)).length;
+    const pendingCount = allDonations.filter((item: any) => pendingStatuses.includes(item.status)).length;
+
+    return {
+      totalCount: summary?.totalCount ?? summary?.total_donations ?? allDonations.length,
+      totalAmount: summary?.totalAmount ?? summary?.total_amount ?? 0,
+      completedCount,
+      pendingCount,
+    };
+  }, [allDonations, summary]);
+
+  const filteredDonations = allDonations.filter((donation: any) => {
+    if (activeTab === 'pending') return pendingStatuses.includes(donation.status);
+    if (activeTab === 'completed') return completedStatuses.includes(donation.status);
+    return true;
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -51,13 +63,15 @@ export default function DonationsScreen() {
 
   const renderDonationItem = ({ item }: { item: any }) => {
     const typeInfo = DONATION_TYPES[item.donationType] || { label: item.donationType, color: colors.gray[500] };
-    
+    const isCompleted = completedStatuses.includes(item.status);
+
     return (
       <TouchableOpacity
         onPress={() => router.push(`/donations/${item.id}`)}
-        activeOpacity={0.7}
+        activeOpacity={0.85}
       >
         <Card style={styles.donationCard}>
+          <View style={[styles.cardAccent, { backgroundColor: isCompleted ? colors.success[500] : colors.warning[500] }]} />
           <View style={styles.donationHeader}>
             <View style={styles.donationType}>
               <View style={[styles.typeIcon, { backgroundColor: typeInfo.color + '15' }]}>
@@ -69,8 +83,8 @@ export default function DonationsScreen() {
               </View>
             </View>
             <Badge
-              label={item.status}
-              variant={item.status === 'completed' ? 'success' : 'warning'}
+              label={isCompleted ? 'Selesai' : 'Menunggu'}
+              variant={isCompleted ? 'success' : 'warning'}
             />
           </View>
 
@@ -85,7 +99,7 @@ export default function DonationsScreen() {
                 {new Date(item.createdAt).toLocaleDateString('id-ID')}
               </Text>
             </View>
-            {item.status === 'pending' ? (
+            {!isCompleted ? (
               <View style={styles.infoRow}>
                 <Clock size={14} color={colors.warning[500]} />
                 <Text style={[styles.statusText, { color: colors.warning[600] }]}>
@@ -107,94 +121,284 @@ export default function DonationsScreen() {
   };
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Donasi Saya"
-        showBackButton={false}
-        rightElement={
+    <View style={styles.root}>
+      <StatusBar style="light" />
+
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerTitleWrap}>
+            <Text style={styles.greetingLabel}>Mari berbagi lebih banyak</Text>
+            <Text style={styles.pageTitle}>Donasi Saya</Text>
+          </View>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => router.push('/donations/new')}
           >
-            <Plus size={24} color={colors.primary[600]} />
+            <Plus size={22} color={colors.white} />
           </TouchableOpacity>
-        }
-      />
-
-      {/* Stats */}
-      {summary && (
-        <View style={styles.statsContainer}>
-          <StatCard
-            title="Total Donasi"
-            value={summary.totalCount || 0}
-            icon={<Heart size={24} color={colors.primary[500]} />}
-            color={colors.primary[500]}
-          />
-          <StatCard
-            title="Total Nominal"
-            value={formatCurrency(summary.totalAmount || 0)}
-            icon={<CheckCircle size={24} color={colors.success[500]} />}
-            color={colors.success[500]}
-          />
         </View>
-      )}
 
-      <FilterTabBar
-        tabs={FILTER_TABS}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
+        <View style={styles.statsStrip}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.totalCount}</Text>
+            <Text style={styles.statLabel}>Total{'\n'}Donasi</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.completedCount}</Text>
+            <Text style={styles.statLabel}>Donasi{'\n'}Selesai</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.pendingCount}</Text>
+            <Text style={styles.statLabel}>Menunggu{'\n'}Pembayaran</Text>
+          </View>
+        </View>
+      </View>
 
-      {isLoading ? (
-        <>
-          <Skeleton height={140} borderRadius={12} />
-          <Skeleton height={140} borderRadius={12} />
-          <Skeleton height={140} borderRadius={12} />
-        </>
-      ) : filteredDonations.length > 0 ? (
-        <FlatList
-          data={filteredDonations}
-          renderItem={renderDonationItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <EmptyState
-          icon={Heart}
-          title="Belum ada donasi"
-          description={
-            activeTab === 'all'
-              ? "Mulai berbagi kebaikan dengan donasi pertama Anda"
-              : `Tidak ada donasi ${activeTab === 'pending' ? 'yang menunggu' : 'yang selesai'}.`
-          }
-          action={{
-            label: 'Buat Donasi',
-            onPress: () => router.push('/donations/new'),
-          }}
-        />
-      )}
-    </ScreenWrapper>
+      <View style={styles.panel}>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryIcon}>
+            <Sparkles size={18} color={colors.primary[600]} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.summaryLabel}>Total Nominal Terdonasi</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(stats.totalAmount)}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.summaryCta}
+            onPress={() => router.push('/donations/new')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.summaryCtaText}>Donasi Lagi</Text>
+            <ChevronRight size={14} color={colors.primary[600]} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+          style={styles.filterWrap}
+        >
+          {FILTER_TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.filterChip, activeTab === tab.key && styles.filterChipActive]}
+              onPress={() => setActiveTab(tab.key)}
+            >
+              <Text style={[styles.filterLabel, activeTab === tab.key && styles.filterLabelActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {isLoading ? (
+          <View style={styles.loadingWrap}>
+            <Skeleton height={130} borderRadius={16} />
+            <Skeleton height={130} borderRadius={16} />
+            <Skeleton height={130} borderRadius={16} />
+          </View>
+        ) : filteredDonations.length > 0 ? (
+          <FlatList
+            data={filteredDonations}
+            renderItem={renderDonationItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 96 }]}
+          />
+        ) : (
+          <View style={styles.emptyWrap}>
+            <EmptyState
+              icon={Heart}
+              title="Belum ada donasi"
+              description={
+                activeTab === 'all'
+                  ? 'Mulai berbagi kebaikan dengan donasi pertama Anda'
+                  : `Tidak ada donasi ${activeTab === 'pending' ? 'yang menunggu' : 'yang selesai'}.`
+              }
+              action={{
+                label: 'Buat Donasi',
+                onPress: () => router.push('/donations/new'),
+              }}
+            />
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.primary[700],
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 22,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  headerTitleWrap: {
+    flex: 1,
+  },
+  greetingLabel: {
+    ...typography.caption,
+    color: colors.primary[200],
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  pageTitle: {
+    ...typography.h4,
+    color: colors.white,
+    fontWeight: '700',
+  },
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary[100],
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-  statsContainer: {
-    marginBottom: 16,
+  statsStrip: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 16,
+    paddingVertical: 12,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    ...typography.h5,
+    color: colors.white,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.primary[200],
+    textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 13,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    marginVertical: 6,
+  },
+  panel: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 18,
+  },
+  summaryCard: {
+    marginHorizontal: 20,
+    marginBottom: 14,
+    backgroundColor: colors.primary[50],
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    borderRadius: 18,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  summaryIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+  },
+  summaryLabel: {
+    ...typography.caption,
+    color: colors.gray[500],
+  },
+  summaryValue: {
+    ...typography.h6,
+    color: colors.primary[700],
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  summaryCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+  },
+  summaryCtaText: {
+    ...typography.caption,
+    color: colors.primary[600],
+    fontWeight: '700',
+  },
+  filterWrap: {
+    marginBottom: 12,
+    maxHeight: 42,
+  },
+  filterScroll: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: colors.gray[100],
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary[600],
+  },
+  filterLabel: {
+    ...typography.body2,
+    color: colors.gray[700],
+    fontWeight: '600',
+  },
+  filterLabelActive: {
+    color: colors.white,
+  },
+  loadingWrap: {
+    paddingHorizontal: 20,
+    gap: 10,
   },
   listContent: {
-    paddingBottom: 100,
+    paddingHorizontal: 20,
+    paddingTop: 2,
   },
   donationCard: {
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    overflow: 'hidden',
+  },
+  cardAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
   },
   donationHeader: {
     flexDirection: 'row',
@@ -228,7 +432,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   amount: {
-    ...typography.h3,
+    ...typography.h5,
     color: colors.gray[900],
   },
   donationFooter: {
@@ -250,5 +454,10 @@ const styles = StyleSheet.create({
   statusText: {
     ...typography.caption,
     fontWeight: '500',
+  },
+  emptyWrap: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
   },
 });

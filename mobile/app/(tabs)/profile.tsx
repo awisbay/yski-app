@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { 
-  User, 
-  ChevronRight, 
+import {
+  User,
+  ChevronRight,
   LogOut, 
   Shield, 
   FileText, 
@@ -13,13 +13,11 @@ import {
   MapPin,
   Bell
 } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
+import { MainThemeLayout, SectionHeader } from '@/components/ui';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
-import { Header } from '@/components/Header';
 import { useAuthStore } from '@/stores/authStore';
-import { useNotificationStore } from '@/stores/notificationStore';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
@@ -43,89 +41,88 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScreenWrapper>
-      <Header title="Profil" showBackButton={false} />
-
-      {/* Profile Card */}
-      <Card style={styles.profileCard}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <User size={40} color={colors.primary[600]} />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.name}>{user?.full_name || 'Pengguna'}</Text>
-            <Text style={styles.email}>{user?.email}</Text>
-            <View style={styles.badgeContainer}>
-              <Badge 
-                label={user?.role || 'user'} 
-                variant={user?.role === 'admin' ? 'error' : 'primary'}
-                size="sm"
-              />
+    <MainThemeLayout title="Profil" subtitle="Akun dan pengaturan Anda">
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Card style={styles.profileCard}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <User size={40} color={colors.primary[600]} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.name}>{user?.full_name || 'Pengguna'}</Text>
+              <Text style={styles.email}>{user?.email}</Text>
+              <View style={styles.badgeContainer}>
+                <Badge
+                  label={user?.role || 'user'}
+                  variant={user?.role === 'admin' ? 'error' : 'primary'}
+                  size="sm"
+                />
+              </View>
             </View>
           </View>
-        </View>
-        
-        <View style={styles.contactInfo}>
-          {user?.phone && (
-            <View style={styles.contactRow}>
-              <Phone size={16} color={colors.gray[500]} />
-              <Text style={styles.contactText}>{user.phone}</Text>
-            </View>
-          )}
-        </View>
-      </Card>
 
-      {/* Admin Menu */}
-      {isAdmin && (
-        <>
-          <SectionHeader title="Admin" />
+          <View style={styles.contactInfo}>
+            {user?.phone && (
+              <View style={styles.contactRow}>
+                <Phone size={16} color={colors.gray[500]} />
+                <Text style={styles.contactText}>{user.phone}</Text>
+              </View>
+            )}
+          </View>
+        </Card>
+
+        {isAdmin && (
+          <>
+            <SectionHeader title="Admin" />
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push('/(admin)')}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: colors.error[100] }]}>
+                <Shield size={20} color={colors.error[600]} />
+              </View>
+              <Text style={styles.menuLabel}>Dashboard Admin</Text>
+              <ChevronRight size={20} color={colors.gray[400]} />
+            </TouchableOpacity>
+          </>
+        )}
+
+        <SectionHeader title="Menu" />
+        {MENU_ITEMS.map((item, index) => (
           <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => router.push('/(admin)')}
+            key={item.label}
+            style={[styles.menuItem, index === MENU_ITEMS.length - 1 && styles.menuItemLast]}
+            onPress={() => router.push(item.route)}
           >
-            <View style={[styles.menuIcon, { backgroundColor: colors.error[100] }]}>
-              <Shield size={20} color={colors.error[600]} />
+            <View style={styles.menuIcon}>
+              <item.icon size={20} color={colors.gray[600]} />
             </View>
-            <Text style={styles.menuLabel}>Dashboard Admin</Text>
+            <Text style={styles.menuLabel}>{item.label}</Text>
             <ChevronRight size={20} color={colors.gray[400]} />
           </TouchableOpacity>
-        </>
-      )}
+        ))}
 
-      {/* Menu List */}
-      <SectionHeader title="Menu" />
-      {MENU_ITEMS.map((item, index) => (
-        <TouchableOpacity
-          key={item.label}
-          style={[styles.menuItem, index === MENU_ITEMS.length - 1 && styles.menuItemLast]}
-          onPress={() => router.push(item.route)}
-        >
-          <View style={styles.menuIcon}>
-            <item.icon size={20} color={colors.gray[600]} />
-          </View>
-          <Text style={styles.menuLabel}>{item.label}</Text>
-          <ChevronRight size={20} color={colors.gray[400]} />
-        </TouchableOpacity>
-      ))}
+        <View style={styles.logoutContainer}>
+          <Button
+            title="Keluar"
+            variant="secondary"
+            leftIcon={<LogOut size={20} color={colors.error[600]} />}
+            onPress={handleLogout}
+            style={styles.logoutButton}
+          />
+        </View>
 
-      {/* Logout Button */}
-      <View style={styles.logoutContainer}>
-        <Button
-          title="Keluar"
-          variant="secondary"
-          leftIcon={<LogOut size={20} color={colors.error[600]} />}
-          onPress={handleLogout}
-          style={styles.logoutButton}
-        />
-      </View>
-
-      {/* Version */}
-      <Text style={styles.version}>Version 1.0.0</Text>
-    </ScreenWrapper>
+        <Text style={styles.version}>Version 1.0.0</Text>
+      </ScrollView>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   profileCard: {
     marginBottom: 24,
   },

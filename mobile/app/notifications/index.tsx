@@ -1,11 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { router } from 'expo-router';
 import { Bell, Check, Trash2, ChevronRight, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
+import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -71,55 +69,66 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Notifikasi"
-        showBackButton
-        rightElement={
-          notifications.length > 0 ? (
-            <View style={styles.headerActions}>
-              <TouchableOpacity onPress={markAllAsRead} style={styles.headerButton}>
-                <Check size={20} color={colors.primary[600]} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={clearNotifications} style={styles.headerButton}>
-                <Trash2 size={20} color={colors.error[600]} />
-              </TouchableOpacity>
-            </View>
-          ) : null
-        }
-      />
-
-      {notifications.length > 0 ? (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <EmptyState
-          icon={Bell}
-          title="Tidak ada notifikasi"
-          description="Anda akan menerima notifikasi di sini"
-        />
-      )}
-    </ScreenWrapper>
+    <MainThemeLayout
+      title="Notifikasi"
+      subtitle="Update terbaru untuk Anda"
+      showBackButton
+      rightElement={
+        notifications.length > 0 ? (
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={markAllAsRead} style={styles.headerButton}>
+              <Check size={18} color={colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={clearNotifications} style={[styles.headerButton, styles.clearButton]}>
+              <Trash2 size={18} color={colors.error[100]} />
+            </TouchableOpacity>
+          </View>
+        ) : null
+      }
+    >
+      <View style={styles.content}>
+        {notifications.length > 0 ? (
+          <FlatList
+            data={notifications}
+            renderItem={renderNotification}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <EmptyState
+            icon={Bell}
+            title="Tidak ada notifikasi"
+            description="Anda akan menerima notifikasi di sini"
+          />
+        )}
+      </View>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   headerActions: {
     flexDirection: 'row',
     gap: 8,
   },
   headerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.gray[100],
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  clearButton: {
+    backgroundColor: 'rgba(220,38,38,0.22)',
+    borderColor: 'rgba(220,38,38,0.25)',
   },
   listContent: {
     paddingBottom: 100,

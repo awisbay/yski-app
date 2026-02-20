@@ -5,11 +5,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Truck, Package, Moon, Heart, ChevronLeft, ChevronRight, User, Phone, MapPin, Calendar, Info } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ScreenWrapper } from '@/components/ui';
+import { MainThemeLayout } from '@/components/ui';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Card } from '@/components/Card';
-import { Header } from '@/components/Header';
 import { useCreatePickup } from '@/hooks';
 import { pickupSchema, type PickupFormData } from '@/lib/validation';
 import { usePickupStore } from '@/stores/pickupStore';
@@ -83,20 +82,18 @@ export default function NewPickupScreen() {
   };
 
   return (
-    <ScreenWrapper scrollable={false}>
-      <Header
-        title="Jadwalkan Penjemputan"
-        showBackButton
-        onBackPress={() => {
-          if (step > 1) {
-            setStep(step - 1);
-          } else {
-            router.back();
-          }
-        }}
-      />
-
-      {/* Step Indicator */}
+    <MainThemeLayout
+      title="Jadwalkan Penjemputan"
+      subtitle="Atur detail penjemputan Anda"
+      showBackButton
+      onBackPress={() => {
+        if (step > 1) {
+          setStep(step - 1);
+        } else {
+          router.back();
+        }
+      }}
+    >
       <View style={styles.stepContainer}>
         {[1, 2, 3].map((s) => (
           <View key={s} style={styles.stepWrapper}>
@@ -226,7 +223,7 @@ export default function NewPickupScreen() {
                         <View style={styles.dateInfo}>
                           <Text style={styles.dateLabel}>Tanggal</Text>
                           <Text style={styles.dateValue}>
-                            {value 
+                            {value
                               ? value.toLocaleDateString('id-ID', {
                                   weekday: 'long',
                                   day: 'numeric',
@@ -318,7 +315,7 @@ export default function NewPickupScreen() {
           />
         </View>
       </ScrollView>
-    </ScreenWrapper>
+    </MainThemeLayout>
   );
 }
 

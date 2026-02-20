@@ -2,11 +2,10 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Heart, TrendingUp, ChevronRight, Search } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, Skeleton, ProgramCardSkeleton } from '@/components/ui';
+import { MainThemeLayout, ProgramCardSkeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { ProgressBar } from '@/components/ProgressBar';
 import { usePrograms } from '@/hooks';
 import { colors } from '@/constants/colors';
@@ -72,73 +71,79 @@ export default function ProgramsScreen() {
   );
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Program"
-        showBackButton
-        rightElement={
-          <TouchableOpacity style={styles.searchButton}>
-            <Search size={24} color={colors.gray[700]} />
-          </TouchableOpacity>
-        }
-      />
-
-      {/* Categories */}
-      <View style={styles.categoryContainer}>
-        {CATEGORIES.map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryButton,
-              selectedCategory === category && styles.categoryButtonActive,
-            ]}
-            onPress={() => setSelectedCategory(category)}
-          >
-            <Text
+    <MainThemeLayout
+      title="Program"
+      subtitle="Program unggulan YSKI"
+      showBackButton
+      rightElement={
+        <TouchableOpacity style={styles.searchButton}>
+          <Search size={20} color={colors.white} />
+        </TouchableOpacity>
+      }
+    >
+      <View style={styles.content}>
+        <View style={styles.categoryContainer}>
+          {CATEGORIES.map((category) => (
+            <TouchableOpacity
+              key={category}
               style={[
-                styles.categoryText,
-                selectedCategory === category && styles.categoryTextActive,
+                styles.categoryButton,
+                selectedCategory === category && styles.categoryButtonActive,
               ]}
+              onPress={() => setSelectedCategory(category)}
             >
-              {category === 'all' ? 'Semua' : category.charAt(0).toUpperCase() + category.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.categoryTextActive,
+                ]}
+              >
+                {category === 'all' ? 'Semua' : category.charAt(0).toUpperCase() + category.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      {isLoading ? (
-        <>
-          <ProgramCardSkeleton />
-          <ProgramCardSkeleton />
-          <ProgramCardSkeleton />
-        </>
-      ) : programs?.length > 0 ? (
-        <FlatList
-          data={programs}
-          renderItem={renderProgramItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <EmptyState
-          icon={Heart}
-          title="Belum ada program"
-          description="Program akan segera tersedia"
-        />
-      )}
-    </ScreenWrapper>
+        {isLoading ? (
+          <>
+            <ProgramCardSkeleton />
+            <ProgramCardSkeleton />
+            <ProgramCardSkeleton />
+          </>
+        ) : programs?.length > 0 ? (
+          <FlatList
+            data={programs}
+            renderItem={renderProgramItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <EmptyState
+            icon={Heart}
+            title="Belum ada program"
+            description="Program akan segera tersedia"
+          />
+        )}
+      </View>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   categoryContainer: {
     flexDirection: 'row',

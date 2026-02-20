@@ -2,12 +2,11 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Plus, Truck, Calendar, MapPin, Clock, ChevronRight, Package, Moon, Heart } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, FilterTabBar, Skeleton } from '@/components/ui';
+import { MainThemeLayout, FilterTabBar, Skeleton } from '@/components/ui';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { useMyPickups, useCancelPickup } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -125,69 +124,75 @@ export default function PickupsScreen() {
   };
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Penjemputan"
-        showBackButton={false}
-        rightElement={
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/pickups/new')}
-          >
-            <Plus size={24} color={colors.primary[600]} />
-          </TouchableOpacity>
-        }
-      />
-
-      <FilterTabBar
-        tabs={FILTER_TABS}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
-
-      {isLoading ? (
-        <>
-          <Skeleton height={160} borderRadius={12} />
-          <Skeleton height={160} borderRadius={12} />
-          <Skeleton height={160} borderRadius={12} />
-        </>
-      ) : filteredPickups.length > 0 ? (
-        <FlatList
-          data={filteredPickups}
-          renderItem={renderPickupItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+    <MainThemeLayout
+      title="Penjemputan"
+      subtitle="Kelola jadwal jemput donasi"
+      rightElement={
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push('/pickups/new')}
+        >
+          <Plus size={22} color={colors.white} />
+        </TouchableOpacity>
+      }
+    >
+      <View style={styles.content}>
+        <FilterTabBar
+          tabs={FILTER_TABS}
+          activeTab={activeTab}
+          onChange={setActiveTab}
         />
-      ) : (
-        <EmptyState
-          icon={Truck}
-          title="Belum ada penjemputan"
-          description={
-            activeTab === 'all'
-              ? "Jadwalkan penjemputan zakat, kencleng, atau donasi"
-              : `Tidak ada penjemputan ${activeTab === 'active' ? 'aktif' : 'yang selesai'}.`
-          }
-          action={{
-            label: 'Jadwalkan Penjemputan',
-            onPress: () => router.push('/pickups/new'),
-          }}
-        />
-      )}
-    </ScreenWrapper>
+
+        {isLoading ? (
+          <>
+            <Skeleton height={160} borderRadius={12} />
+            <Skeleton height={160} borderRadius={12} />
+            <Skeleton height={160} borderRadius={12} />
+          </>
+        ) : filteredPickups.length > 0 ? (
+          <FlatList
+            data={filteredPickups}
+            renderItem={renderPickupItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <EmptyState
+            icon={Truck}
+            title="Belum ada penjemputan"
+            description={
+              activeTab === 'all'
+                ? 'Jadwalkan penjemputan zakat, kencleng, atau donasi'
+                : `Tidak ada penjemputan ${activeTab === 'active' ? 'aktif' : 'yang selesai'}.`
+            }
+            action={{
+              label: 'Jadwalkan Penjemputan',
+              onPress: () => router.push('/pickups/new'),
+            }}
+          />
+        )}
+      </View>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+  },
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary[100],
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   listContent: {
+    paddingHorizontal: 20,
     paddingBottom: 100,
   },
   pickupCard: {

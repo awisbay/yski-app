@@ -11,11 +11,10 @@ import {
   LogOut,
   TrendingUp
 } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, StatCard } from '@/components/ui';
+import { MainThemeLayout, SectionHeader, StatCard } from '@/components/ui';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
-import { Header } from '@/components/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -38,93 +37,95 @@ export default function AdminDashboard() {
   };
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Admin Dashboard"
-        showBackButton
-        onBackPress={() => router.push('/(tabs)/profile')}
-      />
-
-      {/* Admin Info */}
-      <Card style={styles.adminCard}>
-        <View style={styles.adminInfo}>
-          <View style={styles.avatar}>
-            <Users size={32} color={colors.white} />
-          </View>
-          <View style={styles.adminText}>
-            <Text style={styles.adminName}>{user?.full_name}</Text>
-            <Text style={styles.adminEmail}>{user?.email}</Text>
-            <Badge 
-              label={user?.role?.toUpperCase() || 'ADMIN'} 
-              variant="error" 
-              size="sm"
-              style={styles.roleBadge}
-            />
-          </View>
-        </View>
-      </Card>
-
-      {/* Stats Overview */}
-      <SectionHeader title="Statistik" />
-      <View style={styles.statsGrid}>
-        <StatCard
-          title="Total User"
-          value="124"
-          icon={<Users size={24} color={colors.primary[500]} />}
-          color={colors.primary[500]}
-        />
-        <StatCard
-          title="Booking Hari Ini"
-          value="8"
-          icon={<Calendar size={24} color={colors.secondary[500]} />}
-          color={colors.secondary[500]}
-        />
-        <StatCard
-          title="Donasi Bulan Ini"
-          value="Rp 15.2M"
-          icon={<Heart size={24} color={colors.success[500]} />}
-          color={colors.success[500]}
-        />
-        <StatCard
-          title="Penjemputan Pending"
-          value="5"
-          icon={<Truck size={24} color={colors.warning[500]} />}
-          color={colors.warning[500]}
-        />
-      </View>
-
-      {/* Quick Actions */}
-      <SectionHeader title="Menu Admin" />
-      <View style={styles.menuContainer}>
-        {ADMIN_MENU.map((item) => (
-          <TouchableOpacity
-            key={item.label}
-            style={styles.menuItem}
-            onPress={() => router.push(item.route)}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: item.color + '15' }]}>
-              <item.icon size={24} color={item.color} />
+    <MainThemeLayout
+      title="Admin Dashboard"
+      subtitle="Kelola operasional aplikasi"
+      showBackButton
+      onBackPress={() => router.push('/(tabs)/profile')}
+    >
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Card style={styles.adminCard}>
+          <View style={styles.adminInfo}>
+            <View style={styles.avatar}>
+              <Users size={32} color={colors.white} />
             </View>
-            <Text style={styles.menuLabel}>{item.label}</Text>
-            <ChevronRight size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
-        ))}
-      </View>
+            <View style={styles.adminText}>
+              <Text style={styles.adminName}>{user?.full_name}</Text>
+              <Text style={styles.adminEmail}>{user?.email}</Text>
+              <Badge
+                label={user?.role?.toUpperCase() || 'ADMIN'}
+                variant="error"
+                size="sm"
+                style={styles.roleBadge}
+              />
+            </View>
+          </View>
+        </Card>
 
-      {/* Logout */}
-      <View style={styles.logoutContainer}>
-        <Button
-          title="Kembali ke App"
-          variant="secondary"
-          onPress={() => router.push('/(tabs)')}
-          style={styles.backButton}
-        />
-      </View>
-    </ScreenWrapper>
+        <SectionHeader title="Statistik" />
+        <View style={styles.statsGrid}>
+          <StatCard
+            title="Total User"
+            value="124"
+            icon={<Users size={24} color={colors.primary[500]} />}
+            color={colors.primary[500]}
+          />
+          <StatCard
+            title="Booking Hari Ini"
+            value="8"
+            icon={<Calendar size={24} color={colors.secondary[500]} />}
+            color={colors.secondary[500]}
+          />
+          <StatCard
+            title="Donasi Bulan Ini"
+            value="Rp 15.2M"
+            icon={<Heart size={24} color={colors.success[500]} />}
+            color={colors.success[500]}
+          />
+          <StatCard
+            title="Penjemputan Pending"
+            value="5"
+            icon={<Truck size={24} color={colors.warning[500]} />}
+            color={colors.warning[500]}
+          />
+        </View>
+
+        <SectionHeader title="Menu Admin" />
+        <View style={styles.menuContainer}>
+          {ADMIN_MENU.map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              style={styles.menuItem}
+              onPress={() => router.push(item.route)}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: item.color + '15' }]}>
+                <item.icon size={24} color={item.color} />
+              </View>
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <ChevronRight size={20} color={colors.gray[400]} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.logoutContainer}>
+          <Button
+            title="Kembali ke App"
+            variant="secondary"
+            onPress={() => router.push('/(tabs)')}
+            style={styles.backButton}
+          />
+          <View style={{ height: 24 }} />
+        </View>
+      </ScrollView>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   adminCard: {
     marginBottom: 24,
   },

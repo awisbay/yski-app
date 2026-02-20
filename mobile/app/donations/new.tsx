@@ -4,12 +4,11 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Heart, Gift, Building, Moon, ChevronLeft, ChevronRight, Wallet, Info } from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ui';
+import { MainThemeLayout } from '@/components/ui';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
-import { Header } from '@/components/Header';
 import { useCreateDonation } from '@/hooks';
 import { donationAmountSchema, type DonationAmountFormData } from '@/lib/validation';
 import { useDonationStore } from '@/stores/donationStore';
@@ -79,19 +78,18 @@ export default function NewDonationScreen() {
   };
 
   return (
-    <ScreenWrapper scrollable={false}>
-      <Header
-        title="Donasi Baru"
-        showBackButton
-        onBackPress={() => {
-          if (step > 1) {
-            setStep(step - 1);
-          } else {
-            router.back();
-          }
-        }}
-      />
-
+    <MainThemeLayout
+      title="Donasi Baru"
+      subtitle="Lengkapi donasi Anda"
+      showBackButton
+      onBackPress={() => {
+        if (step > 1) {
+          setStep(step - 1);
+        } else {
+          router.back();
+        }
+      }}
+    >
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {step === 1 && (
           <View style={styles.stepContent}>
@@ -130,7 +128,7 @@ export default function NewDonationScreen() {
             />
 
             <Text style={styles.sectionTitle}>Pilih Nominal</Text>
-            
+
             <Controller
               control={control}
               name="amount"
@@ -187,16 +185,16 @@ export default function NewDonationScreen() {
 
             <Card style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Detail Donasi</Text>
-              
+
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Jenis Donasi</Text>
                 <Text style={styles.summaryValue}>
                   {DONATION_TYPES.find(t => t.key === selectedType)?.label}
                 </Text>
               </View>
-              
+
               <View style={styles.divider} />
-              
+
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Nominal</Text>
                 <Text style={[styles.summaryValue, styles.amountValue]}>
@@ -228,7 +226,7 @@ export default function NewDonationScreen() {
           />
         </View>
       </ScrollView>
-    </ScreenWrapper>
+    </MainThemeLayout>
   );
 }
 

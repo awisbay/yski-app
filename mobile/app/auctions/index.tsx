@@ -2,11 +2,10 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, TextInput } 
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Gavel, Search, Clock, ChevronRight, TrendingUp, Users } from 'lucide-react-native';
-import { ScreenWrapper, SectionHeader, Skeleton } from '@/components/ui';
+import { MainThemeLayout, Skeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Header } from '@/components/Header';
 import { useAuctions, useMyBids } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -65,7 +64,7 @@ export default function AuctionsScreen() {
           </View>
         </View>
         
-        <View style={styles.content}>
+        <View style={styles.cardContent}>
           <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
           
           <View style={styles.priceContainer}>
@@ -96,79 +95,84 @@ export default function AuctionsScreen() {
     : myBidsData?.items || [];
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Lelang Barang"
-        showBackButton
-        rightElement={
-          <TouchableOpacity style={styles.searchButton}>
-            <Search size={24} color={colors.gray[700]} />
-          </TouchableOpacity>
-        }
-      />
+    <MainThemeLayout
+      title="Lelang Barang"
+      subtitle="Ikuti lelang yang sedang aktif"
+      showBackButton
+      rightElement={
+        <TouchableOpacity style={styles.searchButton}>
+          <Search size={20} color={colors.white} />
+        </TouchableOpacity>
+      }
+    >
+      <View style={styles.content}>
+        <View style={styles.searchContainer}>
+          <Search size={20} color={colors.gray[400]} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Cari lelang..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Search size={20} color={colors.gray[400]} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Cari lelang..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <View style={styles.tabContainer}>
+          {FILTER_TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tab, activeTab === tab.key && styles.activeTab]}
+              onPress={() => setActiveTab(tab.key)}
+            >
+              <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {isLoading ? (
+          <>
+            <Skeleton height={280} borderRadius={12} />
+            <Skeleton height={280} borderRadius={12} />
+          </>
+        ) : items.length > 0 ? (
+          <FlatList
+            data={items}
+            renderItem={renderAuctionItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <EmptyState
+            icon={Gavel}
+            title={activeTab === 'active' ? 'Tidak ada lelang aktif' : 'Belum ada tawaran'}
+            description={
+              activeTab === 'active'
+                ? 'Lelang akan segera tersedia'
+                : 'Anda belum melakukan tawaran pada lelang apapun'
+            }
+          />
+        )}
       </View>
-
-      {/* Filter Tabs */}
-      <View style={styles.tabContainer}>
-        {FILTER_TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.activeTab]}
-            onPress={() => setActiveTab(tab.key)}
-          >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {isLoading ? (
-        <>
-          <Skeleton height={280} borderRadius={12} />
-          <Skeleton height={280} borderRadius={12} />
-        </>
-      ) : items.length > 0 ? (
-        <FlatList
-          data={items}
-          renderItem={renderAuctionItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <EmptyState
-          icon={Gavel}
-          title={activeTab === 'active' ? "Tidak ada lelang aktif" : "Belum ada tawaran"}
-          description={
-            activeTab === 'active'
-              ? "Lelang akan segera tersedia"
-              : "Anda belum melakukan tawaran pada lelang apapun"
-          }
-        />
-      )}
-    </ScreenWrapper>
+    </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -248,7 +252,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  content: {
+  cardContent: {
     padding: 16,
   },
   title: {
