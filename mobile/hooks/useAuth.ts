@@ -16,8 +16,9 @@ export function useAuth() {
       authApi.login(email, password).then((res) => res.data),
     onSuccess: async (data) => {
       await setTokens(data.access_token, data.refresh_token);
-      setUser(data.user);
-      queryClient.setQueryData(authKeys.user(), data.user);
+      const me = await authApi.me().then((res) => res.data);
+      setUser(me);
+      queryClient.setQueryData(authKeys.user(), me);
     },
   });
 
@@ -25,9 +26,9 @@ export function useAuth() {
     mutationFn: (data: { email: string; password: string; full_name: string; phone?: string }) =>
       authApi.register(data).then((res) => res.data),
     onSuccess: async (data) => {
-      await setTokens(data.access_token, data.refresh_token);
-      setUser(data.user);
-      queryClient.setQueryData(authKeys.user(), data.user);
+      // Register endpoint currently returns user profile only.
+      setUser(data);
+      queryClient.setQueryData(authKeys.user(), data);
     },
   });
 

@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   Image,
+  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -18,7 +19,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks';
 import { registerSchema, type RegisterFormData } from '@/lib/validation';
-import { Input } from '@/components/Input';
 import { colors } from '@/constants/colors';
 
 export default function RegisterScreen() {
@@ -102,16 +102,27 @@ export default function RegisterScreen() {
             control={control}
             name="fullName"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Nama Lengkap"
-                autoCapitalize="words"
-                autoCorrect={false}
-                leftIcon={<User size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
-                error={errors.fullName?.message}
-              />
+              <View style={styles.fieldWrapper}>
+                <View style={[
+                  styles.inputRow,
+                  errors.fullName ? styles.inputRowError : styles.inputRowNormal,
+                ]}>
+                  <User size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Nama Lengkap"
+                    placeholderTextColor={colors.gray[400]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+                {errors.fullName && (
+                  <Text style={styles.fieldError}>{errors.fullName.message}</Text>
+                )}
+              </View>
             )}
           />
 
@@ -120,17 +131,28 @@ export default function RegisterScreen() {
             control={control}
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Email"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                leftIcon={<Mail size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
-                error={errors.email?.message}
-              />
+              <View style={styles.fieldWrapper}>
+                <View style={[
+                  styles.inputRow,
+                  errors.email ? styles.inputRowError : styles.inputRowNormal,
+                ]}>
+                  <Mail size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Email"
+                    placeholderTextColor={colors.gray[400]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                {errors.email && (
+                  <Text style={styles.fieldError}>{errors.email.message}</Text>
+                )}
+              </View>
             )}
           />
 
@@ -139,15 +161,26 @@ export default function RegisterScreen() {
             control={control}
             name="phone"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Nomor Telepon"
-                keyboardType="phone-pad"
-                leftIcon={<Phone size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
-                error={errors.phone?.message}
-              />
+              <View style={styles.fieldWrapper}>
+                <View style={[
+                  styles.inputRow,
+                  errors.phone ? styles.inputRowError : styles.inputRowNormal,
+                ]}>
+                  <Phone size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Nomor Telepon"
+                    placeholderTextColor={colors.gray[400]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+                {errors.phone && (
+                  <Text style={styles.fieldError}>{errors.phone.message}</Text>
+                )}
+              </View>
             )}
           />
 
@@ -156,26 +189,35 @@ export default function RegisterScreen() {
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Password (min. 6 karakter)"
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                leftIcon={<Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
-                rightIcon={(
+              <View style={styles.fieldWrapper}>
+                <View style={[
+                  styles.inputRow,
+                  errors.password ? styles.inputRowError : styles.inputRowNormal,
+                ]}>
+                  <Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Password (min. 6 karakter)"
+                    placeholderTextColor={colors.gray[400]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry={!showPassword}
+                  />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     {showPassword
                       ? <EyeOff size={20} color={colors.gray[400]} />
-                      : <Eye size={20} color={colors.gray[400]} />}
+                      : <Eye size={20} color={colors.gray[400]} />
+                    }
                   </TouchableOpacity>
+                </View>
+                {errors.password && (
+                  <Text style={styles.fieldError}>{errors.password.message}</Text>
                 )}
-                error={errors.password?.message}
-              />
+              </View>
             )}
           />
 
@@ -184,26 +226,35 @@ export default function RegisterScreen() {
             control={control}
             name="confirmPassword"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Konfirmasi Password"
-                secureTextEntry={!showConfirmPassword}
-                autoCapitalize="none"
-                leftIcon={<Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
-                rightIcon={(
+              <View style={styles.fieldWrapper}>
+                <View style={[
+                  styles.inputRow,
+                  errors.confirmPassword ? styles.inputRowError : styles.inputRowNormal,
+                ]}>
+                  <Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Konfirmasi Password"
+                    placeholderTextColor={colors.gray[400]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry={!showConfirmPassword}
+                  />
                   <TouchableOpacity
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     {showConfirmPassword
                       ? <EyeOff size={20} color={colors.gray[400]} />
-                      : <Eye size={20} color={colors.gray[400]} />}
+                      : <Eye size={20} color={colors.gray[400]} />
+                    }
                   </TouchableOpacity>
+                </View>
+                {errors.confirmPassword && (
+                  <Text style={styles.fieldError}>{errors.confirmPassword.message}</Text>
                 )}
-                error={errors.confirmPassword?.message}
-              />
+              </View>
             )}
           />
 
@@ -319,6 +370,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.error[600],
     textAlign: 'center',
+  },
+
+  // Underline inputs
+  fieldWrapper: {
+    marginBottom: 20,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1.5,
+    paddingBottom: 10,
+    paddingHorizontal: 2,
+  },
+  inputRowNormal: {
+    borderBottomColor: colors.gray[300],
+  },
+  inputRowError: {
+    borderBottomColor: colors.error[400],
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.gray[900],
+    paddingVertical: 0,
+  },
+  fieldError: {
+    fontSize: 12,
+    color: colors.error[500],
+    marginTop: 6,
+    marginLeft: 32,
   },
 
   // Register button

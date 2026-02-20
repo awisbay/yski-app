@@ -178,6 +178,10 @@ async def forgot_password(
     Request password reset.
     Always returns success to avoid email enumeration.
     """
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:forgot:ip:{client_ip}", max_requests=10, window_seconds=60)
+    enforce_rate_limit(f"auth:forgot:email:{payload.email.lower()}", max_requests=5, window_seconds=60)
+
     user_service = UserService(db)
     reset_service = PasswordResetService(db)
 
@@ -233,6 +237,3 @@ async def logout(
     """Revoke active refresh token for current user session."""
     current_user.current_refresh_jti = None
     return {"message": "Logged out successfully"}
-    client_ip = request.client.host if request.client else "unknown"
-    enforce_rate_limit(f"auth:forgot:ip:{client_ip}", max_requests=10, window_seconds=60)
-    enforce_rate_limit(f"auth:forgot:email:{payload.email.lower()}", max_requests=5, window_seconds=60)
