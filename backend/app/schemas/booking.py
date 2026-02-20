@@ -6,7 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class BookingBase(BaseModel):
@@ -23,8 +23,18 @@ class BookingBase(BaseModel):
 
 
 class BookingCreate(BookingBase):
+    time_slots: Optional[list[str]] = None
     requester_name: Optional[str] = None
     requester_phone: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_time_slots(self):
+        if self.time_slots:
+            allowed = {"08:00", "10:00", "13:00", "15:00", "17:00", "19:00", "21:00"}
+            invalid = [slot for slot in self.time_slots if slot not in allowed]
+            if invalid:
+                raise ValueError(f"Invalid time slot values: {', '.join(invalid)}")
+        return self
 
 
 class BookingUpdate(BaseModel):
@@ -43,6 +53,7 @@ class BookingResponse(BookingBase):
     approved_by: Optional[UUID] = None
     rating: Optional[int] = None
     review_text: Optional[str] = None
+    time_slots: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     purpose: Optional[str] = None

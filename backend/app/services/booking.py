@@ -9,7 +9,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, ProgrammingError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +24,16 @@ MAX_SLOTS_PER_DAY_PER_USER = len(ALLOWED_SLOTS)
 def generate_booking_code() -> str:
     """Generate unique booking code."""
     return "BKG-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+
+def _extract_slots(booking: MovingBooking) -> set[str]:
+    """Extract all occupied slots from a booking row (supports legacy and multi-slot)."""
+    slots: set[str] = set()
+    if booking.time_slot:
+        slots.add(booking.time_slot)
+    if booking.time_slots:
+        slots.update({s.strip() for s in booking.time_slots.split(",") if s.strip()})
+    return slots
 
 
 class BookingService:
@@ -72,7 +82,12 @@ class BookingService:
     ) -> MovingBooking:
         """Create a new booking with anti double-booking."""
         # Business validation
-        if data.time_slot not in ALLOWED_SLOTS:
+        selected_slots = list(dict.fromkeys(data.time_slots or [data.time_slot]))
+        if not selected_slots:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Minimal 1 slot harus dipilih")
+
+        invalid_slots = [slot for slot in selected_slots if slot not in ALLOWED_SLOTS]
+        if invalid_slots:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid time slot. Allowed: {ALLOWED_SLOTS}"
@@ -91,41 +106,52 @@ class BookingService:
                 detail=f"Cannot book more than {MAX_ADVANCE_DAYS} days ahead"
             )
         
-        # A user can reserve multiple slots in the same day (up to all available slots).
-        same_day_count = await self.db.scalar(
-            select(func.count()).select_from(MovingBooking).where(
-                MovingBooking.requester_id == requester_id,
-                MovingBooking.booking_date == data.booking_date,
-                MovingBooking.status.in_(["pending", "approved", "in_progress"])
-            )
-        )
-        if same_day_count >= MAX_SLOTS_PER_DAY_PER_USER:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Anda sudah memesan seluruh slot untuk tanggal {data.booking_date}"
-            )
-        
-        # Check if slot is already booked (Layer 2) with pessimistic locking
-        existing = await self.db.scalar(
+        # Lock all active bookings on the date, then validate overlaps safely.
+        same_day_result = await self.db.execute(
             select(MovingBooking)
             .with_for_update()
             .where(
                 MovingBooking.booking_date == data.booking_date,
-                MovingBooking.time_slot == data.time_slot,
                 MovingBooking.status.notin_(["rejected", "cancelled"])
             )
         )
-        if existing:
+        same_day_bookings = list(same_day_result.scalars().all())
+
+        requester_occupied: set[str] = set()
+        occupied_by_others: set[str] = set()
+        for booking_row in same_day_bookings:
+            occupied = _extract_slots(booking_row)
+            if booking_row.requester_id == requester_id:
+                requester_occupied.update(occupied)
+            else:
+                occupied_by_others.update(occupied)
+
+        # User can book up to all slots in a day, but not duplicate their own slot booking.
+        if len(requester_occupied.union(selected_slots)) > MAX_SLOTS_PER_DAY_PER_USER:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Anda sudah memesan seluruh slot untuk tanggal {data.booking_date}"
+            )
+
+        if requester_occupied.intersection(selected_slots):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This slot is already booked"
+                detail="Anda sudah memesan salah satu slot yang dipilih pada tanggal ini"
+            )
+
+        conflicted = sorted(occupied_by_others.intersection(selected_slots))
+        if conflicted:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Slot berikut sudah dibooking pengguna lain: {', '.join(conflicted)}"
             )
         
-        # Create booking (Layer 1 - UNIQUE constraint is final safety net)
+        # Create one booking row for all selected slots.
         booking = MovingBooking(
             booking_code=generate_booking_code(),
             booking_date=data.booking_date,
-            time_slot=data.time_slot,
+            time_slot=selected_slots[0],
+            time_slots=",".join(selected_slots),
             requester_id=requester_id,
             requester_name=requester_name,
             requester_phone=requester_phone,
@@ -188,12 +214,14 @@ class BookingService:
         
         # Get booked slots
         result = await self.db.execute(
-            select(MovingBooking.time_slot).where(
+            select(MovingBooking).where(
                 MovingBooking.booking_date == target_date,
                 MovingBooking.status.notin_(["rejected", "cancelled"])
             )
         )
-        booked_slots = {row[0] for row in result.all()}
+        booked_slots: set[str] = set()
+        for booking in result.scalars().all():
+            booked_slots.update(_extract_slots(booking))
         
         return [
             {"time": slot, "available": slot not in booked_slots}

@@ -203,30 +203,19 @@ export default function NewBookingScreen() {
           setSubmitError('Pilih minimal 1 slot waktu.');
           return;
         }
-
-        const failures: string[] = [];
-        for (const slot of slots) {
-          try {
-            await createMutation.mutateAsync({
-              booking_date:    watch('bookingDate').toISOString().split('T')[0],
-              time_slot:       slot,
-              pickup_address:  watch('pickupAddress'),
-              pickup_lat:      pickupLoc?.latitude,
-              pickup_lng:      pickupLoc?.longitude,
-              dropoff_address: watch('dropoffAddress'),
-              dropoff_lat:     dropoffLoc?.latitude,
-              dropoff_lng:     dropoffLoc?.longitude,
-              purpose:         watch('purpose'),
-              notes:           watch('notes'),
-            });
-          } catch {
-            failures.push(slot);
-          }
-        }
-        if (failures.length > 0) {
-          setSubmitError(`Beberapa slot gagal dipesan: ${failures.join(', ')}`);
-          return;
-        }
+        await createMutation.mutateAsync({
+          booking_date:    watch('bookingDate').toISOString().split('T')[0],
+          time_slot:       slots[0],
+          time_slots:      slots,
+          pickup_address:  watch('pickupAddress'),
+          pickup_lat:      pickupLoc?.latitude,
+          pickup_lng:      pickupLoc?.longitude,
+          dropoff_address: watch('dropoffAddress'),
+          dropoff_lat:     dropoffLoc?.latitude,
+          dropoff_lng:     dropoffLoc?.longitude,
+          purpose:         watch('purpose'),
+          notes:           watch('notes'),
+        });
         router.replace('/booking');
       } catch (err: any) {
         const detail = err?.response?.data?.detail;

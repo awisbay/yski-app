@@ -127,7 +127,9 @@ function BookingManagementScreen() {
         <View style={styles.row}>
           <Calendar size={14} color={colors.primary[600]} />
           <Text style={styles.rowText}>
-            {item.bookingDate ? new Date(item.bookingDate).toLocaleDateString('id-ID') : '-'} · {item.timeSlot || '-'}
+            {item.bookingDate ? new Date(item.bookingDate).toLocaleDateString('id-ID') : '-'} · {
+              (item.timeSlots && item.timeSlots.length > 0) ? item.timeSlots.join(', ') : (item.timeSlot || '-')
+            }
           </Text>
         </View>
 

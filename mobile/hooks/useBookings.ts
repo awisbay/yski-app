@@ -4,10 +4,17 @@ import { useBookingStore } from '@/stores/bookingStore';
 
 function normalizeBooking(raw: any) {
   if (!raw) return raw;
+  const rawTimeSlots = raw.timeSlots ?? raw.time_slots;
+  const normalizedTimeSlots = Array.isArray(rawTimeSlots)
+    ? rawTimeSlots
+    : typeof rawTimeSlots === 'string'
+    ? rawTimeSlots.split(',').map((s) => s.trim()).filter(Boolean)
+    : undefined;
   return {
     ...raw,
     bookingDate: raw.bookingDate ?? raw.booking_date,
     timeSlot: raw.timeSlot ?? raw.time_slot,
+    timeSlots: normalizedTimeSlots,
     pickupAddress: raw.pickupAddress ?? raw.pickup_address,
     dropoffAddress: raw.dropoffAddress ?? raw.dropoff_address,
     requesterName: raw.requesterName ?? raw.requester_name,

@@ -96,7 +96,9 @@ export default function BookingListScreen() {
               <View style={[styles.infoIcon, { backgroundColor: colors.primary[50] }]}>
                 <Clock size={13} color={colors.primary[600]} />
               </View>
-              <Text style={styles.infoText}>{item.timeSlot}</Text>
+              <Text style={styles.infoText}>
+                {(item.timeSlots && item.timeSlots.length > 0) ? item.timeSlots.join(', ') : (item.timeSlot || '-')}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <View style={[styles.infoIcon, { backgroundColor: '#FFF1F2' }]}>

@@ -27,6 +27,7 @@ class MovingBooking(Base):
     booking_code: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
     booking_date: Mapped[date] = mapped_column(Date, nullable=False)
     time_slot: Mapped[str] = mapped_column(String(5), nullable=False)  # e.g. '08:00'..'21:00'
+    time_slots: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # CSV slots, e.g. "08:00,10:00"
     
     # Requester
     requester_id: Mapped[uuid.UUID] = mapped_column(

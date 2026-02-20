@@ -291,7 +291,11 @@ export default function HomeScreen() {
                       <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
                         <Clock size={13} color={colors.primary[600]} />
                       </View>
-                      <Text style={styles.infoText}>{nextBooking.timeSlot}</Text>
+                      <Text style={styles.infoText}>
+                        {(nextBooking.timeSlots && nextBooking.timeSlots.length > 0)
+                          ? nextBooking.timeSlots.join(', ')
+                          : (nextBooking.timeSlot || '-')}
+                      </Text>
                     </View>
                     <View style={styles.infoRow}>
                       <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>

@@ -85,10 +85,11 @@ async def create_booking(
     staff_user_ids = [row[0] for row in staff_result.all()]
     if staff_user_ids:
         notif_service = NotificationService(db)
+        slots_text = booking.time_slots or booking.time_slot
         await notif_service.create_bulk_notifications(
             user_ids=staff_user_ids,
             title="Booking Pickup Baru Masuk",
-            body=f"{current_user.full_name} membuat booking untuk {booking.booking_date} jam {booking.time_slot}.",
+            body=f"{current_user.full_name} membuat booking untuk {booking.booking_date} jam {slots_text}.",
             type="info",
             reference_type="booking",
             reference_id=booking.id,

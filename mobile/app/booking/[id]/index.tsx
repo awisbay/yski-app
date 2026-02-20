@@ -98,7 +98,11 @@ export default function BookingDetailScreen() {
                   </View>
                   <View style={styles.rowTextWrap}>
                     <Text style={styles.label}>Waktu</Text>
-                    <Text style={styles.value}>{booking.timeSlot || '-'}</Text>
+                    <Text style={styles.value}>
+                      {(booking.timeSlots && booking.timeSlots.length > 0)
+                        ? booking.timeSlots.join(', ')
+                        : (booking.timeSlot || '-')}
+                    </Text>
                   </View>
                 </View>
 
