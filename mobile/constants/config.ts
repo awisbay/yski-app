@@ -12,6 +12,9 @@ export const config = {
     timeout: 10000,
     retries: 3,
   },
+  maps: {
+    googlePlacesApiKey: Constants.expoConfig?.extra?.googleMapsApiKey || '',
+  },
   // App Info
   app: {
     name: 'Yayasan Sahabat Khairat Indonesia',
@@ -46,3 +49,4 @@ export type Config = typeof config;
 
 // Direct exports for convenience
 export const API_BASE_URL = config.api.baseUrl;
+export const GOOGLE_PLACES_API_KEY = config.maps.googlePlacesApiKey;

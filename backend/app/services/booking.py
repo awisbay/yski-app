@@ -1,5 +1,5 @@
 """
-Booking Service - Business logic for moving bookings
+Booking Service - Business logic for pickup bookings
 """
 
 import random
@@ -63,7 +63,13 @@ class BookingService:
         result = await self.db.execute(query)
         return list(result.scalars().all())
     
-    async def create_booking(self, data: BookingCreate, requester_id: UUID) -> MovingBooking:
+    async def create_booking(
+        self,
+        data: BookingCreate,
+        requester_id: UUID,
+        requester_name: str,
+        requester_phone: str,
+    ) -> MovingBooking:
         """Create a new booking with anti double-booking."""
         # Business validation
         if data.time_slot not in ALLOWED_SLOTS:
@@ -120,14 +126,15 @@ class BookingService:
             booking_date=data.booking_date,
             time_slot=data.time_slot,
             requester_id=requester_id,
-            requester_name=data.requester_name,
-            requester_phone=data.requester_phone,
+            requester_name=requester_name,
+            requester_phone=requester_phone,
             pickup_address=data.pickup_address,
             pickup_lat=data.pickup_lat,
             pickup_lng=data.pickup_lng,
             dropoff_address=data.dropoff_address,
             dropoff_lat=data.dropoff_lat,
             dropoff_lng=data.dropoff_lng,
+            purpose=data.purpose,
             notes=data.notes,
             status="pending"
         )

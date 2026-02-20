@@ -34,13 +34,15 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      "expo-location"
     ],
     "experiments": {
       "typedRoutes": false
     },
     "extra": {
-      "apiUrl": "http://192.168.100.88/api/v1"
+      "apiUrl": "http://192.168.100.88/api/v1",
+      "googleMapsApiKey": ""
     }
   }
 }

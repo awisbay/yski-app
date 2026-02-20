@@ -18,12 +18,13 @@ class BookingBase(BaseModel):
     dropoff_address: str
     dropoff_lat: Optional[Decimal] = None
     dropoff_lng: Optional[Decimal] = None
+    purpose: str = Field(..., min_length=3, max_length=120)
     notes: Optional[str] = None
 
 
 class BookingCreate(BookingBase):
-    requester_name: str
-    requester_phone: str
+    requester_name: Optional[str] = None
+    requester_phone: Optional[str] = None
 
 
 class BookingUpdate(BaseModel):
@@ -44,6 +45,7 @@ class BookingResponse(BookingBase):
     review_text: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+    purpose: Optional[str] = None
     
     class Config:
         from_attributes = True

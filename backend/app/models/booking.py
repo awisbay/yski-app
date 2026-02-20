@@ -1,5 +1,5 @@
 """
-Booking Model - Moving Service Booking (Armada Pindahan)
+Booking Model - Pickup Service Booking
 """
 
 import uuid
@@ -15,7 +15,7 @@ from app.core.database import Base
 
 
 class MovingBooking(Base):
-    """Moving service booking model."""
+    """Pickup service booking model."""
     
     __tablename__ = "moving_bookings"
     
@@ -44,6 +44,7 @@ class MovingBooking(Base):
     dropoff_address: Mapped[str] = mapped_column(Text, nullable=False)
     dropoff_lat: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
     dropoff_lng: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
+    purpose: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     

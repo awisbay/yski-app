@@ -61,7 +61,16 @@ async def create_booking(
 ):
     """Create a new booking."""
     service = BookingService(db)
-    booking = await service.create_booking(booking_data, current_user.id)
+    requester_phone = current_user.phone or booking_data.requester_phone
+    if not requester_phone:
+        raise HTTPException(status_code=400, detail="Nomor telepon pengguna belum tersedia")
+
+    booking = await service.create_booking(
+        booking_data,
+        current_user.id,
+        current_user.full_name,
+        requester_phone,
+    )
     return booking
 
 
