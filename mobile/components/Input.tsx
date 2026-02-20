@@ -4,19 +4,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 type IconProp = keyof typeof MaterialIcons.glyphMap | React.ReactNode;
 
-export interface InputProps extends Pick<TextInputProps, 'autoCapitalize' | 'autoCorrect' | 'editable'> {
+export interface InputProps extends TextInputProps {
   value: string;
   onChangeText: (text: string) => void;
-  placeholder?: string;
   label?: string;
   error?: string;
-  secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad';
   icon?: IconProp;
   leftIcon?: IconProp;
   rightIcon?: IconProp;
-  multiline?: boolean;
-  numberOfLines?: number;
   style?: StyleProp<ViewStyle>;
 }
 

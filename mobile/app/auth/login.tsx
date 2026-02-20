@@ -7,7 +7,6 @@ import {
   Platform,
   ScrollView,
   Image,
-  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -19,6 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
+import { Input } from '@/components/Input';
 import { colors } from '@/constants/colors';
 
 export default function LoginScreen() {
@@ -93,28 +93,17 @@ export default function LoginScreen() {
             control={control}
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
-              <View style={styles.fieldWrapper}>
-                <View style={[
-                  styles.inputRow,
-                  errors.email ? styles.inputRowError : styles.inputRowNormal,
-                ]}>
-                  <Mail size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Email"
-                    placeholderTextColor={colors.gray[400]}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-                {errors.email && (
-                  <Text style={styles.fieldError}>{errors.email.message}</Text>
-                )}
-              </View>
+              <Input
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                leftIcon={<Mail size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
+                error={errors.email?.message}
+              />
             )}
           />
 
@@ -123,40 +112,31 @@ export default function LoginScreen() {
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
-              <View style={styles.fieldWrapper}>
-                <View style={[
-                  styles.inputRow,
-                  errors.password ? styles.inputRowError : styles.inputRowNormal,
-                ]}>
-                  <Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Password"
-                    placeholderTextColor={colors.gray[400]}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    secureTextEntry={!showPassword}
-                  />
+              <Input
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Password"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                leftIcon={<Lock size={20} color={value ? colors.primary[500] : colors.gray[400]} />}
+                rightIcon={(
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     {showPassword
                       ? <EyeOff size={20} color={colors.gray[400]} />
-                      : <Eye size={20} color={colors.gray[400]} />
-                    }
+                      : <Eye size={20} color={colors.gray[400]} />}
                   </TouchableOpacity>
-                </View>
-                {errors.password && (
-                  <Text style={styles.fieldError}>{errors.password.message}</Text>
                 )}
-              </View>
+                error={errors.password?.message}
+              />
             )}
           />
 
           {/* Forgot password */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/auth/forgot-password')}>
             <Text style={styles.forgotPasswordText}>Lupa password?</Text>
           </TouchableOpacity>
 
@@ -274,43 +254,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Underline inputs
-  fieldWrapper: {
-    marginBottom: 20,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1.5,
-    paddingBottom: 10,
-    paddingHorizontal: 2,
-  },
-  inputRowNormal: {
-    borderBottomColor: colors.gray[300],
-  },
-  inputRowError: {
-    borderBottomColor: colors.error[400],
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.gray[900],
-    paddingVertical: 0,
-  },
-  fieldError: {
-    fontSize: 12,
-    color: colors.error[500],
-    marginTop: 6,
-    marginLeft: 32,
-  },
-
   // Forgot password
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginBottom: 32,
+    marginTop: 2,
+    marginBottom: 28,
   },
   forgotPasswordText: {
     fontSize: 13,
