@@ -189,7 +189,11 @@ export default function NewBookingScreen() {
           booking_date:    watch('bookingDate').toISOString().split('T')[0],
           time_slot:       watch('timeSlots')[0],
           pickup_address:  watch('pickupAddress'),
+          pickup_lat:      pickupLoc?.latitude,
+          pickup_lng:      pickupLoc?.longitude,
           dropoff_address: watch('dropoffAddress'),
+          dropoff_lat:     dropoffLoc?.latitude,
+          dropoff_lng:     dropoffLoc?.longitude,
           purpose:         watch('purpose'),
           notes:           watch('notes'),
         });

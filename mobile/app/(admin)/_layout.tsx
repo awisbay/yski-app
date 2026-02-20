@@ -5,13 +5,17 @@ export default function AdminLayout() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isOperationalRole =
+    user?.role === 'admin' ||
+    user?.role === 'superadmin' ||
+    user?.role === 'pengurus' ||
+    user?.role === 'relawan';
 
   if (!isAuthenticated) {
     return <Redirect href="/auth/login" />;
   }
 
-  if (!isAdmin) {
+  if (!isOperationalRole) {
     return <Redirect href="/(tabs)" />;
   }
 

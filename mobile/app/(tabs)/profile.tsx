@@ -33,7 +33,15 @@ const MENU_ITEMS = [
 export default function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isOperationalRole =
+    user?.role === 'admin' ||
+    user?.role === 'superadmin' ||
+    user?.role === 'pengurus' ||
+    user?.role === 'relawan';
+  const roleLabel =
+    user?.role === 'pengurus' ? 'Pengurus' :
+    user?.role === 'relawan' ? 'Relawan' :
+    'Admin';
 
   const handleLogout = async () => {
     await logout();
@@ -71,9 +79,9 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        {isAdmin && (
+        {isOperationalRole && (
           <>
-            <SectionHeader title="Admin" />
+            <SectionHeader title={roleLabel} />
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => router.push('/(admin)')}
@@ -81,7 +89,7 @@ export default function ProfileScreen() {
               <View style={[styles.menuIcon, { backgroundColor: colors.error[100] }]}>
                 <Shield size={20} color={colors.error[600]} />
               </View>
-              <Text style={styles.menuLabel}>Dashboard Admin</Text>
+              <Text style={styles.menuLabel}>{`Dashboard ${roleLabel}`}</Text>
               <ChevronRight size={20} color={colors.gray[400]} />
             </TouchableOpacity>
           </>

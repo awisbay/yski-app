@@ -12,6 +12,11 @@ function normalizeBooking(raw: any) {
     dropoffAddress: raw.dropoffAddress ?? raw.dropoff_address,
     requesterName: raw.requesterName ?? raw.requester_name,
     requesterPhone: raw.requesterPhone ?? raw.requester_phone,
+    pickupLat: raw.pickupLat ?? raw.pickup_lat,
+    pickupLng: raw.pickupLng ?? raw.pickup_lng,
+    dropoffLat: raw.dropoffLat ?? raw.dropoff_lat,
+    dropoffLng: raw.dropoffLng ?? raw.dropoff_lng,
+    bookingCode: raw.bookingCode ?? raw.booking_code,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
     assignedTo: raw.assignedTo ?? raw.assigned_to,
@@ -47,6 +52,14 @@ export function useMyBookings() {
   });
 }
 
+// Hook to get all bookings for operational roles
+export function useAllBookings() {
+  return useQuery({
+    queryKey: bookingKeys.list({ scope: 'all' }),
+    queryFn: () => bookingsApi.getList().then(res => (res.data || []).map(normalizeBooking)),
+  });
+}
+
 // Hook to get booking detail
 export function useBookingDetail(id: string) {
   return useQuery({
@@ -76,6 +89,26 @@ export function useCancelBooking() {
 
   return useMutation({
     mutationFn: (id: string) => bookingsApi.cancel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
+    },
+  });
+}
+
+export function useApproveBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => bookingsApi.approve(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
+    },
+  });
+}
+
+export function useRejectBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => bookingsApi.reject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
     },

@@ -89,6 +89,8 @@ export const bookingsApi = {
   getMyBookings: () => api.get('/bookings/my'),
   getBooking: (id: string) => api.get(`/bookings/${id}`),
   create: (data: any) => api.post('/bookings', data),
+  approve: (id: string) => api.patch(`/bookings/${id}/approve`),
+  reject: (id: string) => api.patch(`/bookings/${id}/reject`),
   cancel: (id: string) => api.patch(`/bookings/${id}/cancel`),
   getSlots: (date: string) => api.get(`/bookings/slots?date=${date}`),
 };

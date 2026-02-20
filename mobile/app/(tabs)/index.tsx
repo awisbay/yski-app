@@ -42,6 +42,7 @@ export default function HomeScreen() {
   const { data: news, isLoading: newsLoading } = useNews({ limit: 3 });
 
   const [refreshing, setRefreshing] = useState(false);
+  const isOperationalRole = ['admin', 'pengurus', 'relawan', 'superadmin'].includes(user?.role || '');
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -204,91 +205,95 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── Booking Berikutnya ── */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Booking Berikutnya</Text>
-          <TouchableOpacity style={styles.seeAll} onPress={() => router.push('/booking')}>
-            <Text style={styles.seeAllText}>Lihat Semua</Text>
-            <ChevronRight size={13} color={colors.primary[600]} />
-          </TouchableOpacity>
-        </View>
-
-        {bookingsLoading ? (
-          <Skeleton height={130} borderRadius={18} />
-        ) : nextBooking ? (
-          <TouchableOpacity
-            style={styles.bookingCard}
-            onPress={() => router.push(`/booking/${nextBooking.id}`)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.bookingAccent} />
-            <View style={styles.bookingBody}>
-              <View style={styles.bookingTopRow}>
-                <Badge
-                  label={
-                    nextBooking.status === 'approved' ? 'disetujui' :
-                    nextBooking.status === 'in_progress' ? 'berjalan' :
-                    nextBooking.status
-                  }
-                  variant={
-                    nextBooking.status === 'confirmed' || nextBooking.status === 'approved'
-                      ? 'success'
-                      : nextBooking.status === 'in_progress'
-                      ? 'secondary'
-                      : 'warning'
-                  }
-                />
-                <Text style={styles.bookingId}>#{nextBooking.id.slice(-6).toUpperCase()}</Text>
-              </View>
-              <View style={styles.bookingInfoList}>
-                <View style={styles.infoRow}>
-                  <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
-                    <Calendar size={13} color={colors.primary[600]} />
-                  </View>
-                  <Text style={styles.infoText}>
-                    {new Date(nextBooking.bookingDate).toLocaleDateString('id-ID', {
-                      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-                    })}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
-                    <Clock size={13} color={colors.primary[600]} />
-                  </View>
-                  <Text style={styles.infoText}>{nextBooking.timeSlot}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
-                    <MapPin size={13} color={colors.primary[600]} />
-                  </View>
-                  <Text style={styles.infoText} numberOfLines={1}>
-                    {nextBooking.pickupAddress}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.emptyBooking}>
-            <View style={styles.emptyBookingAccent} />
-            <View style={styles.emptyBookingBody}>
-              <View style={styles.emptyIconCircle}>
-                <Calendar size={26} color={colors.primary[600]} />
-              </View>
-              <Text style={styles.emptyTitle}>Belum ada jadwal booking</Text>
-              <Text style={styles.emptySubtitle}>
-                Mulai buat booking pertama Anda dan kami siap membantu
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyBtn}
-                onPress={() => router.push('/booking/new')}
-                activeOpacity={0.85}
-              >
-                <Plus size={15} color={colors.white} />
-                <Text style={styles.emptyBtnText}>Buat Booking</Text>
+        {!isOperationalRole && (
+          <>
+            {/* ── Booking Berikutnya ── */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Booking Berikutnya</Text>
+              <TouchableOpacity style={styles.seeAll} onPress={() => router.push('/booking')}>
+                <Text style={styles.seeAllText}>Lihat Semua</Text>
+                <ChevronRight size={13} color={colors.primary[600]} />
               </TouchableOpacity>
             </View>
-          </View>
+
+            {bookingsLoading ? (
+              <Skeleton height={130} borderRadius={18} />
+            ) : nextBooking ? (
+              <TouchableOpacity
+                style={styles.bookingCard}
+                onPress={() => router.push(`/booking/${nextBooking.id}`)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.bookingAccent} />
+                <View style={styles.bookingBody}>
+                  <View style={styles.bookingTopRow}>
+                    <Badge
+                      label={
+                        nextBooking.status === 'approved' ? 'disetujui' :
+                        nextBooking.status === 'in_progress' ? 'berjalan' :
+                        nextBooking.status
+                      }
+                      variant={
+                        nextBooking.status === 'confirmed' || nextBooking.status === 'approved'
+                          ? 'success'
+                          : nextBooking.status === 'in_progress'
+                          ? 'secondary'
+                          : 'warning'
+                      }
+                    />
+                    <Text style={styles.bookingId}>#{nextBooking.id.slice(-6).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.bookingInfoList}>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
+                        <Calendar size={13} color={colors.primary[600]} />
+                      </View>
+                      <Text style={styles.infoText}>
+                        {new Date(nextBooking.bookingDate).toLocaleDateString('id-ID', {
+                          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                        })}
+                      </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
+                        <Clock size={13} color={colors.primary[600]} />
+                      </View>
+                      <Text style={styles.infoText}>{nextBooking.timeSlot}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoIconBox, { backgroundColor: colors.primary[50] }]}>
+                        <MapPin size={13} color={colors.primary[600]} />
+                      </View>
+                      <Text style={styles.infoText} numberOfLines={1}>
+                        {nextBooking.pickupAddress}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.emptyBooking}>
+                <View style={styles.emptyBookingAccent} />
+                <View style={styles.emptyBookingBody}>
+                  <View style={styles.emptyIconCircle}>
+                    <Calendar size={26} color={colors.primary[600]} />
+                  </View>
+                  <Text style={styles.emptyTitle}>Belum ada jadwal booking</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Mulai buat booking pertama Anda dan kami siap membantu
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.emptyBtn}
+                    onPress={() => router.push('/booking/new')}
+                    activeOpacity={0.85}
+                  >
+                    <Plus size={15} color={colors.white} />
+                    <Text style={styles.emptyBtnText}>Buat Booking</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
         )}
 
         {/* ── Program Unggulan ── */}

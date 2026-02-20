@@ -30,6 +30,13 @@ const ADMIN_MENU = [
 export default function AdminDashboard() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const roleLabel =
+    user?.role === 'pengurus' ? 'Pengurus' :
+    user?.role === 'relawan' ? 'Relawan' :
+    'Admin';
+  const menuItems = user?.role === 'admin' || user?.role === 'superadmin'
+    ? ADMIN_MENU
+    : ADMIN_MENU.filter((item) => item.route !== '/admin/users');
 
   const handleLogout = async () => {
     await logout();
@@ -38,7 +45,7 @@ export default function AdminDashboard() {
 
   return (
     <MainThemeLayout
-      title="Admin Dashboard"
+      title={`${roleLabel} Dashboard`}
       subtitle="Kelola operasional aplikasi"
       showBackButton
       onBackPress={() => router.push('/(tabs)/profile')}
@@ -90,9 +97,9 @@ export default function AdminDashboard() {
           />
         </View>
 
-        <SectionHeader title="Menu Admin" />
+        <SectionHeader title={`Menu ${roleLabel}`} />
         <View style={styles.menuContainer}>
-          {ADMIN_MENU.map((item) => (
+          {menuItems.map((item) => (
             <TouchableOpacity
               key={item.label}
               style={styles.menuItem}

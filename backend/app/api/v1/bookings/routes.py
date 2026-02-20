@@ -7,12 +7,14 @@ from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
 from app.models.user import User
 from app.schemas.booking import BookingCreate, BookingResponse, SlotsResponse
 from app.services.booking import BookingService
+from app.services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -44,10 +46,10 @@ async def list_bookings(
     status: str = Query(None, description="Filter by status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(require_role("admin", "pengurus")),
+    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
     db: AsyncSession = Depends(get_db)
 ):
-    """List all bookings (Admin/Pengurus only)."""
+    """List all bookings (Admin/Pengurus/Relawan only)."""
     service = BookingService(db)
     bookings = await service.list_bookings(skip=skip, limit=limit, status=status)
     return bookings
@@ -71,6 +73,26 @@ async def create_booking(
         current_user.full_name,
         requester_phone,
     )
+
+    # Notify operational roles when a new booking comes in.
+    staff_result = await db.execute(
+        select(User.id).where(
+            User.role.in_(["admin", "pengurus", "relawan"]),
+            User.is_active == True,  # noqa: E712
+            User.id != current_user.id,
+        )
+    )
+    staff_user_ids = [row[0] for row in staff_result.all()]
+    if staff_user_ids:
+        notif_service = NotificationService(db)
+        await notif_service.create_bulk_notifications(
+            user_ids=staff_user_ids,
+            title="Booking Pickup Baru Masuk",
+            body=f"{current_user.full_name} membuat booking untuk {booking.booking_date} jam {booking.time_slot}.",
+            type="info",
+            reference_type="booking",
+            reference_id=booking.id,
+        )
     return booking
 
 
@@ -99,10 +121,10 @@ async def get_booking(
 @router.patch("/{booking_id}/approve", response_model=BookingResponse)
 async def approve_booking(
     booking_id: UUID,
-    current_user: User = Depends(require_role("admin", "pengurus")),
+    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
     db: AsyncSession = Depends(get_db)
 ):
-    """Approve a pending booking."""
+    """Approve a pending booking (Admin/Pengurus/Relawan)."""
     service = BookingService(db)
     booking = await service.update_status(str(booking_id), "approved", current_user.id)
     if not booking:
@@ -113,10 +135,10 @@ async def approve_booking(
 @router.patch("/{booking_id}/reject", response_model=BookingResponse)
 async def reject_booking(
     booking_id: UUID,
-    current_user: User = Depends(require_role("admin", "pengurus")),
+    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
     db: AsyncSession = Depends(get_db)
 ):
-    """Reject a pending booking."""
+    """Reject a pending booking (Admin/Pengurus/Relawan)."""
     service = BookingService(db)
     booking = await service.update_status(str(booking_id), "rejected", current_user.id)
     if not booking:
