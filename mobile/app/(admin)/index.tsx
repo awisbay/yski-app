@@ -28,6 +28,7 @@ const ADMIN_MENU = [
   { icon: Heart, label: 'Manajemen Donasi', route: '/admin/donations', color: colors.warning[500] },
   { icon: Truck, label: 'Manajemen Penjemputan', route: '/admin/pickups', color: colors.info[500] },
   { icon: LayoutGrid, label: 'Manajemen Program', route: '/admin/programs', color: colors.primary[700], adminOrPengurusOnly: true },
+  { icon: TrendingUp, label: 'Manajemen Berita', route: '/admin/news', color: colors.secondary[700], adminOrPengurusOnly: true },
 ];
 
 export default function AdminDashboard() {

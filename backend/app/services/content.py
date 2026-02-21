@@ -179,7 +179,7 @@ class ContentService:
         if news_status:
             query = query.where(NewsArticle.status == news_status)
 
-        query = query.offset(skip).limit(limit).order_by(NewsArticle.created_at.desc())
+        query = query.order_by(NewsArticle.updated_at.desc().nullslast(), NewsArticle.created_at.desc()).offset(skip).limit(limit)
         result = await self.db.execute(query)
         return list(result.scalars().all())
     
@@ -199,6 +199,7 @@ class ContentService:
             slug=slug,
             excerpt=data.excerpt or data.content[:200] + "...",
             content=data.content,
+            thumbnail_url=data.thumbnail_url,
             category=data.category,
             is_published=False,
             created_by=created_by

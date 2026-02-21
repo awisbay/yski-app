@@ -52,6 +52,7 @@ class NewsBase(BaseModel):
     excerpt: Optional[str] = None
     content: str
     category: str = "general"
+    thumbnail_url: Optional[str] = None
 
 
 class NewsCreate(NewsBase):
@@ -63,6 +64,7 @@ class NewsUpdate(BaseModel):
     excerpt: Optional[str] = None
     content: Optional[str] = None
     category: Optional[str] = None
+    thumbnail_url: Optional[str] = None
     is_published: Optional[bool] = None
     scheduled_at: Optional[datetime] = None
     meta_title: Optional[str] = None
@@ -72,6 +74,16 @@ class NewsUpdate(BaseModel):
 
 class NewsReject(BaseModel):
     reason: str
+
+
+class NewsGenerateRequest(BaseModel):
+    title: str
+    brief: str
+
+
+class NewsGenerateResponse(BaseModel):
+    generated_content: str
+    suggested_excerpt: Optional[str] = None
 
 
 class NewsResponse(NewsBase):

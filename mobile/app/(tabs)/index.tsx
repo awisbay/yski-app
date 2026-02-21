@@ -53,6 +53,7 @@ const OPS_DASHBOARD_MENU = [
   { key: 'donations', label: 'Cek Donasi Masuk', route: '/admin/donations', icon: TrendingUp, color: colors.warning[600] },
   { key: 'pickups', label: 'Cek Request Penjemputan', route: '/admin/pickups', icon: MapPin, color: colors.info[600] },
   { key: 'programs', label: 'Manajemen Program', route: '/admin/programs', icon: Plus, color: colors.primary[700], roles: ['admin', 'superadmin', 'pengurus'] },
+  { key: 'news', label: 'Manajemen Berita', route: '/admin/news', icon: Newspaper, color: colors.secondary[700], roles: ['admin', 'superadmin', 'pengurus'] },
 ];
 
 export default function HomeScreen() {
@@ -72,7 +73,7 @@ export default function HomeScreen() {
 
   const { data: bookings, isLoading: bookingsLoading, refetch: refetchBookings } = useMyBookings();
   const { data: programs, isLoading: programsLoading } = usePrograms({ limit: 4 });
-  const { data: news, isLoading: newsLoading } = useNews({ limit: 3 });
+  const { data: news, isLoading: newsLoading } = useNews({ limit: 3, is_published: true });
 
   const [refreshing, setRefreshing] = useState(false);
   const isOperationalRole = ['admin', 'pengurus', 'relawan', 'superadmin'].includes(user?.role || '');
@@ -97,6 +98,7 @@ export default function HomeScreen() {
     donations: (allDonations || []).filter((d: any) => d.paymentStatus === 'pending' || d.paymentStatus === 'awaiting_verification').length,
     equipment: (allLoans || []).filter((l: any) => l.status === 'pending').length,
     programs: 0,
+    news: 0,
     users: 0,
   };
 

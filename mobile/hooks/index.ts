@@ -54,7 +54,14 @@ export {
   useCreateProgram,
   useUpdateProgram,
 } from './usePrograms';
-export { useNews, useNewsDetail } from './useNews';
+export {
+  useNews,
+  useNewsDetail,
+  useUploadNewsBanner,
+  useGenerateNewsContent,
+  useCreateNews,
+  useUpdateNews,
+} from './useNews';
 
 // Phase 5: Advanced Features
 export {

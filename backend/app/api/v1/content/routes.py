@@ -14,13 +14,16 @@ from app.core.media import save_upload_file
 from app.models.user import User
 from app.schemas.content import (
     ProgramCreate, ProgramResponse, ProgramUpdate,
-    NewsCreate, NewsResponse, NewsUpdate, NewsReject,
+    NewsCreate, NewsResponse, NewsUpdate, NewsReject, NewsGenerateRequest, NewsGenerateResponse,
 )
+from app.services.ai_content import AIContentService
 from app.services.content import ContentService
 
 router = APIRouter()
 ALLOWED_PROGRAM_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 MAX_PROGRAM_IMAGE_SIZE = 8 * 1024 * 1024
+ALLOWED_NEWS_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+MAX_NEWS_IMAGE_SIZE = 8 * 1024 * 1024
 
 
 # === Programs Endpoints ===
@@ -146,7 +149,7 @@ async def list_news(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=50),
     category: str = Query(None),
-    is_published: bool = Query(True),
+    is_published: Optional[bool] = Query(None),
     news_status: str = Query(None, description="Filter by publishing status"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -157,6 +160,32 @@ async def list_news(
         is_published=is_published, news_status=news_status,
     )
     return articles
+
+
+@router.post("/news/upload-banner")
+async def upload_news_banner(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role("admin", "pengurus")),
+):
+    """Upload news banner image and return media URL."""
+    banner_url = await save_upload_file(
+        file=file,
+        subdir="news/banners",
+        allowed_types=ALLOWED_NEWS_IMAGE_TYPES,
+        max_size_bytes=MAX_NEWS_IMAGE_SIZE,
+    )
+    return {"banner_url": banner_url}
+
+
+@router.post("/news/generate-content", response_model=NewsGenerateResponse)
+async def generate_news_content(
+    payload: NewsGenerateRequest,
+    current_user: User = Depends(require_role("admin", "pengurus")),
+):
+    """Generate long-form news content from short text using Gemini."""
+    service = AIContentService()
+    result = await service.generate_news_content(title=payload.title, brief=payload.brief)
+    return result
 
 
 @router.get("/news/{news_id}", response_model=NewsResponse)

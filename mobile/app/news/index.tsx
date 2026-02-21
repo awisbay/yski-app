@@ -1,7 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Newspaper, Calendar, ChevronRight, Search } from 'lucide-react-native';
+import { Newspaper, Calendar } from 'lucide-react-native';
 import { MainThemeLayout, Skeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
@@ -10,41 +9,38 @@ import { useNews } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
-const CATEGORIES = ['all', 'umum', 'kegiatan', 'pengumuman', 'artikel'];
-
 export default function NewsScreen() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const { data: news, isLoading } = useNews({
-    category: selectedCategory === 'all' ? undefined : selectedCategory,
-  });
+  const { data: news, isLoading } = useNews({ limit: 50, is_published: true });
 
   const renderNewsItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       onPress={() => router.push(`/news/${item.id}`)}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
     >
       <Card style={styles.newsCard}>
-        <View style={styles.newsImage}>
-          <Newspaper size={32} color={colors.primary[300]} />
+        <View style={styles.newsImageWrap}>
+          {item.thumbnailUrl ? (
+            <Image source={{ uri: item.thumbnailUrl }} style={styles.newsImage} />
+          ) : (
+            <View style={styles.newsImageFallback}>
+              <Newspaper size={28} color={colors.primary[500]} />
+            </View>
+          )}
         </View>
         <View style={styles.newsContent}>
-          <View style={styles.newsHeader}>
-            <Badge label={item.category} variant="secondary" size="sm" />
+          <View style={styles.metaRow}>
+            <Badge label={item.category || 'umum'} variant="secondary" size="sm" />
             <View style={styles.dateRow}>
-              <Calendar size={14} color={colors.gray[400]} />
+              <Calendar size={12} color={colors.gray[500]} />
               <Text style={styles.dateText}>
-                {new Date(item.publishedAt).toLocaleDateString('id-ID')}
+                {new Date(item.publishedAt || item.createdAt).toLocaleDateString('id-ID')}
               </Text>
             </View>
           </View>
           <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
-          <Text style={styles.newsExcerpt} numberOfLines={2}>
-            {item.excerpt || item.content?.substring(0, 100)}...
+          <Text style={styles.newsExcerpt} numberOfLines={3}>
+            {item.excerpt || item.content || '-'}
           </Text>
-          <View style={styles.readMore}>
-            <Text style={styles.readMoreText}>Baca selengkapnya</Text>
-            <ChevronRight size={16} color={colors.primary[600]} />
-          </View>
         </View>
       </Card>
     </TouchableOpacity>
@@ -55,42 +51,15 @@ export default function NewsScreen() {
       title="Berita & Informasi"
       subtitle="Info terbaru yayasan"
       showBackButton
-      rightElement={
-        <TouchableOpacity style={styles.searchButton}>
-          <Search size={20} color={colors.white} />
-        </TouchableOpacity>
-      }
     >
       <View style={styles.content}>
-        <View style={styles.categoryContainer}>
-          {CATEGORIES.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category && styles.categoryButtonActive,
-              ]}
-              onPress={() => setSelectedCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === category && styles.categoryTextActive,
-                ]}
-              >
-                {category === 'all' ? 'Semua' : category.charAt(0).toUpperCase() + category.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         {isLoading ? (
           <>
-            <Skeleton height={200} borderRadius={12} />
-            <Skeleton height={200} borderRadius={12} />
-            <Skeleton height={200} borderRadius={12} />
+            <Skeleton height={210} borderRadius={14} />
+            <Skeleton height={210} borderRadius={14} />
+            <Skeleton height={210} borderRadius={14} />
           </>
-        ) : news?.length > 0 ? (
+        ) : news?.length ? (
           <FlatList
             data={news}
             renderItem={renderNewsItem}
@@ -115,90 +84,56 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
-  searchButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  categoryContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: colors.gray[100],
-  },
-  categoryButtonActive: {
-    backgroundColor: colors.primary[500],
-  },
-  categoryText: {
-    ...typography.caption,
-    color: colors.gray[600],
-    fontWeight: '500',
-  },
-  categoryTextActive: {
-    color: colors.white,
-  },
   listContent: {
     paddingBottom: 100,
   },
   newsCard: {
-    marginBottom: 16,
+    marginBottom: 14,
+    padding: 10,
+    borderRadius: 16,
+  },
+  newsImageWrap: {
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: colors.gray[100],
   },
   newsImage: {
-    height: 160,
-    backgroundColor: colors.gray[100],
-    justifyContent: 'center',
+    width: '100%',
+    height: 155,
+  },
+  newsImageFallback: {
+    width: '100%',
+    height: 155,
     alignItems: 'center',
-    margin: -16,
-    marginBottom: 16,
+    justifyContent: 'center',
+    backgroundColor: colors.primary[50],
   },
   newsContent: {
-    paddingTop: 8,
+    paddingTop: 10,
+    gap: 8,
   },
-  newsHeader: {
+  metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   dateText: {
     ...typography.caption,
-    color: colors.gray[400],
+    color: colors.gray[500],
+    fontWeight: '600',
   },
   newsTitle: {
     ...typography.h4,
     color: colors.gray[900],
-    marginBottom: 8,
   },
   newsExcerpt: {
     ...typography.body2,
-    color: colors.gray[500],
-    marginBottom: 12,
-  },
-  readMore: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  readMoreText: {
-    ...typography.body2,
-    color: colors.primary[600],
-    fontWeight: '500',
-    marginRight: 4,
+    color: colors.gray[600],
+    lineHeight: 20,
   },
 });

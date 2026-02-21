@@ -178,9 +178,17 @@ export const programsApi = {
 };
 
 export const newsApi = {
-  getList: (params?: { category?: string; page?: number; limit?: number }) =>
+  getList: (params?: { category?: string; page?: number; limit?: number; is_published?: boolean; news_status?: string; skip?: number }) =>
     api.get('/content/news', { params }),
   getDetail: (id: string) => api.get(`/content/news/${id}`),
+  create: (data: any) => api.post('/content/news', data),
+  update: (id: string, data: any) => api.put(`/content/news/${id}`, data),
+  uploadBanner: (formData: FormData) =>
+    api.post('/content/news/upload-banner', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  generateContent: (data: { title: string; brief: string }) =>
+    api.post('/content/news/generate-content', data),
 };
 
 // Phase 5: Auction API

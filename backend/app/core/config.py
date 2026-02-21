@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     DONATION_WEBHOOK_SECRET: str = ""
     PASSWORD_RESET_DEBUG_EXPOSE: bool = False
 
+    # AI content generation (Gemini)
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+
     @validator("JWT_SECRET_KEY")
     def jwt_secret_must_be_set(cls, v, values):
         if not v and values.get("APP_ENV") != "development":
