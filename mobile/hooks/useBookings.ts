@@ -29,6 +29,7 @@ function normalizeBooking(raw: any) {
     assignedTo: raw.assignedTo ?? raw.assigned_to,
     approvedBy: raw.approvedBy ?? raw.approved_by,
     reviewText: raw.reviewText ?? raw.review_text,
+    rejectionReason: raw.rejectionReason ?? raw.rejection_reason,
   };
 }
 
@@ -120,7 +121,7 @@ export function useApproveBooking() {
 export function useRejectBooking() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => bookingsApi.reject(id),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => bookingsApi.reject(id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
       queryClient.invalidateQueries({ queryKey: bookingKeys.list({ scope: 'all' }) });

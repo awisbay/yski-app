@@ -48,6 +48,7 @@ class MovingBooking(Base):
     purpose: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Workflow
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)

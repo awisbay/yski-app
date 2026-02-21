@@ -42,6 +42,10 @@ class BookingUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class BookingRejectRequest(BaseModel):
+    rejection_reason: str = Field(..., min_length=3, max_length=500)
+
+
 class BookingResponse(BookingBase):
     id: UUID
     booking_code: str
@@ -51,6 +55,7 @@ class BookingResponse(BookingBase):
     status: str
     assigned_to: Optional[UUID] = None
     approved_by: Optional[UUID] = None
+    rejection_reason: Optional[str] = None
     rating: Optional[int] = None
     review_text: Optional[str] = None
     time_slots: Optional[str] = None

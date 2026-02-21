@@ -90,7 +90,8 @@ export const bookingsApi = {
   getBooking: (id: string) => api.get(`/bookings/${id}`),
   create: (data: any) => api.post('/bookings', data),
   approve: (id: string) => api.patch(`/bookings/${id}/approve`),
-  reject: (id: string) => api.patch(`/bookings/${id}/reject`),
+  reject: (id: string, rejectionReason: string) =>
+    api.patch(`/bookings/${id}/reject`, { rejection_reason: rejectionReason }),
   updateStatus: (id: string, status: 'in_progress' | 'completed') =>
     api.patch(`/bookings/${id}/status?status=${status}`),
   cancel: (id: string) => api.patch(`/bookings/${id}/cancel`),

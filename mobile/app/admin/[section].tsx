@@ -94,6 +94,8 @@ function BookingManagementScreen() {
   const approveMutation = useApproveBooking();
   const rejectMutation = useRejectBooking();
   const updateStatusMutation = useUpdateBookingStatus();
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({});
 
   const pendingCount = useMemo(
     () => (bookings || []).filter((b: any) => b.status === 'pending').length,
@@ -115,8 +117,15 @@ function BookingManagementScreen() {
   };
 
   const handleReject = async (id: string) => {
+    const reason = (rejectReasons[id] || '').trim();
+    if (reason.length < 3) {
+      Alert.alert('Alasan wajib diisi', 'Masukkan minimal 3 karakter alasan penolakan.');
+      return;
+    }
     try {
-      await rejectMutation.mutateAsync(id);
+      await rejectMutation.mutateAsync({ id, reason });
+      setRejectingId(null);
+      setRejectReasons((prev) => ({ ...prev, [id]: '' }));
       refetch();
     } catch {
       Alert.alert('Gagal', 'Tidak dapat menolak booking ini.');
@@ -174,36 +183,65 @@ function BookingManagementScreen() {
         </View>
 
         {isPending && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.rejectBtn]}
-              onPress={() => handleReject(item.id)}
-              disabled={rejectMutation.isPending || approveMutation.isPending}
-            >
-              {rejectMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.error[600]} />
-              ) : (
-                <>
-                  <XCircle size={15} color={colors.error[600]} />
-                  <Text style={styles.rejectText}>Tolak</Text>
-                </>
-              )}
-            </TouchableOpacity>
+          <View>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.rejectBtn]}
+                onPress={() => setRejectingId(rejectingId === item.id ? null : item.id)}
+                disabled={rejectMutation.isPending || approveMutation.isPending}
+              >
+                <XCircle size={15} color={colors.error[600]} />
+                <Text style={styles.rejectText}>Tolak</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.approveBtn]}
-              onPress={() => handleApprove(item.id)}
-              disabled={approveMutation.isPending || rejectMutation.isPending}
-            >
-              {approveMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.success[700]} />
-              ) : (
-                <>
-                  <CheckCircle2 size={15} color={colors.success[700]} />
-                  <Text style={styles.approveText}>Setujui</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.approveBtn]}
+                onPress={() => handleApprove(item.id)}
+                disabled={approveMutation.isPending || rejectMutation.isPending}
+              >
+                {approveMutation.isPending ? (
+                  <ActivityIndicator size="small" color={colors.success[700]} />
+                ) : (
+                  <>
+                    <CheckCircle2 size={15} color={colors.success[700]} />
+                    <Text style={styles.approveText}>Setujui</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {rejectingId === item.id && (
+              <View style={styles.rejectReasonWrap}>
+                <TextInput
+                  value={rejectReasons[item.id] || ''}
+                  onChangeText={(text) => setRejectReasons((prev) => ({ ...prev, [item.id]: text }))}
+                  placeholder="Tulis alasan penolakan..."
+                  placeholderTextColor={colors.gray[400]}
+                  style={styles.rejectReasonInput}
+                  multiline
+                />
+                <View style={styles.rejectReasonActions}>
+                  <TouchableOpacity
+                    style={styles.rejectCancelBtn}
+                    onPress={() => setRejectingId(null)}
+                    disabled={rejectMutation.isPending}
+                  >
+                    <Text style={styles.rejectCancelText}>Batal</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.rejectSubmitBtn}
+                    onPress={() => handleReject(item.id)}
+                    disabled={rejectMutation.isPending}
+                  >
+                    {rejectMutation.isPending ? (
+                      <ActivityIndicator size="small" color={colors.white} />
+                    ) : (
+                      <Text style={styles.rejectSubmitText}>Kirim Penolakan</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -1141,6 +1179,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 8,
+  },
+  rejectReasonWrap: {
+    marginTop: 8,
+    backgroundColor: colors.error[50],
+    borderWidth: 1,
+    borderColor: colors.error[100],
+    borderRadius: 10,
+    padding: 10,
+    gap: 8,
+  },
+  rejectReasonInput: {
+    minHeight: 76,
+    borderWidth: 1,
+    borderColor: colors.error[200],
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: colors.gray[800],
+    textAlignVertical: 'top',
+    backgroundColor: colors.white,
+  },
+  rejectReasonActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  rejectCancelBtn: {
+    height: 34,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  rejectCancelText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray[700],
+  },
+  rejectSubmitBtn: {
+    height: 34,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.error[600],
+  },
+  rejectSubmitText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.white,
   },
   actionBtn: {
     flex: 1,

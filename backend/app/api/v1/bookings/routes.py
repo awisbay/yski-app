@@ -12,7 +12,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
 from app.models.user import User
-from app.schemas.booking import BookingCreate, BookingResponse, SlotsResponse
+from app.schemas.booking import BookingCreate, BookingRejectRequest, BookingResponse, SlotsResponse
 from app.services.booking import BookingService
 from app.services.notification_service import NotificationService
 
@@ -136,12 +136,18 @@ async def approve_booking(
 @router.patch("/{booking_id}/reject", response_model=BookingResponse)
 async def reject_booking(
     booking_id: UUID,
+    payload: BookingRejectRequest,
     current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
     db: AsyncSession = Depends(get_db)
 ):
     """Reject a pending booking (Admin/Pengurus/Relawan)."""
     service = BookingService(db)
-    booking = await service.update_status(str(booking_id), "rejected", current_user.id)
+    booking = await service.update_status(
+        str(booking_id),
+        "rejected",
+        current_user.id,
+        rejection_reason=payload.rejection_reason,
+    )
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     return booking

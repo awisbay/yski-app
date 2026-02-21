@@ -108,6 +108,14 @@ export default function BookingListScreen() {
               </View>
               <Text style={styles.infoText} numberOfLines={1}>{item.pickupAddress}</Text>
             </View>
+            {item.status === 'rejected' && (
+              <View style={styles.rejectedBox}>
+                <Text style={styles.rejectedLabel}>Alasan ditolak:</Text>
+                <Text style={styles.rejectedValue} numberOfLines={2}>
+                  {item.rejectionReason || 'Tidak ada catatan alasan.'}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* footer */}
@@ -304,6 +312,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   infoText: { fontSize: 13, color: colors.gray[700], flex: 1, lineHeight: 18 },
+  rejectedBox: {
+    marginTop: 4,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: colors.error[50],
+    borderWidth: 1,
+    borderColor: colors.error[100],
+  },
+  rejectedLabel: { fontSize: 11, fontWeight: '700', color: colors.error[700], marginBottom: 2 },
+  rejectedValue: { fontSize: 12, color: colors.error[700], lineHeight: 17 },
   cardFooter: {
     flexDirection: 'row', alignItems: 'center',
     borderTopWidth: 1, borderTopColor: colors.gray[50], paddingTop: 10,

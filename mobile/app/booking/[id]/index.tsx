@@ -161,6 +161,15 @@ export default function BookingDetailScreen() {
 
                 <Text style={[styles.noteTitle, { marginTop: 14 }]}>Catatan</Text>
                 <Text style={styles.noteValue}>{booking.notes || '-'}</Text>
+
+                {booking.status === 'rejected' && (
+                  <>
+                    <Text style={[styles.noteTitle, { marginTop: 14 }]}>Alasan Ditolak</Text>
+                    <Text style={[styles.noteValue, styles.rejectedReason]}>
+                      {booking.rejectionReason || 'Tidak ada catatan alasan.'}
+                    </Text>
+                  </>
+                )}
               </View>
             </ScrollView>
 
@@ -324,6 +333,9 @@ const styles = StyleSheet.create({
     color: colors.gray[900],
     lineHeight: 20,
     fontWeight: '500',
+  },
+  rejectedReason: {
+    color: colors.error[700],
   },
   footer: {
     position: 'absolute',

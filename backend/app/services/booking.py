@@ -239,7 +239,13 @@ class BookingService:
         "cancelled": set(),
     }
 
-    async def update_status(self, booking_id: str, new_status: str, user_id: UUID) -> Optional[MovingBooking]:
+    async def update_status(
+        self,
+        booking_id: str,
+        new_status: str,
+        user_id: UUID,
+        rejection_reason: Optional[str] = None,
+    ) -> Optional[MovingBooking]:
         """Update booking status with transition validation."""
         booking = await self.get_by_id(booking_id)
         if not booking:
@@ -256,6 +262,15 @@ class BookingService:
 
         if new_status == "approved":
             booking.approved_by = user_id
+            booking.rejection_reason = None
+        elif new_status == "rejected":
+            cleaned_reason = (rejection_reason or "").strip()
+            if not cleaned_reason:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Alasan penolakan wajib diisi",
+                )
+            booking.rejection_reason = cleaned_reason
         elif new_status in ("in_progress", "completed"):
             booking.assigned_to = user_id
 
