@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { Bell, Check, ChevronRight, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import { Bell, Check, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
 import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
@@ -15,7 +15,10 @@ const ICONS: Record<string, any> = {
   warning: AlertTriangle,
 };
 
+type FilterType = 'all' | 'unread';
+
 export default function NotificationsScreen() {
+  const [filter, setFilter] = useState<FilterType>('all');
   const { data, isLoading, refetch, isRefetching } = useNotifications({ limit: 100, includeRead: true });
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
@@ -29,6 +32,13 @@ export default function NotificationsScreen() {
       setUnreadCount(unreadCount);
     }
   }, [setUnreadCount, unreadCount]);
+
+  const filteredNotifications = useMemo(() => {
+    if (filter === 'unread') {
+      return notifications.filter((item: any) => !item.is_read);
+    }
+    return notifications;
+  }, [filter, notifications]);
 
   const formatTime = (date?: string) => {
     if (!date) return '-';
@@ -48,36 +58,36 @@ export default function NotificationsScreen() {
 
   const renderNotification = ({ item }: { item: any }) => {
     const Icon = ICONS[item.type] || Info;
-    const iconColors: Record<string, string> = {
-      info: colors.primary[500],
-      success: colors.success[500],
-      warning: colors.warning[500],
-    };
+    const iconColor = item.type === 'success'
+      ? colors.success[600]
+      : item.type === 'warning'
+      ? colors.warning[600]
+      : colors.primary[600];
     const isRead = !!item.is_read;
 
     return (
       <TouchableOpacity
         onPress={() => {
           if (!isRead) {
-            markAsRead.mutate(item.id, {
-              onSuccess: () => refetch(),
-            });
+            markAsRead.mutate(item.id, { onSuccess: () => refetch() });
           }
         }}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
-        <Card style={[styles.notificationCard, !isRead ? styles.unreadCard : undefined]}>
-          <View style={styles.notificationContent}>
-            <View style={[styles.iconContainer, { backgroundColor: `${iconColors[item.type] || colors.primary[500]}15` }]}>
-              <Icon size={20} color={iconColors[item.type] || colors.primary[500]} />
+        <Card style={[styles.notificationCard, !isRead && styles.notificationCardUnread]}>
+          <View style={styles.notificationRow}>
+            <View style={[styles.iconWrap, { backgroundColor: `${iconColor}18` }]}>
+              <Icon size={18} color={iconColor} />
             </View>
-            <View style={styles.textContainer}>
-              <Text style={[styles.title, !isRead && styles.unreadText]}>{item.title}</Text>
+            <View style={styles.textWrap}>
+              <View style={styles.titleRow}>
+                <Text style={[styles.title, !isRead && styles.titleUnread]} numberOfLines={1}>{item.title}</Text>
+                {!isRead ? <View style={styles.unreadBadge}><Text style={styles.unreadBadgeText}>Baru</Text></View> : null}
+              </View>
               <Text style={styles.message} numberOfLines={2}>{item.body}</Text>
               <Text style={styles.time}>{formatTime(item.created_at)}</Text>
             </View>
           </View>
-          {!isRead && <View style={styles.unreadDot} />}
         </Card>
       </TouchableOpacity>
     );
@@ -86,27 +96,57 @@ export default function NotificationsScreen() {
   return (
     <MainThemeLayout
       title="Notifikasi"
-      subtitle="Sama dengan lonceng di beranda"
+      subtitle="Sinkron dengan ikon lonceng beranda"
       showBackButton
       rightElement={
-        notifications.length > 0 ? (
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              onPress={() => markAllAsRead.mutate(undefined, { onSuccess: () => refetch() })}
-              style={styles.headerButton}
-            >
-              <Check size={18} color={colors.white} />
-            </TouchableOpacity>
-          </View>
+        unreadCount > 0 ? (
+          <TouchableOpacity
+            onPress={() => markAllAsRead.mutate(undefined, { onSuccess: () => refetch() })}
+            style={styles.headerButton}
+            activeOpacity={0.85}
+          >
+            <Check size={18} color={colors.white} />
+          </TouchableOpacity>
         ) : null
+      }
+      statsStrip={
+        <View style={styles.statsStrip}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{notifications.length}</Text>
+            <Text style={styles.statLabel}>Total</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{unreadCount}</Text>
+            <Text style={styles.statLabel}>Belum Dibaca</Text>
+          </View>
+        </View>
       }
     >
       <View style={styles.content}>
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
+            onPress={() => setFilter('all')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>Semua</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, filter === 'unread' && styles.filterChipActive]}
+            onPress={() => setFilter('unread')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.filterText, filter === 'unread' && styles.filterTextActive]}>Belum Dibaca</Text>
+          </TouchableOpacity>
+        </View>
+
         {isLoading ? (
-          <View style={styles.loadingWrap}><ActivityIndicator size="small" color={colors.primary[600]} /></View>
-        ) : notifications.length > 0 ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="small" color={colors.primary[600]} />
+          </View>
+        ) : filteredNotifications.length > 0 ? (
           <FlatList
-            data={notifications}
+            data={filteredNotifications}
             renderItem={renderNotification}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
@@ -123,8 +163,8 @@ export default function NotificationsScreen() {
         ) : (
           <EmptyState
             icon={Bell}
-            title="Tidak ada notifikasi"
-            description="Anda akan menerima notifikasi di sini"
+            title={filter === 'unread' ? 'Tidak ada notifikasi baru' : 'Tidak ada notifikasi'}
+            description="Update akan tampil di halaman ini"
           />
         )}
       </View>
@@ -137,15 +177,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
-  loadingWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
   headerButton: {
     width: 38,
     height: 38,
@@ -156,57 +187,126 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
   },
+  statsStrip: {
+    marginTop: 14,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  statValue: {
+    ...typography.h5,
+    color: colors.white,
+    fontWeight: '800',
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.primary[100],
+    fontWeight: '600',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    height: 34,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary[600],
+    borderColor: colors.primary[600],
+  },
+  filterText: {
+    ...typography.caption,
+    color: colors.gray[600],
+    fontWeight: '700',
+  },
+  filterTextActive: {
+    color: colors.white,
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   listContent: {
     paddingBottom: 100,
   },
   notificationCard: {
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
   },
-  unreadCard: {
+  notificationCardUnread: {
+    borderColor: colors.primary[200],
     backgroundColor: colors.primary[50],
   },
-  notificationContent: {
-    flex: 1,
+  notificationRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: 'center',
-    marginRight: 12,
+    justifyContent: 'center',
+    marginRight: 10,
   },
-  textContainer: {
+  textWrap: {
     flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
   },
   title: {
     ...typography.body2,
-    fontWeight: '500',
     color: colors.gray[700],
-    marginBottom: 4,
-  },
-  unreadText: {
     fontWeight: '600',
+    flex: 1,
+  },
+  titleUnread: {
     color: colors.gray[900],
+    fontWeight: '700',
+  },
+  unreadBadge: {
+    paddingHorizontal: 8,
+    height: 20,
+    borderRadius: 999,
+    backgroundColor: colors.primary[600],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unreadBadgeText: {
+    ...typography.caption,
+    color: colors.white,
+    fontWeight: '700',
   },
   message: {
     ...typography.caption,
-    color: colors.gray[500],
+    color: colors.gray[600],
     marginBottom: 4,
+    lineHeight: 18,
   },
   time: {
     ...typography.caption,
     color: colors.gray[400],
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary[500],
-    marginLeft: 8,
   },
 });
