@@ -10,9 +10,21 @@
 |---|---|
 | Phase 1: DB Migrations | ✅ DONE |
 | Phase 2: Backend API Additions | ✅ DONE |
-| Phase 3: Website Scaffold | ✅ DONE (Next.js created, packages pending) |
-| Phase 4: Core Layout & Auth | ⏳ IN PROGRESS |
-| Phase 5: Dashboard Pages | ⏳ PENDING |
+| Phase 3: Website Scaffold | ✅ DONE |
+| Phase 4: Core Layout & Auth | ✅ DONE |
+| Phase 5: Dashboard Pages | ✅ DONE |
+| Phase 6: Shared UI Components | ✅ DONE |
+
+### All pages completed:
+- `/login` — Login form with role validation
+- `/` — Overview dashboard (KPIs, charts, quick actions)
+- `/users` + `/users/[id]` — User management + detail
+- `/donations` + `/donations/[id]` — Donation management + detail
+- `/auctions` + `/auctions/new` + `/auctions/[id]` — Auction management
+- `/bookings` + `/bookings/[id]` — Booking management + detail
+- `/equipment` + `/equipment/[id]` — Equipment + loans (2-tab)
+- `/finance` + `/finance/[id]` — Finance reports + entries
+- `/content` + news/programs create+edit pages — Content management
 | Phase 6: Shared UI Components | ⏳ PENDING |
 
 ---
