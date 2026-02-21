@@ -153,6 +153,9 @@ class EquipmentService:
         
         if equipment.available_stock <= 0:
             raise HTTPException(status_code=400, detail="Equipment not available")
+
+        if data.return_date and data.return_date <= data.borrow_date:
+            raise HTTPException(status_code=400, detail="Tanggal kembali harus setelah tanggal pinjam")
         
         loan = EquipmentLoan(
             equipment_id=UUID(equipment_id),

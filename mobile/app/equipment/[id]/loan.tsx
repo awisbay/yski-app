@@ -19,7 +19,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useRequestLoan } from '@/hooks';
 import { colors } from '@/constants/colors';
 
-const DURATIONS = [1, 3, 7, 14, 30];
+type LoanDurationMode = 'manual' | 'undetermined';
 
 export default function EquipmentLoanScreen() {
   const insets = useSafeAreaInsets();
@@ -27,7 +27,8 @@ export default function EquipmentLoanScreen() {
   const user = useAuthStore((state) => state.user);
   const requestLoan = useRequestLoan();
 
-  const [durationDays, setDurationDays] = useState(7);
+  const [durationMode, setDurationMode] = useState<LoanDurationMode>('manual');
+  const [durationDaysInput, setDurationDaysInput] = useState('7');
   const [notes, setNotes] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -35,10 +36,13 @@ export default function EquipmentLoanScreen() {
 
   const borrowDate = useMemo(() => new Date(), []);
   const returnDate = useMemo(() => {
+    if (durationMode !== 'manual') return null;
+    const durationDays = Number(durationDaysInput);
+    if (!Number.isFinite(durationDays) || durationDays <= 0) return null;
     const d = new Date();
     d.setDate(d.getDate() + durationDays);
     return d;
-  }, [durationDays]);
+  }, [durationMode, durationDaysInput]);
 
   const tagCurrentLocation = async () => {
     setIsLocating(true);
@@ -72,6 +76,17 @@ export default function EquipmentLoanScreen() {
       Alert.alert('Lokasi belum ditandai', 'Silakan tag lokasi peminjam terlebih dahulu.');
       return;
     }
+    if (durationMode === 'manual') {
+      const durationDays = Number(durationDaysInput);
+      if (!Number.isFinite(durationDays) || durationDays <= 0) {
+        Alert.alert('Durasi tidak valid', 'Masukkan jumlah hari peminjaman minimal 1 hari.');
+        return;
+      }
+      if (!returnDate) {
+        Alert.alert('Durasi tidak valid', 'Tanggal kembali tidak dapat dihitung. Periksa input durasi.');
+        return;
+      }
+    }
 
     try {
       await requestLoan.mutateAsync({
@@ -81,7 +96,7 @@ export default function EquipmentLoanScreen() {
           borrower_name: user?.full_name || '-',
           borrower_phone: user?.phone || '-',
           borrow_date: borrowDate.toISOString(),
-          return_date: returnDate.toISOString(),
+          return_date: returnDate ? returnDate.toISOString() : null,
           borrow_location: locationAddress,
           borrow_lat: String(coords.lat),
           borrow_lng: String(coords.lng),
@@ -109,21 +124,46 @@ export default function EquipmentLoanScreen() {
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       >
         <Text style={styles.label}>Durasi Peminjaman</Text>
-        <View style={styles.durationWrap}>
-          {DURATIONS.map((d) => (
-            <TouchableOpacity
-              key={d}
-              onPress={() => setDurationDays(d)}
-              style={[styles.durationBtn, durationDays === d && styles.durationBtnActive]}
-            >
-              <Text style={[styles.durationText, durationDays === d && styles.durationTextActive]}>{d} hari</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.radioGroup}>
+          <TouchableOpacity
+            style={styles.radioRow}
+            activeOpacity={0.85}
+            onPress={() => setDurationMode('manual')}
+          >
+            <View style={[styles.radioOuter, durationMode === 'manual' && styles.radioOuterActive]}>
+              {durationMode === 'manual' ? <View style={styles.radioInner} /> : null}
+            </View>
+            <Text style={styles.radioLabel}>Tentukan durasi (hari)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.radioRow}
+            activeOpacity={0.85}
+            onPress={() => setDurationMode('undetermined')}
+          >
+            <View style={[styles.radioOuter, durationMode === 'undetermined' && styles.radioOuterActive]}>
+              {durationMode === 'undetermined' ? <View style={styles.radioInner} /> : null}
+            </View>
+            <Text style={styles.radioLabel}>Belum ditentukan</Text>
+          </TouchableOpacity>
         </View>
+
+        {durationMode === 'manual' && (
+          <TextInput
+            style={styles.input}
+            value={durationDaysInput}
+            onChangeText={(text) => setDurationDaysInput(text.replace(/[^0-9]/g, ''))}
+            placeholder="Masukkan berapa hari"
+            placeholderTextColor={colors.gray[400]}
+            keyboardType="number-pad"
+          />
+        )}
 
         <View style={styles.dateCard}>
           <Text style={styles.dateText}>Mulai: {borrowDate.toLocaleDateString('id-ID')}</Text>
-          <Text style={styles.dateText}>Kembali: {returnDate.toLocaleDateString('id-ID')}</Text>
+          <Text style={styles.dateText}>
+            Kembali: {returnDate ? returnDate.toLocaleDateString('id-ID') : 'Belum ditentukan'}
+          </Text>
         </View>
 
         <Text style={styles.label}>Lokasi Peminjam</Text>
@@ -168,18 +208,39 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 28 },
   label: { fontSize: 13, fontWeight: '700', color: colors.gray[700], marginBottom: 8, marginTop: 8 },
-  durationWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  durationBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+  radioGroup: {
+    gap: 10,
+    marginBottom: 10,
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  radioOuter: {
+    width: 20,
+    height: 20,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderWidth: 2,
+    borderColor: colors.gray[300],
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.white,
   },
-  durationBtnActive: { backgroundColor: colors.primary[600], borderColor: colors.primary[600] },
-  durationText: { fontSize: 12, fontWeight: '700', color: colors.gray[700] },
-  durationTextActive: { color: colors.white },
+  radioOuterActive: {
+    borderColor: colors.primary[600],
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary[600],
+  },
+  radioLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gray[700],
+  },
   dateCard: {
     borderWidth: 1,
     borderColor: colors.gray[100],

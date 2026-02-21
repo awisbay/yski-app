@@ -74,7 +74,7 @@ class EquipmentLoan(Base):
     borrower_phone: Mapped[str] = mapped_column(String(20), nullable=False)
     
     borrow_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    return_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    return_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     borrow_location: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     borrow_lat: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     borrow_lng: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)

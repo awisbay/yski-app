@@ -86,6 +86,12 @@ async function fetchRouteEstimate(booking: any): Promise<{ distanceKm: number; d
   }
 }
 
+function formatLoanDateRange(start?: string, end?: string | null) {
+  const startText = start ? new Date(start).toLocaleDateString('id-ID') : '-';
+  const endText = end ? new Date(end).toLocaleDateString('id-ID') : 'Belum ditentukan';
+  return `${startText} - ${endText}`;
+}
+
 function BookingManagementScreen() {
   const user = useAuthStore((state) => state.user);
   const isOperationalRole = ['admin', 'superadmin', 'pengurus', 'relawan'].includes(user?.role || '');
@@ -774,7 +780,7 @@ function EquipmentManagementScreen() {
                     <Text style={styles.loanRequestTitle}>{item.equipment?.name || 'Peralatan'}</Text>
                     <Text style={styles.loanRequestMeta}>{item.borrowerName} · {item.borrowerPhone}</Text>
                     <Text style={styles.loanRequestMeta}>
-                      {new Date(item.borrowDate).toLocaleDateString('id-ID')} - {new Date(item.returnDate).toLocaleDateString('id-ID')}
+                      {formatLoanDateRange(item.borrowDate, item.returnDate)}
                     </Text>
                     {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
                     <View style={styles.actionRow}>
@@ -838,7 +844,7 @@ function EquipmentManagementScreen() {
                     </View>
                     <Text style={styles.loanRequestMeta}>Peminjam: {item.borrowerName} · {item.borrowerPhone}</Text>
                     <Text style={styles.loanRequestMeta}>
-                      Durasi: {new Date(item.borrowDate).toLocaleDateString('id-ID')} - {new Date(item.returnDate).toLocaleDateString('id-ID')}
+                      Durasi: {formatLoanDateRange(item.borrowDate, item.returnDate)}
                     </Text>
                     {item.borrowLocation ? <Text style={styles.loanRequestMeta}>Lokasi: {item.borrowLocation}</Text> : null}
 
