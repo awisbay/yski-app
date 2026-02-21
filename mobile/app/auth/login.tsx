@@ -61,7 +61,7 @@ export default function LoginScreen() {
           />
         </View>
         <Text style={styles.orgLabel}>YAYASAN SAHABAT KHAIRAT</Text>
-        <Text style={styles.welcomeTitle}>Selamat Datang</Text>
+        <Text style={styles.welcomeTitle}>Assalamu'alaikum</Text>
         <Text style={styles.welcomeSubtitle}>
           Masuk ke akun Anda untuk melanjutkan
         </Text>

@@ -191,7 +191,7 @@ export default function HomeScreen() {
               resizeMode="contain"
             />
             <View>
-              <Text style={styles.greetingLabel}>Selamat Datang,</Text>
+              <Text style={styles.greetingLabel}>Assalamu'alaikum,</Text>
               <Text style={styles.userName} numberOfLines={1}>
                 {user?.full_name || 'Pengguna'}
               </Text>

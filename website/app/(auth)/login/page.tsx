@@ -62,7 +62,7 @@ export default function LoginPage() {
       })
 
       setAuth(user, tokenData.access_token, tokenData.refresh_token)
-      toast.success(`Selamat datang, ${user.full_name}!`)
+      toast.success(`Assalamu'alaikum, ${user.full_name}!`)
       router.replace("/")
     } catch (err: unknown) {
       const msg =
