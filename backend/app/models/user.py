@@ -54,7 +54,11 @@ class User(Base):
     # Phase 5: Auction relationships
     donated_auction_items: Mapped[List["AuctionItem"]] = relationship("AuctionItem", foreign_keys="AuctionItem.donor_id", back_populates="donor")
     won_auctions: Mapped[List["AuctionItem"]] = relationship("AuctionItem", foreign_keys="AuctionItem.winner_id", back_populates="winner")
-    auction_bids: Mapped[List["AuctionBid"]] = relationship("AuctionBid", back_populates="bidder")
+    auction_bids: Mapped[List["AuctionBid"]] = relationship(
+        "AuctionBid",
+        back_populates="bidder",
+        foreign_keys="AuctionBid.bidder_id",
+    )
     
     # Phase 5: Financial report relationships
     generated_reports: Mapped[List["FinancialReport"]] = relationship("FinancialReport", back_populates="generator")

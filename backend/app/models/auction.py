@@ -30,8 +30,12 @@ class AuctionItem(Base, UUIDMixin, TimestampMixin):
         index=True,
     )
 
-    # Status: draft, active, sold, expired, cancelled
-    status = Column(String(20), nullable=False, default="draft", index=True)
+    # Status: ready, bidding, payment_pending, sold, cancelled
+    status = Column(String(20), nullable=False, default="ready", index=True)
+    payment_status = Column(String(32), nullable=True)  # awaiting_payment, awaiting_verification, paid, rejected
+    payment_proof_url = Column(Text, nullable=True)
+    payment_verified_by = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    payment_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timing
     start_time = Column(DateTime(timezone=True), nullable=True)
@@ -40,6 +44,7 @@ class AuctionItem(Base, UUIDMixin, TimestampMixin):
     # Relationships
     donor = relationship("User", foreign_keys=[donor_id], back_populates="donated_auction_items")
     winner = relationship("User", foreign_keys=[winner_id], back_populates="won_auctions")
+    payment_verifier = relationship("User", foreign_keys=[payment_verified_by])
     images = relationship("AuctionImage", back_populates="auction_item", cascade="all, delete-orphan")
     bids = relationship("AuctionBid", back_populates="auction_item", cascade="all, delete-orphan")
 
@@ -81,10 +86,14 @@ class AuctionBid(Base, UUIDMixin, TimestampMixin):
         index=True,
     )
     amount = Column(Numeric(12, 2), nullable=False)
+    status = Column(String(20), nullable=False, default="pending", index=True)  # pending, approved, rejected
+    reviewed_by = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     auction_item = relationship("AuctionItem", back_populates="bids")
-    bidder = relationship("User", back_populates="auction_bids")
+    bidder = relationship("User", back_populates="auction_bids", foreign_keys=[bidder_id])
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
 
     def __repr__(self):
         return f"<AuctionBid(id={self.id}, amount={self.amount})>"

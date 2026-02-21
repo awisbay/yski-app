@@ -1,158 +1,132 @@
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, TextInput } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Gavel, Search, Clock, ChevronRight, TrendingUp, Users } from 'lucide-react-native';
+import { Plus, Search, Gavel } from 'lucide-react-native';
 import { MainThemeLayout, Skeleton } from '@/components/ui';
-import { Card } from '@/components/Card';
-import { Badge } from '@/components/Badge';
-import { EmptyState } from '@/components/EmptyState';
-import { useAuctions, useMyBids } from '@/hooks';
+import { useAuctions } from '@/hooks';
+import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
-import { typography } from '@/constants/typography';
 
-const FILTER_TABS = [
-  { key: 'active', label: 'Aktif' },
-  { key: 'my-bids', label: 'Tawaran Saya' },
-];
+const FILTERS = [
+  { key: 'ready', label: 'Ready' },
+  { key: 'bidding', label: 'Dalam Penawaran' },
+  { key: 'sold', label: 'Terjual' },
+] as const;
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(Number(amount || 0));
+}
 
 export default function AuctionsScreen() {
-  const [activeTab, setActiveTab] = useState('active');
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const { data: auctionsData, isLoading: auctionsLoading } = useAuctions({ search: searchQuery });
-  const { data: myBidsData, isLoading: myBidsLoading } = useMyBids();
+  const user = useAuthStore((state) => state.user);
+  const isManager = ['admin', 'pengurus'].includes(user?.role || '');
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const [activeFilter, setActiveFilter] = useState<(typeof FILTERS)[number]['key']>('ready');
+  const [search, setSearch] = useState('');
 
-  const formatTimeLeft = (endTime: string) => {
-    const end = new Date(endTime);
-    const now = new Date();
-    const diff = end.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Berakhir';
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) return `${days} hari lagi`;
-    return `${hours} jam lagi`;
-  };
+  const { data, isLoading } = useAuctions({ status: activeFilter, search });
+  const items = data?.items || [];
 
-  const renderAuctionItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/auctions/${item.id}`)}
-      activeOpacity={0.7}
-    >
-      <Card style={styles.auctionCard}>
-        <View style={styles.imageContainer}>
-          {item.images && item.images.length > 0 ? (
-            <Image source={{ uri: item.images[0].image_url }} style={styles.image} />
-          ) : (
-            <View style={styles.imagePlaceholder}>
-              <Gavel size={40} color={colors.primary[300]} />
-            </View>
-          )}
-          <View style={styles.timeBadge}>
-            <Clock size={12} color={colors.white} />
-            <Text style={styles.timeText}>{formatTimeLeft(item.endTime)}</Text>
-          </View>
-        </View>
-        
-        <View style={styles.cardContent}>
-          <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-          
-          <View style={styles.priceContainer}>
-            <View>
-              <Text style={styles.priceLabel}>Harga Saat Ini</Text>
-              <Text style={styles.currentPrice}>{formatCurrency(item.currentPrice)}</Text>
-            </View>
-            <View style={styles.bidCount}>
-              <Users size={14} color={colors.gray[500]} />
-              <Text style={styles.bidCountText}>{item.bidCount || 0} bid</Text>
-            </View>
-          </View>
-          
-          <View style={styles.footer}>
-            <Text style={styles.startingPrice}>
-              Mulai: {formatCurrency(item.startingPrice)}
-            </Text>
-            <ChevronRight size={20} color={colors.gray[400]} />
-          </View>
-        </View>
-      </Card>
-    </TouchableOpacity>
-  );
-
-  const isLoading = activeTab === 'active' ? auctionsLoading : myBidsLoading;
-  const items = activeTab === 'active' 
-    ? auctionsData?.items || [] 
-    : myBidsData?.items || [];
+  const headerSubtitle = useMemo(() => {
+    if (activeFilter === 'ready') return 'Barang siap untuk diajukan bid';
+    if (activeFilter === 'bidding') return 'Sedang dipantau admin/pengurus';
+    return 'Barang yang sudah terjual';
+  }, [activeFilter]);
 
   return (
     <MainThemeLayout
       title="Lelang Barang"
-      subtitle="Ikuti lelang yang sedang aktif"
+      subtitle={headerSubtitle}
       showBackButton
       rightElement={
-        <TouchableOpacity style={styles.searchButton}>
-          <Search size={20} color={colors.white} />
-        </TouchableOpacity>
+        isManager ? (
+          <TouchableOpacity style={styles.addButton} onPress={() => router.push('/auctions/new')}>
+            <Plus size={21} color={colors.white} />
+          </TouchableOpacity>
+        ) : undefined
       }
     >
-      <View style={styles.content}>
-        <View style={styles.searchContainer}>
-          <Search size={20} color={colors.gray[400]} />
+      <View style={styles.container}>
+        <View style={styles.searchBox}>
+          <Search size={16} color={colors.gray[400]} />
           <TextInput
+            value={search}
+            onChangeText={setSearch}
             style={styles.searchInput}
-            placeholder="Cari lelang..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            placeholder="Cari nama barang lelang..."
+            placeholderTextColor={colors.gray[400]}
           />
         </View>
 
-        <View style={styles.tabContainer}>
-          {FILTER_TABS.map((tab) => (
-            <TouchableOpacity
-              key={tab.key}
-              style={[styles.tab, activeTab === tab.key && styles.activeTab]}
-              onPress={() => setActiveTab(tab.key)}
-            >
-              <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.filterRow}>
+          {FILTERS.map((filter) => {
+            const active = activeFilter === filter.key;
+            return (
+              <TouchableOpacity
+                key={filter.key}
+                style={[styles.filterPill, active && styles.filterPillActive]}
+                onPress={() => setActiveFilter(filter.key)}
+              >
+                <Text style={[styles.filterText, active && styles.filterTextActive]}>{filter.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {isLoading ? (
-          <>
-            <Skeleton height={280} borderRadius={12} />
-            <Skeleton height={280} borderRadius={12} />
-          </>
+          <View style={styles.grid}>
+            <Skeleton height={220} borderRadius={14} />
+            <Skeleton height={220} borderRadius={14} />
+            <Skeleton height={220} borderRadius={14} />
+            <Skeleton height={220} borderRadius={14} />
+          </View>
         ) : items.length > 0 ? (
           <FlatList
             data={items}
-            renderItem={renderAuctionItem}
             keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
+            numColumns={2}
+            columnWrapperStyle={styles.columnRow}
             contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.85}
+                onPress={() => router.push(`/auctions/${item.id}`)}
+              >
+                <View style={styles.imageWrap}>
+                  {item.images?.length > 0 && item.images[0]?.imageUrl ? (
+                    <Image source={{ uri: item.images[0].imageUrl }} style={styles.image} />
+                  ) : (
+                    <View style={styles.imagePlaceholder}>
+                      <Gavel size={24} color={colors.primary[400]} />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.cardBody}>
+                  <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.priceLabel}>Penawaran Saat Ini</Text>
+                  <Text style={styles.price}>{formatCurrency(item.currentPrice)}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           />
         ) : (
-          <EmptyState
-            icon={Gavel}
-            title={activeTab === 'active' ? 'Tidak ada lelang aktif' : 'Belum ada tawaran'}
-            description={
-              activeTab === 'active'
-                ? 'Lelang akan segera tersedia'
-                : 'Anda belum melakukan tawaran pada lelang apapun'
-            }
-          />
+          <View style={styles.emptyWrap}>
+            <View style={styles.emptyIconWrap}><Gavel size={30} color={colors.primary[500]} /></View>
+            <Text style={styles.emptyTitle}>Belum ada barang</Text>
+            <Text style={styles.emptyDesc}>Belum ada barang lelang untuk kategori ini.</Text>
+            {isManager && activeFilter === 'ready' ? (
+              <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/auctions/new')}>
+                <Plus size={15} color={colors.white} />
+                <Text style={styles.emptyBtnText}>Tambah Barang Lelang</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         )}
       </View>
     </MainThemeLayout>
@@ -160,11 +134,8 @@ export default function AuctionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  searchButton: {
+  container: { flex: 1, paddingHorizontal: 16 },
+  addButton: {
     width: 42,
     height: 42,
     borderRadius: 21,
@@ -174,126 +145,90 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.gray[100],
+  searchBox: {
+    height: 46,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    backgroundColor: colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    marginBottom: 10,
   },
-  searchInput: {
+  searchInput: { flex: 1, fontSize: 14, color: colors.gray[800] },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterPill: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: colors.gray[800],
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  tab: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: colors.gray[100],
-  },
-  activeTab: {
-    backgroundColor: colors.primary[500],
-  },
-  tabText: {
-    ...typography.body2,
-    color: colors.gray[600],
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: colors.white,
-  },
-  listContent: {
-    paddingBottom: 100,
-  },
-  auctionCard: {
-    marginBottom: 16,
-    overflow: 'hidden',
-    padding: 0,
-  },
-  imageContainer: {
-    position: 'relative',
-    height: 180,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: colors.primary[50],
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  timeBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
+  filterPillActive: {
+    backgroundColor: colors.primary[600],
   },
-  timeText: {
-    color: colors.white,
+  filterText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: colors.gray[600],
   },
-  cardContent: {
-    padding: 16,
+  filterTextActive: { color: colors.white },
+  grid: { gap: 10 },
+  listContent: { paddingBottom: 95 },
+  columnRow: { justifyContent: 'space-between', marginBottom: 10 },
+  card: {
+    width: '48.5%',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    backgroundColor: colors.white,
+    overflow: 'hidden',
   },
-  title: {
-    ...typography.h4,
-    color: colors.gray[900],
+  imageWrap: { height: 120, backgroundColor: colors.gray[50] },
+  image: { width: '100%', height: '100%' },
+  imagePlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  cardBody: { padding: 10 },
+  title: { fontSize: 13, fontWeight: '700', color: colors.gray[900], minHeight: 36 },
+  priceLabel: { marginTop: 6, fontSize: 10, color: colors.gray[500], fontWeight: '700' },
+  price: { fontSize: 13, fontWeight: '800', color: colors.success[700], marginTop: 2 },
+
+  emptyWrap: {
+    marginTop: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.white,
+    padding: 22,
+    alignItems: 'center',
+  },
+  emptyIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  priceLabel: {
-    ...typography.caption,
-    color: colors.gray[500],
-    marginBottom: 4,
-  },
-  currentPrice: {
-    ...typography.h3,
-    color: colors.success[600],
-  },
-  bidCount: {
+  emptyTitle: { fontSize: 17, fontWeight: '800', color: colors.gray[900] },
+  emptyDesc: { marginTop: 6, textAlign: 'center', fontSize: 13, color: colors.gray[600] },
+  emptyBtn: {
+    marginTop: 14,
+    height: 42,
+    borderRadius: 11,
+    backgroundColor: colors.primary[600],
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
   },
-  bidCountText: {
-    ...typography.caption,
-    color: colors.gray[500],
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
-  },
-  startingPrice: {
-    ...typography.caption,
-    color: colors.gray[500],
-  },
+  emptyBtnText: { color: colors.white, fontSize: 12, fontWeight: '800' },
 });

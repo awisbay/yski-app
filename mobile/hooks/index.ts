@@ -50,6 +50,16 @@ export { usePrograms, useFeaturedPrograms, useProgramDetail } from './useProgram
 export { useNews, useNewsDetail } from './useNews';
 
 // Phase 5: Advanced Features
-export { useAuctions, useMyBids, useAuctionDetail, usePlaceBid } from './useAuctions';
+export {
+  useAuctions,
+  useMyBids,
+  useAuctionDetail,
+  usePlaceBid,
+  useUploadAuctionPhoto,
+  useCreateAuction,
+  useApproveAuctionBid,
+  useUploadAuctionPaymentProof,
+  useVerifyAuctionPayment,
+} from './useAuctions';
 export { useFinancialDashboard, useFinancialReports, useFinancialReport } from './useFinancial';
 export { useNotifications, useUnreadCount, useMarkAsRead, useRegisterPushToken } from './useNotifications';

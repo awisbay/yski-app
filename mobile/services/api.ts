@@ -168,12 +168,25 @@ export const newsApi = {
 
 // Phase 5: Auction API
 export const auctionsApi = {
-  getList: (params?: { search?: string; skip?: number; limit?: number }) =>
+  getList: (params?: { search?: string; status?: 'ready' | 'bidding' | 'sold'; skip?: number; limit?: number }) =>
     api.get('/auctions', { params }),
   getMyBids: () => api.get('/auctions/my-bids'),
   getDetail: (id: string) => api.get(`/auctions/${id}`),
+  uploadPhoto: (formData: FormData) =>
+    api.post('/auctions/upload-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  create: (data: any) => api.post('/auctions', data),
   placeBid: (id: string, data: { amount: number }) =>
     api.post(`/auctions/${id}/bid`, data),
+  approveBid: (id: string, bid_id: string) =>
+    api.patch(`/auctions/${id}/approve-bid`, { bid_id }),
+  uploadPaymentProof: (id: string, formData: FormData) =>
+    api.post(`/auctions/${id}/upload-payment-proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  verifyPayment: (id: string, status: 'paid' | 'rejected') =>
+    api.patch(`/auctions/${id}/verify-payment`, { status }),
 };
 
 // Phase 5: Financial Reports API
