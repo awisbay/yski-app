@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Info } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainThemeLayout } from '@/components/ui';
 import { usersApi } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,6 +22,7 @@ import { colors } from '@/constants/colors';
 import { isProfileComplete } from '@/utils/profile';
 
 export default function EditProfileScreen() {
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [showKunyahHint, setShowKunyahHint] = useState(false);
@@ -98,7 +100,7 @@ export default function EditProfileScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 130 }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           showsVerticalScrollIndicator={false}
@@ -167,7 +169,7 @@ export default function EditProfileScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { bottom: insets.bottom + 12 }]}>
           <TouchableOpacity
             style={[styles.saveButton, (!canSave || saving) && styles.saveButtonDisabled]}
             onPress={onSave}

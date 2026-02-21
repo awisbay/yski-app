@@ -1,6 +1,7 @@
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
@@ -34,9 +35,14 @@ const FAQS = [
 const PROGRAMS = ['Khairat Care', 'Kurma', 'Litara', 'Sulthani'];
 
 export default function HelpScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <MainThemeLayout title="Bantuan" subtitle="Pusat bantuan pengguna YSKI" showBackButton>
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 130 }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Card style={styles.heroCard}>
           <Text style={styles.heroTitle}>Butuh bantuan cepat?</Text>
           <Text style={styles.heroText}>YSKI memiliki layanan sosial dan kemanusiaan. Pilih pertanyaan yang paling sesuai dengan kendala Anda.</Text>

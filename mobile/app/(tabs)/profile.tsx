@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   User,
   ChevronRight,
@@ -32,6 +33,7 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const isOperationalRole =
@@ -52,7 +54,11 @@ export default function ProfileScreen() {
 
   return (
     <MainThemeLayout title="Profil" subtitle="Akun dan pengaturan Anda">
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 150 }}
+        showsVerticalScrollIndicator={false}
+      >
         <Card style={styles.profileCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>

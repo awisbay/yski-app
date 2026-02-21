@@ -1,6 +1,7 @@
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
@@ -44,9 +45,14 @@ const TERMS_SECTIONS = [
 ];
 
 export default function TermsScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <MainThemeLayout title="Syarat & Ketentuan" subtitle="Kebijakan penggunaan layanan YSKI" showBackButton>
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 130 }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Card style={styles.infoCard}>
           <Text style={styles.infoTitle}>Ringkasan YSKI</Text>
           <Text style={styles.infoText}>Yayasan Sahabat Khairat Indonesia adalah lembaga dakwah, sosial, dan kemanusiaan dengan fokus layanan umat.</Text>

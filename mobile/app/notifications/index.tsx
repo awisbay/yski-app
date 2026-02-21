@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { Bell, Check, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
@@ -18,6 +19,7 @@ const ICONS: Record<string, any> = {
 type FilterType = 'all' | 'unread';
 
 export default function NotificationsScreen() {
+  const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<FilterType>('all');
   const { data, isLoading, refetch, isRefetching } = useNotifications({ limit: 100, includeRead: true });
   const markAsRead = useMarkAsRead();
@@ -150,7 +152,7 @@ export default function NotificationsScreen() {
             renderItem={renderNotification}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 130 }]}
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}

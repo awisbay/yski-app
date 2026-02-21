@@ -13,12 +13,14 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Eye, EyeOff, Lock } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainThemeLayout } from '@/components/ui';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/constants/colors';
 
 export default function ProfilePasswordScreen() {
+  const insets = useSafeAreaInsets();
   const logout = useAuthStore((state) => state.logout);
   const [loading, setLoading] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
@@ -65,7 +67,7 @@ export default function ProfilePasswordScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 130 }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           showsVerticalScrollIndicator={false}
@@ -99,7 +101,7 @@ export default function ProfilePasswordScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { bottom: insets.bottom + 12 }]}>
           <TouchableOpacity
             style={[styles.submitButton, loading && styles.submitButtonDisabled]}
             onPress={onSubmit}

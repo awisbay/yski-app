@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Bell, Lock, Shield, FileText, Info } from 'lucide-react-native';
 import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
@@ -38,9 +39,14 @@ const SETTING_ITEMS = [
 ];
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <MainThemeLayout title="Pengaturan" subtitle="Preferensi aplikasi dan keamanan" showBackButton>
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 130 }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Card style={styles.bannerCard}>
           <View style={styles.bannerIconWrap}>
             <Shield size={18} color={colors.primary[700]} />
