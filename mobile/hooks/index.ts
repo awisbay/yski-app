@@ -46,7 +46,14 @@ export {
   useCompletePickup,
   useCancelPickup,
 } from './usePickups';
-export { usePrograms, useFeaturedPrograms, useProgramDetail } from './usePrograms';
+export {
+  usePrograms,
+  useFeaturedPrograms,
+  useProgramDetail,
+  useUploadProgramBanner,
+  useCreateProgram,
+  useUpdateProgram,
+} from './usePrograms';
 export { useNews, useNewsDetail } from './useNews';
 
 // Phase 5: Advanced Features

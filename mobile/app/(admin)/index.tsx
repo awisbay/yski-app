@@ -7,6 +7,7 @@ import {
   Package, 
   Heart, 
   Truck,
+  LayoutGrid,
   ChevronRight,
   LogOut,
   TrendingUp
@@ -26,6 +27,7 @@ const ADMIN_MENU = [
   { icon: Package, label: 'Manajemen Peralatan', route: '/admin/equipment', color: colors.success[500] },
   { icon: Heart, label: 'Manajemen Donasi', route: '/admin/donations', color: colors.warning[500] },
   { icon: Truck, label: 'Manajemen Penjemputan', route: '/admin/pickups', color: colors.info[500] },
+  { icon: LayoutGrid, label: 'Manajemen Program', route: '/admin/programs', color: colors.primary[700], adminOrPengurusOnly: true },
 ];
 
 export default function AdminDashboard() {
@@ -36,9 +38,12 @@ export default function AdminDashboard() {
     user?.role === 'pengurus' ? 'Pengurus' :
     user?.role === 'relawan' ? 'Relawan' :
     'Admin';
-  const menuItems = user?.role === 'admin' || user?.role === 'superadmin'
-    ? ADMIN_MENU
-    : ADMIN_MENU.filter((item) => item.route !== '/admin/users');
+  const isAdminRole = user?.role === 'admin' || user?.role === 'superadmin';
+  const menuItems = ADMIN_MENU.filter((item: any) => {
+    if (item.route === '/admin/users' && !isAdminRole) return false;
+    if (item.adminOrPengurusOnly && user?.role === 'relawan') return false;
+    return true;
+  });
   const completedAchievement = String((allBookings || []).filter((b: any) => b.status === 'completed').length);
   const bookingToday = String(
     (allBookings || []).filter((b: any) => {

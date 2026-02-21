@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,10 @@ import {
   StyleSheet,
   RefreshControl,
   Image,
+  FlatList,
+  useWindowDimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,8 +27,8 @@ import {
   Layers,
   Plus,
   Newspaper,
-  LucideIcon,
 } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { Skeleton } from '@/components/ui';
 import { Badge } from '@/components/Badge';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -48,10 +52,12 @@ const OPS_DASHBOARD_MENU = [
   { key: 'equipment', label: 'Manajemen Peralatan', route: '/admin/equipment', icon: Layers, color: colors.success[600] },
   { key: 'donations', label: 'Cek Donasi Masuk', route: '/admin/donations', icon: TrendingUp, color: colors.warning[600] },
   { key: 'pickups', label: 'Cek Request Penjemputan', route: '/admin/pickups', icon: MapPin, color: colors.info[600] },
+  { key: 'programs', label: 'Manajemen Program', route: '/admin/programs', icon: Plus, color: colors.primary[700], roles: ['admin', 'superadmin', 'pengurus'] },
 ];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const user = useAuthStore((state) => state.user);
   const unreadCountStore = useNotificationStore((state) => state.unreadCount);
   const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
@@ -79,13 +85,18 @@ export default function HomeScreen() {
   const { data: allDonations, refetch: refetchAllDonations } = useAllDonations({ enabled: canManageDonations });
   const { data: allLoans, refetch: refetchAllLoans } = useAllEquipmentLoans(undefined, { enabled: canManageEquipment });
 
-  const quickMenus = OPS_DASHBOARD_MENU.filter((item) => !item.adminOnly || isAdminRole);
+  const quickMenus = OPS_DASHBOARD_MENU.filter((item: any) => {
+    if (item.adminOnly && !isAdminRole) return false;
+    if (Array.isArray(item.roles) && !item.roles.includes(user?.role || '')) return false;
+    return true;
+  });
 
   const queueCounts: Record<string, number> = {
     bookings: (allBookings || []).filter((b: any) => b.status === 'pending').length,
     pickups: (allPickups || []).filter((p: any) => p.status === 'pending' || p.status === 'awaiting_confirmation').length,
     donations: (allDonations || []).filter((d: any) => d.paymentStatus === 'pending' || d.paymentStatus === 'awaiting_verification').length,
     equipment: (allLoans || []).filter((l: any) => l.status === 'pending').length,
+    programs: 0,
     users: 0,
   };
 
@@ -108,6 +119,10 @@ export default function HomeScreen() {
   ) || [];
   const nextBooking = activeBookings[0];
   const featuredProgram = programs?.[0];
+  const carouselPrograms = useMemo(() => (programs || []).slice(0, 6), [programs]);
+  const [programIndex, setProgramIndex] = useState(0);
+  const programListRef = useRef<FlatList<any> | null>(null);
+  const programCardWidth = Math.max(screenWidth - 68, 248);
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('id-ID', {
@@ -116,7 +131,38 @@ export default function HomeScreen() {
       minimumFractionDigits: 0,
     }).format(amount);
 
-  const pct = (a: number, b: number) => Math.min(Math.round((a / b) * 100), 100);
+  const pct = (a: number, b: number) => {
+    if (!b || b <= 0) return 0;
+    return Math.min(Math.round((a / b) * 100), 100);
+  };
+
+  useEffect(() => {
+    if (carouselPrograms.length <= 1) {
+      setProgramIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setProgramIndex((prev) => {
+        const next = (prev + 1) % carouselPrograms.length;
+        programListRef.current?.scrollToOffset({
+          offset: next * (programCardWidth + 14),
+          animated: true,
+        });
+        return next;
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [carouselPrograms.length, programCardWidth]);
+
+  const onProgramScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / (programCardWidth + 14));
+    if (index >= 0 && index < carouselPrograms.length) {
+      setProgramIndex(index);
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -190,33 +236,38 @@ export default function HomeScreen() {
         {programsLoading ? (
           <Skeleton height={160} borderRadius={20} />
         ) : featuredProgram ? (
-          <TouchableOpacity
-            style={styles.featuredCard}
-            onPress={() => router.push(`/programs/${featuredProgram.id}`)}
-            activeOpacity={0.9}
-          >
+          (() => {
+            const featuredTarget = Number(featuredProgram.targetAmount || 0);
+            const featuredCollected = Number(featuredProgram.collectedAmount || 0);
+            const featuredProgress = featuredTarget > 0 ? featuredCollected / featuredTarget : 0;
+            return (
+              <TouchableOpacity
+                style={styles.featuredCard}
+                onPress={() => router.push(`/programs/${featuredProgram.id}`)}
+                activeOpacity={0.9}
+              >
             <View style={styles.featuredBadgeRow}>
               <View style={styles.featuredBadge}>
                 <Heart size={11} color={colors.white} fill={colors.white} />
                 <Text style={styles.featuredBadgeText}>Kampanye Aktif</Text>
               </View>
               <Text style={styles.featuredPct}>
-                {pct(featuredProgram.collectedAmount, featuredProgram.targetAmount)}%
+                {pct(featuredCollected, featuredTarget)}%
               </Text>
             </View>
             <Text style={styles.featuredTitle} numberOfLines={2}>
               {featuredProgram.title}
             </Text>
             <ProgressBar
-              progress={featuredProgram.collectedAmount / featuredProgram.targetAmount}
+              progress={featuredProgress}
               style={styles.featuredBar}
             />
             <View style={styles.featuredFooter}>
               <Text style={styles.featuredRaised}>
-                {formatCurrency(featuredProgram.collectedAmount)}
+                {formatCurrency(featuredCollected)}
               </Text>
               <Text style={styles.featuredTarget}>
-                {' '}dari {formatCurrency(featuredProgram.targetAmount)}
+                {' '}dari {formatCurrency(featuredTarget)}
               </Text>
               <View style={{ flex: 1 }} />
               <View style={styles.featuredCta}>
@@ -224,7 +275,9 @@ export default function HomeScreen() {
                 <ChevronRight size={14} color={colors.primary[600]} />
               </View>
             </View>
-          </TouchableOpacity>
+              </TouchableOpacity>
+            );
+          })()
         ) : (
           /* Static impact card when no programs */
           <View style={styles.impactCard}>
@@ -396,13 +449,20 @@ export default function HomeScreen() {
 
         {programsLoading ? (
           <Skeleton height={180} borderRadius={18} />
-        ) : programs?.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.programsRow}
-          >
-            {programs.map((p: any, idx: number) => {
+        ) : carouselPrograms.length > 0 ? (
+          <>
+            <FlatList
+              ref={programListRef}
+              data={carouselPrograms}
+              horizontal
+              snapToInterval={programCardWidth + 14}
+              decelerationRate="fast"
+              disableIntervalMomentum
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.programsRow}
+              onMomentumScrollEnd={onProgramScrollEnd}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item: p, index: idx }) => {
               const CARD_COLORS = [
                 { from: colors.primary[600], to: colors.primary[400] },
                 { from: '#E11D48', to: '#FB7185' },
@@ -410,42 +470,60 @@ export default function HomeScreen() {
                 { from: '#7C3AED', to: '#A78BFA' },
               ];
               const cc = CARD_COLORS[idx % CARD_COLORS.length];
-              const progress = pct(p.collectedAmount, p.targetAmount);
+              const targetAmount = Number(p.targetAmount || 0);
+              const collectedAmount = Number(p.collectedAmount || 0);
+              const progress = pct(collectedAmount, targetAmount);
               return (
                 <TouchableOpacity
-                  key={p.id}
-                  style={styles.programCard}
+                  style={[styles.programCard, { width: programCardWidth }]}
                   onPress={() => router.push(`/programs/${p.id}`)}
                   activeOpacity={0.85}
                 >
                   {/* Colored header */}
                   <View style={[styles.programHeader, { backgroundColor: cc.from }]}>
-                    <Heart size={34} color="rgba(255,255,255,0.35)" fill="rgba(255,255,255,0.2)" />
+                    {p.thumbnailUrl ? (
+                      <Image source={{ uri: p.thumbnailUrl }} style={styles.programHeaderImage} />
+                    ) : (
+                      <Heart size={34} color="rgba(255,255,255,0.35)" fill="rgba(255,255,255,0.2)" />
+                    )}
                     <View style={styles.programPctBadge}>
                       <Text style={styles.programPctText}>{progress}%</Text>
                     </View>
                   </View>
                   {/* Content */}
                   <View style={styles.programBody}>
-                    <Badge label={p.category} variant="primary" size="sm" />
                     <Text style={styles.programTitle} numberOfLines={2}>{p.title}</Text>
                     <ProgressBar
-                      progress={p.collectedAmount / p.targetAmount}
+                      progress={targetAmount > 0 ? collectedAmount / targetAmount : 0}
                       style={styles.programBar}
                     />
                     <View style={styles.programAmountRow}>
                       <Text style={[styles.programRaised, { color: cc.from }]}>
-                        {formatCurrency(p.collectedAmount)}
+                        {formatCurrency(collectedAmount)}
                       </Text>
                       <Text style={styles.programTarget}>
-                        {' '}/ {formatCurrency(p.targetAmount)}
+                        {' '}/ {formatCurrency(targetAmount)}
                       </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
               );
-            })}
-          </ScrollView>
+              }}
+            />
+            <View style={styles.programDots}>
+              {carouselPrograms.map((item: any, idx: number) => (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.dot,
+                    idx === programIndex
+                      ? styles.dotActive
+                      : styles.dotInactive,
+                  ]}
+                />
+              ))}
+            </View>
+          </>
         ) : (
           <View style={styles.emptyProgram}>
             <View style={[styles.emptyProgramIcon, { backgroundColor: '#FFF1F2' }]}>
@@ -893,6 +971,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
+  programHeaderImage: {
+    width: '100%',
+    height: '100%',
+  },
   programPctBadge: {
     position: 'absolute',
     top: 10,
@@ -1073,6 +1155,19 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
+  },
+  dotActive: {
+    width: 18,
+    backgroundColor: colors.primary[500],
+  },
+  dotInactive: {
+    backgroundColor: colors.gray[200],
+  },
+  programDots: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
   },
   emptyNews: {
     backgroundColor: colors.white,

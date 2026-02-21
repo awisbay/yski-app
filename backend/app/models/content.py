@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Optional
 from decimal import Decimal
 
-from sqlalchemy import String, Text, ForeignKey, DateTime, func, Numeric, Boolean
+from sqlalchemy import String, Text, ForeignKey, DateTime, func, Numeric, Boolean, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +28,7 @@ class Program(Base):
     slug: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     thumbnail_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
     # Funding
     target_amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)

@@ -14,6 +14,8 @@ class ProgramBase(BaseModel):
     title: str
     description: str
     target_amount: Optional[Decimal] = None
+    thumbnail_url: Optional[str] = None
+    display_order: int = 0
 
 
 class ProgramCreate(ProgramBase):
@@ -24,6 +26,8 @@ class ProgramUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     target_amount: Optional[Decimal] = None
+    thumbnail_url: Optional[str] = None
+    display_order: Optional[int] = None
     status: Optional[str] = None
     is_featured: Optional[bool] = None
 
@@ -31,7 +35,6 @@ class ProgramUpdate(BaseModel):
 class ProgramResponse(ProgramBase):
     id: UUID
     slug: str
-    thumbnail_url: Optional[str] = None
     collected_amount: Decimal
     status: str
     is_featured: bool

@@ -166,9 +166,15 @@ export const pickupsApi = {
 
 // Content API
 export const programsApi = {
-  getList: (params?: { limit?: number; sort?: string }) =>
+  getList: (params?: { limit?: number; sort?: string; status?: string; skip?: number; is_featured?: boolean }) =>
     api.get('/content/programs', { params }),
   getDetail: (id: string) => api.get(`/content/programs/${id}`),
+  create: (data: any) => api.post('/content/programs', data),
+  update: (id: string, data: any) => api.put(`/content/programs/${id}`, data),
+  uploadBanner: (formData: FormData) =>
+    api.post('/content/programs/upload-banner', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 export const newsApi = {

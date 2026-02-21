@@ -60,7 +60,7 @@ class ContentService:
         skip: int = 0,
         limit: int = 20,
         status: Optional[str] = None,
-        is_featured: Optional[bool] = None
+        is_featured: Optional[bool] = None,
     ) -> List[Program]:
         """List programs with filters."""
         query = select(Program)
@@ -70,7 +70,7 @@ class ContentService:
         if is_featured is not None:
             query = query.where(Program.is_featured == is_featured)
         
-        query = query.offset(skip).limit(limit).order_by(Program.created_at.desc())
+        query = query.order_by(Program.display_order.asc(), Program.created_at.desc()).offset(skip).limit(limit)
         result = await self.db.execute(query)
         return list(result.scalars().all())
     
@@ -89,6 +89,8 @@ class ContentService:
             title=data.title,
             slug=slug,
             description=data.description,
+            thumbnail_url=data.thumbnail_url,
+            display_order=data.display_order,
             target_amount=data.target_amount,
             collected_amount=0,
             status="active",

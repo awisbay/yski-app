@@ -5,11 +5,12 @@ Content Routes (Programs & News)
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
+from app.core.media import save_upload_file
 from app.models.user import User
 from app.schemas.content import (
     ProgramCreate, ProgramResponse, ProgramUpdate,
@@ -18,6 +19,8 @@ from app.schemas.content import (
 from app.services.content import ContentService
 
 router = APIRouter()
+ALLOWED_PROGRAM_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+MAX_PROGRAM_IMAGE_SIZE = 8 * 1024 * 1024
 
 
 # === Programs Endpoints ===
@@ -26,7 +29,7 @@ router = APIRouter()
 async def list_programs(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    status: str = Query(None),
+    status: str = Query("active"),
     is_featured: bool = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
@@ -36,6 +39,21 @@ async def list_programs(
         skip=skip, limit=limit, status=status, is_featured=is_featured
     )
     return programs
+
+
+@router.post("/programs/upload-banner")
+async def upload_program_banner(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role("admin", "pengurus")),
+):
+    """Upload program banner image and return media URL."""
+    banner_url = await save_upload_file(
+        file=file,
+        subdir="programs/banners",
+        allowed_types=ALLOWED_PROGRAM_IMAGE_TYPES,
+        max_size_bytes=MAX_PROGRAM_IMAGE_SIZE,
+    )
+    return {"banner_url": banner_url}
 
 
 @router.get("/programs/featured", response_model=List[ProgramResponse])
