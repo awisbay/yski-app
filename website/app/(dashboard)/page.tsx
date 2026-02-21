@@ -27,7 +27,7 @@ const QUICK_ACTIONS = [
   { label: "Donasi Menunggu Verifikasi", href: "/donations?status=pending", color: "bg-yellow-50 border-yellow-200 text-yellow-800" },
   { label: "Booking Pickup Menunggu Persetujuan", href: "/bookings?status=pending", color: "bg-orange-50 border-orange-200 text-orange-800" },
   { label: "Request Penjemputan Menunggu Proses", href: "/pickups?status=pending", color: "bg-cyan-50 border-cyan-200 text-cyan-800" },
-  { label: "Artikel Menunggu Review", href: "/content?status=pending_review", color: "bg-blue-50 border-blue-200 text-blue-800" },
+  { label: "Artikel Menunggu Review", href: "/content?tab=news&status=pending_review", color: "bg-blue-50 border-blue-200 text-blue-800" },
   { label: "Pengajuan Pinjaman Alkes", href: "/equipment?tab=loans&status=pending", color: "bg-purple-50 border-purple-200 text-purple-800" },
 ]
 

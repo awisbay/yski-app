@@ -24,22 +24,19 @@ import api from "@/lib/api"
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils"
 import type { Donation, DonationMetrics } from "@/types"
 
-const DONATION_TYPES = ["all", "infaq", "sedekah", "wakaf", "zakat"] as const
 const PAYMENT_STATUSES = ["all", "pending", "paid", "cancelled", "refunded"] as const
 
-type DonationTypeFilter = (typeof DONATION_TYPES)[number]
 type PaymentStatusFilter = (typeof PAYMENT_STATUSES)[number]
 
-function useDonations(donationType: DonationTypeFilter, paymentStatus: PaymentStatusFilter) {
+function useDonations(paymentStatus: PaymentStatusFilter) {
   return useQuery({
-    queryKey: ["donations", donationType, paymentStatus],
+    queryKey: ["donations", paymentStatus],
     queryFn: () =>
       api
         .get<Donation[]>("/donations", {
           params: {
             skip: 0,
             limit: 200,
-            donation_type: donationType !== "all" ? donationType : undefined,
             payment_status: paymentStatus !== "all" ? paymentStatus : undefined,
           },
         })
@@ -57,11 +54,10 @@ function useDonationMetrics() {
 export default function DonationsPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState("")
-  const [donationType, setDonationType] = useState<DonationTypeFilter>("all")
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>("all")
   const [verifyTarget, setVerifyTarget] = useState<Donation | null>(null)
 
-  const { data: donations = [], isLoading } = useDonations(donationType, paymentStatus)
+  const { data: donations = [], isLoading } = useDonations(paymentStatus)
   const { data: metrics, isLoading: metricsLoading } = useDonationMetrics()
 
   const verifyMutation = useMutation({
@@ -97,11 +93,6 @@ export default function DonationsPage() {
       cell: ({ row }) => (
         <span className="font-medium text-gray-900">{row.original.donor_name}</span>
       ),
-    },
-    {
-      accessorKey: "donation_type",
-      header: "Jenis",
-      cell: ({ row }) => <StatusBadge status={row.original.donation_type} />,
     },
     {
       accessorKey: "amount",
@@ -170,7 +161,6 @@ export default function DonationsPage() {
   const exportData = filteredDonations.map((d) => ({
     Kode: d.donation_code,
     Donatur: d.donor_name,
-    Jenis: d.donation_type,
     Jumlah: d.amount,
     "Metode Bayar": d.payment_method,
     "Status Bayar": d.payment_status,
@@ -179,12 +169,9 @@ export default function DonationsPage() {
     Tanggal: format(new Date(d.created_at), "dd/MM/yyyy"),
   }))
 
-  const infaqTotal =
-    metrics?.by_type?.find((t) => t.type === "infaq")?.amount ?? 0
-  const sedekahTotal =
-    metrics?.by_type?.find((t) => t.type === "sedekah")?.amount ?? 0
-  const zakatTotal =
-    metrics?.by_type?.find((t) => t.type === "zakat")?.amount ?? 0
+  const pendingCount = donations.filter((d) => d.payment_status === "pending").length
+  const acceptedCount = donations.filter((d) => d.payment_status === "paid").length
+  const rejectedCount = donations.filter((d) => d.payment_status === "cancelled").length
 
   return (
     <div className="space-y-6">
@@ -203,19 +190,16 @@ export default function DonationsPage() {
           loading={metricsLoading}
         />
         <MetricCard
-          title="Infaq"
-          value={metricsLoading ? "—" : formatCurrency(infaqTotal)}
-          loading={metricsLoading}
+          title="Menunggu Konfirmasi"
+          value={formatNumber(pendingCount)}
         />
         <MetricCard
-          title="Sedekah"
-          value={metricsLoading ? "—" : formatCurrency(sedekahTotal)}
-          loading={metricsLoading}
+          title="Diterima"
+          value={formatNumber(acceptedCount)}
         />
         <MetricCard
-          title="Zakat"
-          value={metricsLoading ? "—" : formatCurrency(zakatTotal)}
-          loading={metricsLoading}
+          title="Ditolak"
+          value={formatNumber(rejectedCount)}
         />
       </div>
 
@@ -241,14 +225,19 @@ export default function DonationsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Berdasarkan Jenis</CardTitle>
+            <CardTitle className="text-base">Berdasarkan Status Pembayaran</CardTitle>
           </CardHeader>
           <CardContent>
             {metricsLoading ? (
               <Skeleton className="h-[220px]" />
             ) : (
               <DonutChart
-                data={(metrics?.by_type ?? []).map((t) => ({ name: t.type, value: t.amount }))}
+                data={[
+                  { name: "Menunggu", value: donations.filter((d) => d.payment_status === "pending").length },
+                  { name: "Diterima", value: donations.filter((d) => d.payment_status === "paid").length },
+                  { name: "Ditolak", value: donations.filter((d) => d.payment_status === "cancelled").length },
+                  { name: "Refund", value: donations.filter((d) => d.payment_status === "refunded").length },
+                ]}
                 formatter={(v) => formatCurrency(v)}
               />
             )}
@@ -265,21 +254,6 @@ export default function DonationsPage() {
             placeholder="Cari donatur atau kode..."
             actions={
               <div className="flex items-center gap-2">
-                <Select
-                  value={donationType}
-                  onValueChange={(v) => setDonationType(v as DonationTypeFilter)}
-                >
-                  <SelectTrigger className="h-9 w-36 text-sm">
-                    <SelectValue placeholder="Jenis Donasi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Jenis</SelectItem>
-                    <SelectItem value="infaq">Infaq</SelectItem>
-                    <SelectItem value="sedekah">Sedekah</SelectItem>
-                    <SelectItem value="wakaf">Wakaf</SelectItem>
-                    <SelectItem value="zakat">Zakat</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Select
                   value={paymentStatus}
                   onValueChange={(v) => setPaymentStatus(v as PaymentStatusFilter)}

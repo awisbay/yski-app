@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, Plus } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -47,9 +47,13 @@ function usePrograms() {
 export default function ContentPage() {
   const qc = useQueryClient()
   const { can } = useAuth()
-  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const statusParam = searchParams.get("status")
+  const initialTab = tabParam === "program" ? "program" : "berita"
   const [searchNews, setSearchNews] = useState("")
   const [searchPrograms, setSearchPrograms] = useState("")
+  const [activeTab, setActiveTab] = useState<"berita" | "program">(initialTab)
   const [confirmAction, setConfirmAction] = useState<{ type: string; id: string; title?: string } | null>(null)
 
   const { data: articles = [], isLoading: articlesLoading } = useNewsArticles()
@@ -106,15 +110,21 @@ export default function ContentPage() {
 
   const filteredArticles = articles.filter(
     (a) =>
-      !searchNews ||
-      a.title.toLowerCase().includes(searchNews.toLowerCase()) ||
-      a.category.toLowerCase().includes(searchNews.toLowerCase())
+      (!statusParam || a.status === statusParam) &&
+      (
+        !searchNews ||
+        a.title.toLowerCase().includes(searchNews.toLowerCase()) ||
+        a.category.toLowerCase().includes(searchNews.toLowerCase())
+      )
   )
 
   const filteredPrograms = programs.filter(
     (p) =>
-      !searchPrograms ||
-      p.title.toLowerCase().includes(searchPrograms.toLowerCase())
+      (!statusParam || p.status === statusParam) &&
+      (
+        !searchPrograms ||
+        p.title.toLowerCase().includes(searchPrograms.toLowerCase())
+      )
   )
 
   const newsColumns: ColumnDef<NewsArticle>[] = [
@@ -324,7 +334,7 @@ export default function ContentPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="berita">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "berita" | "program")}>
         <TabsList>
           <TabsTrigger value="berita">Berita</TabsTrigger>
           <TabsTrigger value="program">Program</TabsTrigger>

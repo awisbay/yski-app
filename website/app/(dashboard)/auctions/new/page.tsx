@@ -20,12 +20,8 @@ const auctionSchema = z
   .object({
     title: z.string().min(3, "Judul minimal 3 karakter"),
     description: z.string().min(10, "Deskripsi minimal 10 karakter"),
-    starting_price: z
-      .number({ invalid_type_error: "Masukkan harga awal yang valid" })
-      .positive("Harga awal harus lebih dari 0"),
-    min_increment: z
-      .number({ invalid_type_error: "Masukkan kelipatan bid yang valid" })
-      .positive("Kelipatan bid harus lebih dari 0"),
+    starting_price: z.number().positive("Harga awal harus lebih dari 0"),
+    min_increment: z.number().positive("Kelipatan bid harus lebih dari 0"),
     start_time: z.string().min(1, "Waktu mulai wajib diisi"),
     end_time: z.string().min(1, "Waktu selesai wajib diisi"),
   })

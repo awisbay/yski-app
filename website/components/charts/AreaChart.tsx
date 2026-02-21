@@ -27,6 +27,12 @@ export function AreaChart({
   color = "#059669",
   formatter,
 }: AreaChartProps) {
+  const valueFormatter = (value: unknown) => {
+    const rawValue = Array.isArray(value) ? value[0] : value
+    const numericValue = typeof rawValue === "number" ? rawValue : Number(rawValue ?? 0)
+    return formatter ? formatter(numericValue) : numericValue
+  }
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <ReAreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -50,7 +56,7 @@ export function AreaChart({
           tickFormatter={formatter}
         />
         <Tooltip
-          formatter={(value: number) => [formatter ? formatter(value) : value, label ?? yKey]}
+          formatter={(value) => [valueFormatter(value), label ?? yKey]}
           contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12 }}
         />
         <Area

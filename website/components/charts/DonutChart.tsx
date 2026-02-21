@@ -10,6 +10,12 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ data, formatter }: DonutChartProps) {
+  const valueFormatter = (value: unknown) => {
+    const rawValue = Array.isArray(value) ? value[0] : value
+    const numericValue = typeof rawValue === "number" ? rawValue : Number(rawValue ?? 0)
+    return formatter ? formatter(numericValue) : numericValue
+  }
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
@@ -27,7 +33,7 @@ export function DonutChart({ data, formatter }: DonutChartProps) {
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: number) => [formatter ? formatter(value) : value]}
+          formatter={(value) => [valueFormatter(value)]}
           contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12 }}
         />
         <Legend

@@ -11,7 +11,8 @@ import {
   Truck,
   Clock,
   Package,
-  BookOpen,
+  LayoutGrid,
+  Newspaper,
   FileText,
   ChevronLeft,
   ChevronRight,
@@ -27,8 +28,9 @@ const NAV_ITEMS = [
   { href: "/bookings", icon: Truck, label: "Cek Bookingan Pickup" },
   { href: "/pickups", icon: Clock, label: "Cek Request Penjemputan" },
   { href: "/equipment", icon: Package, label: "Manajemen Peralatan" },
+  { href: "/content?tab=program", icon: LayoutGrid, label: "Manajemen Program" },
+  { href: "/content?tab=news", icon: Newspaper, label: "Manajemen Berita" },
   { href: "/finance", icon: FileText, label: "Keuangan" },
-  { href: "/content", icon: BookOpen, label: "Program & Berita" },
 ]
 
 interface SidebarProps {
@@ -41,8 +43,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   const isActive = (href: string) => {
+    const normalizedHref = href.split("?")[0]
     if (href === "/") return pathname === "/"
-    return pathname.startsWith(href)
+    return pathname.startsWith(normalizedHref)
   }
 
   const SidebarContent = () => (
