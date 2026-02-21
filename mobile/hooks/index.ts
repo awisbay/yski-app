@@ -42,6 +42,8 @@ export {
   useCreatePickup,
   useUploadPickupPhoto,
   useReviewPickup,
+  useStartPickup,
+  useCompletePickup,
   useCancelPickup,
 } from './usePickups';
 export { usePrograms, useFeaturedPrograms, useProgramDetail } from './usePrograms';

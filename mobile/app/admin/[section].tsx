@@ -26,6 +26,8 @@ import {
   useVerifyDonation,
   useAllPickups,
   useReviewPickup,
+  useStartPickup,
+  useCompletePickup,
 } from '@/hooks';
 import {
   useAllEquipmentLoans,
@@ -388,6 +390,8 @@ function PickupManagementScreen() {
   const canManage = ['admin', 'superadmin', 'pengurus', 'relawan'].includes(user?.role || '');
   const { data: pickups, isLoading, refetch } = useAllPickups();
   const reviewPickup = useReviewPickup();
+  const startPickup = useStartPickup();
+  const completePickup = useCompletePickup();
 
   if (!canManage) {
     return (
@@ -450,6 +454,23 @@ function PickupManagementScreen() {
       refetch();
     } catch (err: any) {
       Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat memproses jemput sekarang.');
+    }
+  };
+
+  const handleFinishPickup = async (pickup: any) => {
+    try {
+      if (pickup.status !== 'in_progress') {
+        await startPickup.mutateAsync(pickup.id);
+      }
+      await completePickup.mutateAsync({
+        id: pickup.id,
+        data: {
+          notes: 'Penjemputan selesai dikonfirmasi petugas.',
+        },
+      });
+      refetch();
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat mengubah status menjadi selesai.');
     }
   };
 
@@ -531,18 +552,36 @@ function PickupManagementScreen() {
                       <TouchableOpacity
                         style={[styles.actionBtn, styles.rejectBtn]}
                         onPress={() => handleConfirmLater(item)}
-                        disabled={reviewPickup.isPending}
+                        disabled={reviewPickup.isPending || startPickup.isPending || completePickup.isPending}
                       >
                         <Text style={styles.rejectText}>Dikonfirmasi Lagi Nanti</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.actionBtn, styles.approveBtn]}
                         onPress={() => handlePickupNow(item)}
-                        disabled={reviewPickup.isPending}
+                        disabled={reviewPickup.isPending || startPickup.isPending || completePickup.isPending}
                       >
                         <Text style={styles.approveText}>Jemput Sekarang</Text>
                       </TouchableOpacity>
                     </View>
+                  ) : null}
+
+                  {(item.status === 'awaiting_confirmation' || item.status === 'accepted' || item.status === 'in_progress') ? (
+                    <TouchableOpacity
+                      style={[styles.completeBtn, (startPickup.isPending || completePickup.isPending) && { opacity: 0.7 }]}
+                      onPress={() => handleFinishPickup(item)}
+                      disabled={startPickup.isPending || completePickup.isPending}
+                      activeOpacity={0.85}
+                    >
+                      {(startPickup.isPending || completePickup.isPending) ? (
+                        <ActivityIndicator size="small" color={colors.white} />
+                      ) : (
+                        <>
+                          <CheckCircle2 size={15} color={colors.white} />
+                          <Text style={styles.completeText}>Selesaikan Penjemputan</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
                   ) : null}
                 </View>
               );

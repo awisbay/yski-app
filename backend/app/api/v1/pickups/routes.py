@@ -176,8 +176,8 @@ async def start_pickup(
     if not pickup:
         raise HTTPException(status_code=404, detail="Pickup not found")
     
-    # Relawan can only update their assigned pickups
-    if current_user.role == "relawan" and pickup.assigned_to != current_user.id:
+    # Relawan can update when unassigned, or already assigned to self.
+    if current_user.role == "relawan" and pickup.assigned_to and pickup.assigned_to != current_user.id:
         raise HTTPException(status_code=403, detail="Not assigned to this pickup")
     
     pickup = await service.start_pickup(str(pickup_id))
@@ -198,8 +198,8 @@ async def complete_pickup(
     if not pickup:
         raise HTTPException(status_code=404, detail="Pickup not found")
     
-    # Relawan can only update their assigned pickups
-    if current_user.role == "relawan" and pickup.assigned_to != current_user.id:
+    # Relawan can update when unassigned, or already assigned to self.
+    if current_user.role == "relawan" and pickup.assigned_to and pickup.assigned_to != current_user.id:
         raise HTTPException(status_code=403, detail="Not assigned to this pickup")
     
     pickup = await service.complete_pickup(str(pickup_id), complete_data)

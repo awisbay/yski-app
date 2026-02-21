@@ -231,6 +231,8 @@ class PickupService:
             raise HTTPException(status_code=400, detail="Pickup cannot be started")
         
         pickup.status = "in_progress"
+        if not pickup.assigned_to:
+            pickup.assigned_to = pickup.scheduled_by
         await self.db.flush()
         await self.db.refresh(pickup)
         return pickup

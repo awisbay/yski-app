@@ -106,6 +106,31 @@ export function useReviewPickup() {
   });
 }
 
+export function useStartPickup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => pickupsApi.start(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pickupKeys.list('all') });
+      queryClient.invalidateQueries({ queryKey: pickupKeys.list('my') });
+      queryClient.invalidateQueries({ queryKey: pickupKeys.list('assigned') });
+    },
+  });
+}
+
+export function useCompletePickup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: { collected_amount?: number | null; notes?: string | null } }) =>
+      pickupsApi.complete(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pickupKeys.list('all') });
+      queryClient.invalidateQueries({ queryKey: pickupKeys.list('my') });
+      queryClient.invalidateQueries({ queryKey: pickupKeys.list('assigned') });
+    },
+  });
+}
+
 export function useCancelPickup() {
   const queryClient = useQueryClient();
 

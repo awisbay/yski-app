@@ -146,6 +146,9 @@ export const pickupsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   review: (id: string, data: any) => api.patch(`/pickups/${id}/review`, data),
+  start: (id: string) => api.patch(`/pickups/${id}/start`),
+  complete: (id: string, data?: { collected_amount?: number | null; notes?: string | null }) =>
+    api.patch(`/pickups/${id}/complete`, data || {}),
   cancel: (id: string, reason?: string) =>
     api.patch(`/pickups/${id}/cancel`, { cancellation_reason: reason }),
 };
