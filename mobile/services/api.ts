@@ -83,6 +83,11 @@ export const authApi = {
     api.post('/auth/reset-password', { token, new_password: newPassword }),
 };
 
+export const usersApi = {
+  getMe: () => api.get('/users/me'),
+  updateMe: (data: any) => api.put('/users/me', data),
+};
+
 // Bookings API
 export const bookingsApi = {
   getList: () => api.get('/bookings'),
@@ -189,13 +194,28 @@ export const auctionsApi = {
     api.patch(`/auctions/${id}/verify-payment`, { status }),
 };
 
-// Phase 5: Financial Reports API
+// Phase 5: Financial API
 export const financialApi = {
-  getDashboard: () => api.get('/financial/dashboard'),
-  getReports: (params?: { skip?: number; limit?: number }) =>
-    api.get('/financial/reports', { params }),
-  getReport: (id: string) => api.get(`/financial/reports/${id}`),
-  downloadPdf: (id: string) => api.get(`/financial/reports/${id}/pdf`, { responseType: 'blob' }),
+  getCategories: () => api.get('/financial/categories'),
+  createCategory: (data: { name: string }) => api.post('/financial/categories', data),
+  getTransactions: (params?: {
+    skip?: number;
+    limit?: number;
+    status?: 'pending' | 'approved' | 'rejected';
+    transaction_type?: 'request_fund' | 'income_report';
+    category_id?: string;
+  }) => api.get('/financial/transactions', { params }),
+  createTransaction: (data: {
+    category_id: string;
+    transaction_type: 'request_fund' | 'income_report';
+    amount: number;
+    description?: string;
+  }) => api.post('/financial/transactions', data),
+  reviewTransaction: (
+    id: string,
+    data: { status: 'approved' | 'rejected'; reviewed_note?: string }
+  ) => api.patch(`/financial/transactions/${id}/review`, data),
+  getBalances: () => api.get('/financial/balances'),
 };
 
 // Phase 5: Notifications API

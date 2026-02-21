@@ -11,8 +11,16 @@ from pydantic import BaseModel, EmailStr, Field
 class UserBase(BaseModel):
     """Base user schema."""
     full_name: str = Field(..., min_length=1, max_length=100)
+    kunyah_name: Optional[str] = Field(None, max_length=100)
     email: EmailStr
     phone: Optional[str] = Field(None, max_length=20)
+    occupation: Optional[str] = Field(None, max_length=120)
+    address: Optional[str] = Field(None, max_length=255)
+    city: Optional[str] = Field(None, max_length=100)
+    province: Optional[str] = Field(None, max_length=100)
+    interested_as_donatur: bool = False
+    interested_as_relawan: bool = False
+    wants_beneficiary_survey: bool = False
     avatar_url: Optional[str] = None
 
 
@@ -24,7 +32,16 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Schema for updating user."""
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    kunyah_name: Optional[str] = Field(None, max_length=100)
+    email: Optional[EmailStr] = None
     phone: Optional[str] = Field(None, max_length=20)
+    occupation: Optional[str] = Field(None, max_length=120)
+    address: Optional[str] = Field(None, max_length=255)
+    city: Optional[str] = Field(None, max_length=100)
+    province: Optional[str] = Field(None, max_length=100)
+    interested_as_donatur: Optional[bool] = None
+    interested_as_relawan: Optional[bool] = None
+    wants_beneficiary_survey: Optional[bool] = None
     avatar_url: Optional[str] = None
 
 

@@ -24,6 +24,8 @@ import {
   Wallet,
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
+import { useAuthStore } from '@/stores/authStore';
+import { isProfileComplete } from '@/utils/profile';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,12 +35,15 @@ const SERVICES = [
   { icon: Truck,    label: 'Jemput',    route: '/pickups',   color: colors.warning[600],   bg: colors.warning[50]   },
   { icon: Package,  label: 'Peralatan', route: '/equipment', color: colors.secondary[600], bg: colors.secondary[50] },
   { icon: Gavel,    label: 'Lelang',    route: '/auctions',  color: '#7C3AED',             bg: '#F5F3FF'            },
-  { icon: Wallet,   label: 'Keuangan',  route: '/financial', color: '#0891B2',             bg: '#ECFEFF'            },
+  { icon: Wallet,   label: 'Keuangan',  route: '/financial', color: '#0891B2',             bg: '#ECFEFF', roles: ['admin', 'superadmin', 'pengurus'] },
 ];
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const user = useAuthStore((state) => state.user);
+  const role = user?.role || '';
   const [isOpen, setIsOpen] = useState(false);
+  const visibleServices = SERVICES.filter((svc: any) => !svc.roles || svc.roles.includes(role));
 
   const backdropAnim  = useRef(new Animated.Value(0)).current;
   const panelAnim     = useRef(new Animated.Value(400)).current;
@@ -48,13 +53,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const isActive = (name: string) => state.routes[state.index]?.name === name;
 
   const openMenu = () => {
-    itemAnims.forEach(a => a.setValue(0));
+    itemAnims.forEach((a: Animated.Value) => a.setValue(0));
     setIsOpen(true);
     Animated.parallel([
       Animated.timing(backdropAnim, { toValue: 1, duration: 280, useNativeDriver: true }),
       Animated.spring(panelAnim,    { toValue: 0, tension: 70, friction: 11, useNativeDriver: true }),
       Animated.timing(rotateAnim,   { toValue: 1, duration: 280, useNativeDriver: true }),
-      Animated.stagger(55, itemAnims.map(a =>
+      Animated.stagger(55, itemAnims.map((a: Animated.Value) =>
         Animated.spring(a, { toValue: 1, tension: 130, friction: 8, useNativeDriver: true })
       )),
     ]).start();
@@ -65,7 +70,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       Animated.timing(backdropAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
       Animated.timing(panelAnim,    { toValue: 400, duration: 240, useNativeDriver: true }),
       Animated.timing(rotateAnim,   { toValue: 0, duration: 220, useNativeDriver: true }),
-      ...itemAnims.map(a =>
+      ...itemAnims.map((a: Animated.Value) =>
         Animated.timing(a, { toValue: 0, duration: 130, useNativeDriver: true })
       ),
     ]).start(() => {
@@ -74,7 +79,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     });
   };
 
-  const handleService = (route: string) => closeMenu(() => router.push(route));
+  const handleService = (route: string) => {
+    if (!isProfileComplete(user as any)) {
+      closeMenu(() => router.push('/profile/edit'));
+      return;
+    }
+    closeMenu(() => router.push(route));
+  };
 
   const spin = rotateAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '135deg'] });
   const tabBarHeight = 64 + Math.max(insets.bottom, 0);
@@ -106,7 +117,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           <Text style={styles.panelTitle}>Pilih Layanan</Text>
 
           <View style={styles.serviceGrid}>
-            {SERVICES.map((svc, i) => (
+            {visibleServices.map((svc, i) => (
               <Animated.View
                 key={svc.label}
                 style={{

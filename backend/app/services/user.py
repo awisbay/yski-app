@@ -4,6 +4,7 @@ User Service - Business logic for user management
 
 from typing import Optional, List
 from uuid import UUID
+from fastapi import HTTPException
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -70,8 +71,16 @@ class UserService:
         """Create a new user."""
         user = User(
             full_name=user_data.full_name,
+            kunyah_name=user_data.kunyah_name,
             email=user_data.email,
             phone=user_data.phone,
+            occupation=user_data.occupation,
+            address=user_data.address,
+            city=user_data.city,
+            province=user_data.province,
+            interested_as_donatur=user_data.interested_as_donatur,
+            interested_as_relawan=user_data.interested_as_relawan,
+            wants_beneficiary_survey=user_data.wants_beneficiary_survey,
             password_hash=get_password_hash(user_data.password),
             avatar_url=user_data.avatar_url,
             role=role,
@@ -89,6 +98,10 @@ class UserService:
             return None
         
         update_data = user_data.model_dump(exclude_unset=True)
+        if "email" in update_data:
+            existing = await self.get_by_email(update_data["email"])
+            if existing and str(existing.id) != str(user.id):
+                raise HTTPException(status_code=409, detail="Email already registered")
         for field, value in update_data.items():
             setattr(user, field, value)
         

@@ -7,13 +7,19 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select, func, extract
+from sqlalchemy import select, func, extract, and_, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.financial import FinancialReport, FinancialEntry
+from app.models.financial import (
+    FinancialReport,
+    FinancialEntry,
+    FinancialCategory,
+    FinancialTransaction,
+)
 from app.models.donation import Donation
 from app.models.auction import AuctionItem
+from app.models.user import User
 
 
 class FinancialService:
@@ -348,3 +354,205 @@ class FinancialService:
                 current = current.replace(month=current.month + 1)
         
         return trend
+
+    # ============== Modern Finance (Transaction + Balance) ==============
+
+    async def ensure_default_categories(self) -> None:
+        """Seed baseline categories for first-time setup."""
+        defaults = ["Pick-up", "Kesehatan", "Operasional"]
+        result = await self.db.execute(select(FinancialCategory.name))
+        existing = {name for (name,) in result.all()}
+        for name in defaults:
+            if name not in existing:
+                self.db.add(FinancialCategory(name=name, is_active=True))
+        await self.db.flush()
+        await self.db.commit()
+
+    async def list_categories(self) -> List[FinancialCategory]:
+        await self.ensure_default_categories()
+        result = await self.db.execute(
+            select(FinancialCategory)
+            .where(FinancialCategory.is_active == True)
+            .order_by(FinancialCategory.name.asc())
+        )
+        return list(result.scalars().all())
+
+    async def create_category(self, name: str) -> FinancialCategory:
+        normalized_name = " ".join(name.strip().split())
+        if not normalized_name:
+            raise HTTPException(status_code=400, detail="Nama kategori wajib diisi")
+
+        result = await self.db.execute(
+            select(FinancialCategory).where(
+                func.lower(FinancialCategory.name) == normalized_name.lower()
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing:
+            if not existing.is_active:
+                existing.is_active = True
+                await self.db.commit()
+                await self.db.refresh(existing)
+            return existing
+
+        category = FinancialCategory(name=normalized_name, is_active=True)
+        self.db.add(category)
+        await self.db.commit()
+        await self.db.refresh(category)
+        return category
+
+    async def create_transaction(
+        self,
+        *,
+        category_id: UUID,
+        transaction_type: str,
+        amount: Decimal,
+        description: Optional[str],
+        requester: User,
+    ) -> FinancialTransaction:
+        category = await self.db.get(FinancialCategory, category_id)
+        if not category or not category.is_active:
+            raise HTTPException(status_code=404, detail="Kategori tidak ditemukan")
+
+        if transaction_type not in {"request_fund", "income_report"}:
+            raise HTTPException(status_code=400, detail="Jenis transaksi tidak valid")
+
+        entry_side = "debit" if transaction_type == "request_fund" else "credit"
+        is_admin = requester.role in {"admin", "superadmin"}
+        now = datetime.utcnow()
+
+        transaction = FinancialTransaction(
+            category_id=category_id,
+            transaction_type=transaction_type,
+            entry_side=entry_side,
+            amount=amount,
+            description=description,
+            requested_by=requester.id,
+            status="approved" if is_admin else "pending",
+            reviewed_by=requester.id if is_admin else None,
+            reviewed_at=now if is_admin else None,
+            approved_at=now if is_admin else None,
+            reviewed_note="Auto-approved by admin" if is_admin else None,
+        )
+        self.db.add(transaction)
+        await self.db.commit()
+        await self.db.refresh(transaction)
+        return transaction
+
+    async def list_transactions(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 30,
+        status_filter: Optional[str] = None,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[UUID] = None,
+    ) -> tuple[List[FinancialTransaction], int]:
+        filters = []
+        if status_filter:
+            filters.append(FinancialTransaction.status == status_filter)
+        if transaction_type:
+            filters.append(FinancialTransaction.transaction_type == transaction_type)
+        if category_id:
+            filters.append(FinancialTransaction.category_id == category_id)
+
+        where_clause = and_(*filters) if filters else None
+
+        count_query = select(func.count()).select_from(FinancialTransaction)
+        data_query = (
+            select(FinancialTransaction)
+            .options(
+                selectinload(FinancialTransaction.category),
+                selectinload(FinancialTransaction.requester),
+                selectinload(FinancialTransaction.reviewer),
+            )
+            .order_by(FinancialTransaction.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        if where_clause is not None:
+            count_query = count_query.where(where_clause)
+            data_query = data_query.where(where_clause)
+
+        total_result = await self.db.execute(count_query)
+        result = await self.db.execute(data_query)
+        return list(result.scalars().all()), int(total_result.scalar() or 0)
+
+    async def review_transaction(
+        self,
+        *,
+        transaction_id: UUID,
+        status: str,
+        reviewed_note: Optional[str],
+        reviewer: User,
+    ) -> FinancialTransaction:
+        transaction = await self.db.get(FinancialTransaction, transaction_id)
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
+        if transaction.status != "pending":
+            raise HTTPException(status_code=400, detail="Transaksi sudah diproses")
+
+        now = datetime.utcnow()
+        transaction.status = status
+        transaction.reviewed_by = reviewer.id
+        transaction.reviewed_at = now
+        transaction.reviewed_note = reviewed_note
+        transaction.approved_at = now if status == "approved" else None
+
+        await self.db.commit()
+        await self.db.refresh(transaction)
+        return transaction
+
+    async def get_balances(self) -> dict:
+        await self.ensure_default_categories()
+
+        credit_expr = func.sum(
+            case((FinancialTransaction.entry_side == "credit", FinancialTransaction.amount), else_=0)
+        ).label("total_credit")
+        debit_expr = func.sum(
+            case((FinancialTransaction.entry_side == "debit", FinancialTransaction.amount), else_=0)
+        ).label("total_debit")
+
+        per_category_result = await self.db.execute(
+            select(
+                FinancialCategory.id,
+                FinancialCategory.name,
+                credit_expr,
+                debit_expr,
+            )
+            .outerjoin(
+                FinancialTransaction,
+                and_(
+                    FinancialTransaction.category_id == FinancialCategory.id,
+                    FinancialTransaction.status == "approved",
+                ),
+            )
+            .where(FinancialCategory.is_active == True)
+            .group_by(FinancialCategory.id, FinancialCategory.name)
+            .order_by(FinancialCategory.name.asc())
+        )
+
+        by_category = []
+        total_credit = Decimal("0")
+        total_debit = Decimal("0")
+        for category_id, category_name, category_credit, category_debit in per_category_result.all():
+            category_credit = category_credit or Decimal("0")
+            category_debit = category_debit or Decimal("0")
+            total_credit += category_credit
+            total_debit += category_debit
+            by_category.append(
+                {
+                    "category_id": category_id,
+                    "category_name": category_name,
+                    "total_credit": category_credit,
+                    "total_debit": category_debit,
+                    "balance": category_credit - category_debit,
+                }
+            )
+
+        return {
+            "total_credit": total_credit,
+            "total_debit": total_debit,
+            "current_balance": total_credit - total_debit,
+            "by_category": by_category,
+        }

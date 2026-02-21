@@ -24,8 +24,16 @@ class User(Base):
         default=uuid.uuid4
     )
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    kunyah_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    occupation: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    province: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    interested_as_donatur: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    interested_as_relawan: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    wants_beneficiary_survey: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
@@ -66,6 +74,16 @@ class User(Base):
     
     # Phase 5: Financial report relationships
     generated_reports: Mapped[List["FinancialReport"]] = relationship("FinancialReport", back_populates="generator")
+    requested_financial_transactions: Mapped[List["FinancialTransaction"]] = relationship(
+        "FinancialTransaction",
+        foreign_keys="FinancialTransaction.requested_by",
+        back_populates="requester",
+    )
+    approved_financial_transactions: Mapped[List["FinancialTransaction"]] = relationship(
+        "FinancialTransaction",
+        foreign_keys="FinancialTransaction.reviewed_by",
+        back_populates="reviewer",
+    )
     
     # Phase 5: Notification relationships
     notifications: Mapped[List["Notification"]] = relationship("Notification", back_populates="user", order_by="Notification.created_at.desc()")

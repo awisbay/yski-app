@@ -71,3 +71,51 @@ class FinancialEntry(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self):
         return f"<FinancialEntry(id={self.id}, type={self.type}, amount={self.amount})>"
+
+
+class FinancialCategory(Base, UUIDMixin, TimestampMixin):
+    """Manual category for financial transaction grouping."""
+
+    __tablename__ = "financial_categories"
+
+    name = Column(String(80), nullable=False, unique=True, index=True)
+    is_active = Column(Boolean, nullable=False, default=True, server_default="true")
+
+    transactions = relationship("FinancialTransaction", back_populates="category")
+
+    def __repr__(self):
+        return f"<FinancialCategory(id={self.id}, name={self.name})>"
+
+
+class FinancialTransaction(Base, UUIDMixin, TimestampMixin):
+    """Ledger-like transaction with approval flow."""
+
+    __tablename__ = "financial_transactions"
+
+    category_id = Column(
+        ForeignKey("financial_categories.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    transaction_type = Column(String(20), nullable=False, index=True)  # request_fund | income_report
+    entry_side = Column(String(10), nullable=False, index=True)  # debit | credit
+    amount = Column(Numeric(15, 2), nullable=False)
+    description = Column(Text, nullable=True)
+    requested_by = Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="pending", server_default="pending", index=True)
+    reviewed_by = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    reviewed_note = Column(Text, nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    category = relationship("FinancialCategory", back_populates="transactions")
+    requester = relationship("User", foreign_keys=[requested_by], back_populates="requested_financial_transactions")
+    reviewer = relationship("User", foreign_keys=[reviewed_by], back_populates="approved_financial_transactions")
+
+    __table_args__ = (
+        Index("idx_financial_transactions_category_status", "category_id", "status"),
+        Index("idx_financial_transactions_approved_at", "approved_at"),
+    )
+
+    def __repr__(self):
+        return f"<FinancialTransaction(id={self.id}, type={self.transaction_type}, status={self.status})>"

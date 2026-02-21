@@ -1,7 +1,20 @@
 import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { TabBar } from '@/components/ui';
+import { useAuthStore } from '@/stores/authStore';
+import { isProfileComplete } from '@/utils/profile';
 
 export default function TabsLayout() {
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    if (user && !isProfileComplete(user)) {
+      router.replace('/profile/edit');
+    }
+  }, [router, user]);
+
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}

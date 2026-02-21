@@ -7,8 +7,16 @@ import { authApi } from '@/services/api';
 interface User {
   id: string;
   full_name: string;
+  kunyah_name?: string;
   email: string;
   phone?: string;
+  occupation?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  interested_as_donatur?: boolean;
+  interested_as_relawan?: boolean;
+  wants_beneficiary_survey?: boolean;
   role: string;
   avatar_url?: string;
 }

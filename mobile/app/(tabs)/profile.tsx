@@ -18,6 +18,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { useAuthStore } from '@/stores/authStore';
+import { isProfileComplete } from '@/utils/profile';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 
@@ -42,6 +43,7 @@ export default function ProfileScreen() {
     user?.role === 'pengurus' ? 'Pengurus' :
     user?.role === 'relawan' ? 'Relawan' :
     'Admin';
+  const profileDone = isProfileComplete(user as any);
 
   const handleLogout = async () => {
     await logout();
@@ -70,10 +72,24 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.contactInfo}>
+            {!profileDone && (
+              <TouchableOpacity style={styles.completeBanner} onPress={() => router.push('/profile/edit')}>
+                <Text style={styles.completeBannerTitle}>Lengkapi profil Anda terlebih dahulu</Text>
+                <Text style={styles.completeBannerText}>
+                  Isi data wajib agar bisa melanjutkan eksplor menu layanan.
+                </Text>
+              </TouchableOpacity>
+            )}
             {user?.phone && (
               <View style={styles.contactRow}>
                 <Phone size={16} color={colors.gray[500]} />
                 <Text style={styles.contactText}>{user.phone}</Text>
+              </View>
+            )}
+            {user?.city && user?.province && (
+              <View style={styles.contactRow}>
+                <MapPin size={16} color={colors.gray[500]} />
+                <Text style={styles.contactText}>{user.city}, {user.province}</Text>
               </View>
             )}
           </View>
@@ -167,6 +183,24 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: colors.gray[100],
+  },
+  completeBanner: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.warning[200],
+    backgroundColor: colors.warning[50],
+    padding: 10,
+    marginBottom: 12,
+  },
+  completeBannerTitle: {
+    ...typography.body2,
+    fontWeight: '700',
+    color: colors.gray[800],
+    marginBottom: 3,
+  },
+  completeBannerText: {
+    ...typography.caption,
+    color: colors.gray[600],
   },
   contactRow: {
     flexDirection: 'row',

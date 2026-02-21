@@ -1,137 +1,135 @@
 """
-Financial Report API Routes - Laporan Keuangan
+Financial API Routes - transaksi & saldo kategori.
 """
-from datetime import date
+
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_db, get_current_user, require_role
+from app.core.deps import get_db, require_role
 from app.models.user import User
 from app.schemas.financial import (
-    FinancialReportCreate,
-    FinancialReportUpdate,
-    FinancialReportPublish,
-    FinancialEntryCreate,
-    FinancialReportResponse,
-    FinancialReportDetailResponse,
-    FinancialReportListResponse,
-    FinancialEntryResponse,
-    FinancialDashboardResponse,
+    FinanceCategoryCreate,
+    FinanceCategoryResponse,
+    FinancialTransactionCreate,
+    FinancialTransactionListResponse,
+    FinancialTransactionResponse,
+    FinancialTransactionReview,
+    FinancialBalanceResponse,
 )
 from app.services.financial_service import FinancialService
 
-router = APIRouter()
+router = APIRouter(
+    dependencies=[Depends(require_role("admin", "superadmin", "pengurus"))],
+)
 
 
-# ============== Dashboard ==============
+def _serialize_transaction(item) -> FinancialTransactionResponse:
+    return FinancialTransactionResponse(
+        id=item.id,
+        category_id=item.category_id,
+        category_name=item.category.name if item.category else "-",
+        transaction_type=item.transaction_type,
+        entry_side=item.entry_side,
+        amount=item.amount,
+        description=item.description,
+        requested_by=item.requested_by,
+        requester_name=item.requester.full_name if item.requester else "-",
+        status=item.status,
+        reviewed_by=item.reviewed_by,
+        reviewer_name=item.reviewer.full_name if item.reviewer else None,
+        reviewed_at=item.reviewed_at,
+        reviewed_note=item.reviewed_note,
+        approved_at=item.approved_at,
+        created_at=item.created_at,
+    )
 
-@router.get("/dashboard", response_model=FinancialDashboardResponse)
-async def get_dashboard(
+
+@router.get("/categories", response_model=list[FinanceCategoryResponse])
+async def list_categories(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("admin", "superadmin", "pengurus")),
 ):
-    """Get financial dashboard data."""
     service = FinancialService(db)
-    data = await service.get_dashboard_data()
-    return data
+    return await service.list_categories()
 
 
-# ============== Reports ==============
+@router.post("/categories", response_model=FinanceCategoryResponse, status_code=status.HTTP_201_CREATED)
+async def create_category(
+    payload: FinanceCategoryCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin", "pengurus")),
+):
+    service = FinancialService(db)
+    return await service.create_category(payload.name)
 
-@router.get("/reports", response_model=FinancialReportListResponse)
-async def list_reports(
+
+@router.get("/transactions", response_model=FinancialTransactionListResponse)
+async def list_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    status_filter: Optional[str] = Query(default=None, alias="status"),
+    transaction_type: Optional[str] = Query(default=None),
+    category_id: Optional[UUID] = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("admin", "superadmin", "pengurus")),
 ):
-    """List published financial reports."""
     service = FinancialService(db)
-    reports, total = await service.get_published_reports(skip=skip, limit=limit)
-    return {"reports": reports, "total": total}
-
-
-@router.get("/reports/{report_id}", response_model=FinancialReportDetailResponse)
-async def get_report(
-    report_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Get financial report detail."""
-    service = FinancialService(db)
-    report = await service.get_report(report_id)
-    
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-    
-    if not report.is_published and current_user.role not in ["admin", "pengurus"]:
-        raise HTTPException(status_code=403, detail="Report not published yet")
-    
-    return {
-        **report.__dict__,
-        "generator_name": report.generator.full_name if report.generator else "Unknown",
-        "entries": report.entries,
-    }
-
-
-@router.post("/reports", response_model=FinancialReportResponse, status_code=status.HTTP_201_CREATED)
-async def create_report(
-    data: FinancialReportCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "pengurus")),
-):
-    """Generate a new financial report (Pengurus/Admin only)."""
-    service = FinancialService(db)
-    report = await service.generate_report(
-        period_start=data.period_start,
-        period_end=data.period_end,
-        generated_by=current_user.id,
+    items, total = await service.list_transactions(
+        skip=skip,
+        limit=limit,
+        status_filter=status_filter,
+        transaction_type=transaction_type,
+        category_id=category_id,
     )
-    
     return {
-        **report.__dict__,
-        "generator_name": current_user.full_name,
+        "transactions": [_serialize_transaction(item) for item in items],
+        "total": total,
     }
 
 
-@router.patch("/reports/{report_id}/publish", response_model=FinancialReportResponse)
-async def publish_report(
-    report_id: UUID,
-    data: FinancialReportPublish,
+@router.post("/transactions", response_model=FinancialTransactionResponse, status_code=status.HTTP_201_CREATED)
+async def create_transaction(
+    payload: FinancialTransactionCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "superadmin", "pengurus")),
 ):
-    """Publish or unpublish a report (Admin only)."""
     service = FinancialService(db)
-    report = await service.publish_report(report_id, is_published=data.is_published)
-    
-    return {
-        **report.__dict__,
-        "generator_name": report.generator.full_name if report.generator else "Unknown",
-    }
-
-
-# ============== Entries (Manual) ==============
-
-@router.post("/reports/{report_id}/entries", response_model=FinancialEntryResponse)
-async def add_entry(
-    report_id: UUID,
-    data: FinancialEntryCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "pengurus")),
-):
-    """Add a manual entry to a report (Pengurus/Admin only)."""
-    service = FinancialService(db)
-    entry = await service.add_manual_entry(
-        report_id=report_id,
-        category=data.category,
-        entry_type=data.type,
-        amount=data.amount,
-        description=data.description,
-        entry_date=data.entry_date,
+    transaction = await service.create_transaction(
+        category_id=payload.category_id,
+        transaction_type=payload.transaction_type,
+        amount=payload.amount,
+        description=payload.description,
+        requester=current_user,
     )
-    
-    return entry
+    await db.refresh(transaction, attribute_names=["category", "requester", "reviewer"])
+    return _serialize_transaction(transaction)
+
+
+@router.patch("/transactions/{transaction_id}/review", response_model=FinancialTransactionResponse)
+async def review_transaction(
+    transaction_id: UUID,
+    payload: FinancialTransactionReview,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin")),
+):
+    service = FinancialService(db)
+    transaction = await service.review_transaction(
+        transaction_id=transaction_id,
+        status=payload.status,
+        reviewed_note=payload.reviewed_note,
+        reviewer=current_user,
+    )
+    await db.refresh(transaction, attribute_names=["category", "requester", "reviewer"])
+    return _serialize_transaction(transaction)
+
+
+@router.get("/balances", response_model=FinancialBalanceResponse)
+async def get_balances(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin", "pengurus")),
+):
+    service = FinancialService(db)
+    return await service.get_balances()
