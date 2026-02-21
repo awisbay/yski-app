@@ -52,7 +52,7 @@ export function MainThemeLayout({
         {statsStrip}
       </View>
 
-      <View style={styles.panel}>{children}</View>
+      <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 18) }]}>{children}</View>
     </View>
   );
 }
