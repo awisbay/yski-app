@@ -79,11 +79,25 @@ class NewsArticle(Base):
     thumbnail_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     category: Mapped[str] = mapped_column(String(50), default="general", nullable=False)  # kesehatan, bencana, pendidikan
-    
-    # Publishing
+
+    # Publishing workflow: draft | pending_review | approved | published | rejected
+    status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)
     is_published: Mapped[bool] = mapped_column(default=False, nullable=False)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+    scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # SEO
+    meta_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    meta_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array as text
+
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
@@ -103,6 +117,7 @@ class NewsArticle(Base):
     
     # Relationships
     creator = relationship("User", foreign_keys=[created_by])
-    
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
+
     def __repr__(self) -> str:
         return f"<NewsArticle(id={self.id}, title={self.title}, published={self.is_published})>"

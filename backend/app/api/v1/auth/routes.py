@@ -3,6 +3,7 @@ Authentication Routes
 """
 
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,7 +95,8 @@ async def login(
     refresh_jti = generate_token_id()
     refresh_token = create_refresh_token(token_data, jti=refresh_jti)
     user.current_refresh_jti = refresh_jti
-    
+    user.last_login_at = datetime.now(timezone.utc)
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,

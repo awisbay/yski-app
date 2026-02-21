@@ -11,6 +11,7 @@ from app.api.v1.equipment import router as equipment_router
 from app.api.v1.donations import router as donations_router
 from app.api.v1.pickups import router as pickups_router
 from app.api.v1.content import router as content_router
+from app.api.v1.dashboard import router as dashboard_router
 
 # Phase 5: Advanced Features
 from app.api.v1.auction import router as auction_router
@@ -26,6 +27,7 @@ api_router.include_router(equipment_router, prefix="/equipment", tags=["Equipmen
 api_router.include_router(donations_router, prefix="/donations", tags=["Donations"])
 api_router.include_router(pickups_router, prefix="/pickups", tags=["Pickups"])
 api_router.include_router(content_router, prefix="/content", tags=["Content"])
+api_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
 
 # Phase 5 Routes
 api_router.include_router(auction_router, prefix="/auctions", tags=["Auctions"])

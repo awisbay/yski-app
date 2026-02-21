@@ -42,11 +42,12 @@ class UserService:
         skip: int = 0,
         limit: int = 20,
         search: Optional[str] = None,
-        role: Optional[str] = None
+        role: Optional[str] = None,
+        is_active: Optional[bool] = None,
     ) -> List[User]:
         """List users with pagination and filters."""
         query = select(User)
-        
+
         if search:
             query = query.where(
                 or_(
@@ -54,10 +55,13 @@ class UserService:
                     User.email.ilike(f"%{search}%")
                 )
             )
-        
+
         if role:
             query = query.where(User.role == role)
-        
+
+        if is_active is not None:
+            query = query.where(User.is_active == is_active)
+
         query = query.offset(skip).limit(limit)
         result = await self.db.execute(query)
         return list(result.scalars().all())

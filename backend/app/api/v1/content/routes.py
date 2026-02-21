@@ -2,6 +2,7 @@
 Content Routes (Programs & News)
 """
 
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -10,7 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
 from app.models.user import User
-from app.schemas.content import ProgramCreate, ProgramResponse, ProgramUpdate, NewsCreate, NewsResponse, NewsUpdate
+from app.schemas.content import (
+    ProgramCreate, ProgramResponse, ProgramUpdate,
+    NewsCreate, NewsResponse, NewsUpdate, NewsReject,
+)
 from app.services.content import ContentService
 
 router = APIRouter()
@@ -101,18 +105,38 @@ async def delete_program(
 
 # === News Endpoints ===
 
+@router.post("/programs/{program_id}/publish", response_model=ProgramResponse)
+async def toggle_publish_program(
+    program_id: UUID,
+    current_user: User = Depends(require_role("admin", "pengurus")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Toggle publish/unpublish on a program (Admin/Pengurus only)."""
+    service = ContentService(db)
+    program = await service.get_program_by_id(str(program_id))
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+    # Toggle active/hidden via status
+    program.status = "active" if program.status != "active" else "hidden"
+    await db.flush()
+    await db.refresh(program)
+    return program
+
+
 @router.get("/news", response_model=List[NewsResponse])
 async def list_news(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=50),
     category: str = Query(None),
     is_published: bool = Query(True),
+    news_status: str = Query(None, description="Filter by publishing status"),
     db: AsyncSession = Depends(get_db)
 ):
     """List news articles."""
     service = ContentService(db)
     articles = await service.list_news(
-        skip=skip, limit=limit, category=category, is_published=is_published
+        skip=skip, limit=limit, category=category,
+        is_published=is_published, news_status=news_status,
     )
     return articles
 
@@ -171,15 +195,82 @@ async def delete_news(
     return None
 
 
+@router.post("/news/{news_id}/submit", response_model=NewsResponse)
+async def submit_news_for_review(
+    news_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Submit a draft article for review."""
+    service = ContentService(db)
+    article = await service.get_news_by_id(str(news_id))
+    if not article:
+        raise HTTPException(status_code=404, detail="News article not found")
+    if article.status not in ("draft", "rejected"):
+        raise HTTPException(status_code=400, detail="Article cannot be submitted in its current status")
+    article.status = "pending_review"
+    await db.flush()
+    await db.refresh(article)
+    return article
+
+
+@router.post("/news/{news_id}/approve", response_model=NewsResponse)
+async def approve_news(
+    news_id: UUID,
+    current_user: User = Depends(require_role("admin", "pengurus")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Approve a pending news article (Admin/Pengurus only)."""
+    from datetime import timezone
+    service = ContentService(db)
+    article = await service.get_news_by_id(str(news_id))
+    if not article:
+        raise HTTPException(status_code=404, detail="News article not found")
+    if article.status != "pending_review":
+        raise HTTPException(status_code=400, detail="Article is not pending review")
+    article.status = "approved"
+    article.reviewed_by = current_user.id
+    article.reviewed_at = datetime.now(timezone.utc)
+    article.rejection_reason = None
+    await db.flush()
+    await db.refresh(article)
+    return article
+
+
+@router.post("/news/{news_id}/reject", response_model=NewsResponse)
+async def reject_news(
+    news_id: UUID,
+    body: NewsReject,
+    current_user: User = Depends(require_role("admin", "pengurus")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject a pending news article with a reason (Admin/Pengurus only)."""
+    from datetime import timezone
+    service = ContentService(db)
+    article = await service.get_news_by_id(str(news_id))
+    if not article:
+        raise HTTPException(status_code=404, detail="News article not found")
+    if article.status != "pending_review":
+        raise HTTPException(status_code=400, detail="Article is not pending review")
+    article.status = "rejected"
+    article.reviewed_by = current_user.id
+    article.reviewed_at = datetime.now(timezone.utc)
+    article.rejection_reason = body.reason
+    await db.flush()
+    await db.refresh(article)
+    return article
+
+
 @router.patch("/news/{news_id}/publish", response_model=NewsResponse)
 async def publish_news(
     news_id: UUID,
     current_user: User = Depends(require_role("admin", "pengurus")),
     db: AsyncSession = Depends(get_db)
 ):
-    """Publish news article (Admin/Pengurus only)."""
+    """Toggle publish/unpublish on a news article (Admin/Pengurus only)."""
     service = ContentService(db)
-    article = await service.publish_news(str(news_id))
+    article = await service.get_news_by_id(str(news_id))
     if not article:
         raise HTTPException(status_code=404, detail="News article not found")
+    article = await service.toggle_publish_news(str(news_id))
     return article

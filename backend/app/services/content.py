@@ -164,16 +164,19 @@ class ContentService:
         skip: int = 0,
         limit: int = 10,
         category: Optional[str] = None,
-        is_published: Optional[bool] = True
+        is_published: Optional[bool] = None,
+        news_status: Optional[str] = None,
     ) -> List[NewsArticle]:
         """List news articles with filters."""
         query = select(NewsArticle)
-        
+
         if category:
             query = query.where(NewsArticle.category == category)
         if is_published is not None:
             query = query.where(NewsArticle.is_published == is_published)
-        
+        if news_status:
+            query = query.where(NewsArticle.status == news_status)
+
         query = query.offset(skip).limit(limit).order_by(NewsArticle.created_at.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
@@ -246,10 +249,30 @@ class ContentService:
         article = await self.get_news_by_id(news_id)
         if not article:
             return None
-        
+
         article.is_published = True
+        article.status = "published"
         article.published_at = datetime.utcnow()
-        
+
+        await self.db.flush()
+        await self.db.refresh(article)
+        return article
+
+    async def toggle_publish_news(self, news_id: str) -> Optional[NewsArticle]:
+        """Toggle publish/unpublish on a news article."""
+        article = await self.get_news_by_id(news_id)
+        if not article:
+            return None
+
+        if article.is_published:
+            article.is_published = False
+            article.status = "approved"
+            article.published_at = None
+        else:
+            article.is_published = True
+            article.status = "published"
+            article.published_at = datetime.utcnow()
+
         await self.db.flush()
         await self.db.refresh(article)
         return article

@@ -28,14 +28,20 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
 
 
+class UserRoleUpdate(BaseModel):
+    """Schema for changing user role."""
+    role: str = Field(..., pattern="^(admin|pengurus|relawan|sahabat)$")
+
+
 class UserResponse(UserBase):
     """Schema for user response."""
     id: UUID
     role: str
     is_active: bool
+    last_login_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 

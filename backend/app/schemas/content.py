@@ -61,17 +61,33 @@ class NewsUpdate(BaseModel):
     content: Optional[str] = None
     category: Optional[str] = None
     is_published: Optional[bool] = None
+    scheduled_at: Optional[datetime] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    tags: Optional[str] = None
+
+
+class NewsReject(BaseModel):
+    reason: str
 
 
 class NewsResponse(NewsBase):
     id: UUID
     slug: str
     thumbnail_url: Optional[str] = None
+    status: str = "draft"
     is_published: bool
     published_at: Optional[datetime] = None
+    scheduled_at: Optional[datetime] = None
+    reviewed_by: Optional[UUID] = None
+    reviewed_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    tags: Optional[str] = None
     created_by: UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
