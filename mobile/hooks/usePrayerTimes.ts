@@ -39,8 +39,14 @@ const EQURAN_BASE = 'https://equran.id/api/v2';
 function normalizeText(value: string) {
   return (value || '')
     .toLowerCase()
+    .replace(/daerah khusus ibukota jakarta/gi, 'dki jakarta')
+    .replace(/daerah istimewa yogyakarta/gi, 'di yogyakarta')
+    .replace(/d\.?k\.?i\.?/gi, 'dki')
+    .replace(/adm\.?/gi, 'administrasi')
     .replace(/^provinsi\s+/i, '')
     .replace(/^kota\s+/i, '')
+    .replace(/^kota administrasi\s+/i, '')
+    .replace(/^kabupaten administrasi\s+/i, '')
     .replace(/^kab\.\s+/i, '')
     .replace(/^kabupaten\s+/i, '')
     .replace(/[^\w\s]/g, ' ')
@@ -48,20 +54,114 @@ function normalizeText(value: string) {
     .trim();
 }
 
-function findBestMatch(target: string, candidates: string[]) {
-  const normalizedTarget = normalizeText(target);
-  if (!normalizedTarget) return null;
+function pushUnique(target: string[], value?: string | null) {
+  const cleaned = (value || '').trim();
+  if (!cleaned) return;
+  if (!target.some((item) => normalizeText(item) === normalizeText(cleaned))) {
+    target.push(cleaned);
+  }
+}
 
-  const exact = candidates.find((candidate) => normalizeText(candidate) === normalizedTarget);
-  if (exact) return exact;
+function scorePair(candidate: string, target: string) {
+  const c = normalizeText(candidate);
+  const t = normalizeText(target);
+  if (!c || !t) return 0;
+  if (c === t) return 100;
+  if (c.includes(t) || t.includes(c)) return 88;
 
-  const includes = candidates.find((candidate) => {
-    const n = normalizeText(candidate);
-    return n.includes(normalizedTarget) || normalizedTarget.includes(n);
+  const cTokens = new Set(c.split(' ').filter(Boolean));
+  const tTokens = new Set(t.split(' ').filter(Boolean));
+  const intersectionSize = [...cTokens].filter((x) => tTokens.has(x)).length;
+  if (!intersectionSize) return 0;
+
+  const unionSize = new Set([...cTokens, ...tTokens]).size;
+  const jaccard = intersectionSize / Math.max(unionSize, 1);
+  return Math.round(jaccard * 80);
+}
+
+function findBestFromTargets(candidates: string[], targets: string[]) {
+  if (!candidates.length || !targets.length) return null;
+
+  let bestCandidate: string | null = null;
+  let bestScore = 0;
+
+  for (const candidate of candidates) {
+    let score = 0;
+    for (const target of targets) {
+      score = Math.max(score, scorePair(candidate, target));
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestCandidate = candidate;
+    }
+  }
+
+  if (bestScore < 45) return null;
+  return bestCandidate;
+}
+
+async function getTaggedLocationCandidates(latitude: number, longitude: number) {
+  const provinceCandidates: string[] = [];
+  const cityCandidates: string[] = [];
+  let locationLabel = '';
+
+  const geocodes = await Location.reverseGeocodeAsync({
+    latitude,
+    longitude,
   });
-  if (includes) return includes;
+  const geocode = geocodes?.[0];
+  if (geocode) {
+    pushUnique(provinceCandidates, geocode.region);
+    pushUnique(provinceCandidates, geocode.subregion);
+    pushUnique(cityCandidates, geocode.city);
+    pushUnique(cityCandidates, geocode.district);
+    pushUnique(cityCandidates, geocode.subregion);
 
-  return null;
+    const cityDisplay = geocode.city || geocode.subregion || geocode.district || '';
+    const provinceDisplay = geocode.region || '';
+    locationLabel = [cityDisplay, provinceDisplay].filter(Boolean).join(', ');
+  }
+
+  // Ambil detail wilayah dari geocoding map (OSM reverse) sebagai sumber tagging tambahan.
+  try {
+    const nominatimUrl =
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`;
+    const reverseRes = await fetch(nominatimUrl, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'yski-mobile-app',
+      },
+    });
+    const reverseJson = await reverseRes.json();
+    const address = reverseJson?.address || {};
+
+    pushUnique(provinceCandidates, address.state);
+    pushUnique(provinceCandidates, address.province);
+    pushUnique(provinceCandidates, address.region);
+
+    pushUnique(cityCandidates, address.city);
+    pushUnique(cityCandidates, address.county);
+    pushUnique(cityCandidates, address.town);
+    pushUnique(cityCandidates, address.municipality);
+    pushUnique(cityCandidates, address.city_district);
+    pushUnique(cityCandidates, address.state_district);
+
+    if (!locationLabel && reverseJson?.display_name) {
+      locationLabel = String(reverseJson.display_name)
+        .split(',')
+        .slice(0, 2)
+        .join(',')
+        .trim();
+    }
+  } catch {
+    // non-blocking fallback to expo reverse geocode
+  }
+
+  return {
+    provinceCandidates,
+    cityCandidates,
+    locationLabel,
+  };
 }
 
 function parseTimeToDate(baseDate: Date, hhmm: string) {
@@ -143,19 +243,15 @@ export function usePrayerTimes() {
         accuracy: Location.Accuracy.Balanced,
       });
 
-      const geocodes = await Location.reverseGeocodeAsync({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
-
-      const geocode = geocodes?.[0];
-      const rawProvince = geocode?.region || '';
-      const rawCity = geocode?.city || geocode?.subregion || geocode?.district || '';
+      const tagged = await getTaggedLocationCandidates(
+        position.coords.latitude,
+        position.coords.longitude
+      );
 
       const provinceRes = await fetch(`${EQURAN_BASE}/shalat/provinsi`);
       const provinceJson = await provinceRes.json();
       const provinces: string[] = provinceJson?.data || [];
-      const matchedProvince = findBestMatch(rawProvince, provinces) || rawProvince;
+      const matchedProvince = findBestFromTargets(provinces, tagged.provinceCandidates);
       if (!matchedProvince) {
         throw new Error('Provinsi tidak ditemukan dari lokasi.');
       }
@@ -167,7 +263,10 @@ export function usePrayerTimes() {
       });
       const cityJson = await cityRes.json();
       const cities: string[] = cityJson?.data || [];
-      const matchedCity = findBestMatch(rawCity, cities) || cities[0] || rawCity;
+      const matchedCity =
+        findBestFromTargets(cities, tagged.cityCandidates) ||
+        findBestFromTargets(cities, [tagged.locationLabel]) ||
+        cities[0];
       if (!matchedCity) {
         throw new Error('Kab/Kota tidak ditemukan dari lokasi.');
       }
