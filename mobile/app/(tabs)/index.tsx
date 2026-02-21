@@ -284,8 +284,8 @@ export default function HomeScreen() {
             <View style={styles.prayerTimesRow}>
               {prayerTimes.map((item) => (
                 <View key={item.label} style={styles.prayerTimeChip}>
-                  <Text style={styles.prayerTimeLabel}>{item.label}</Text>
-                  <Text style={styles.prayerTimeValue}>{item.value}</Text>
+                  <Text style={styles.prayerTimeLabel} numberOfLines={1}>{item.label}</Text>
+                  <Text style={styles.prayerTimeValue} numberOfLines={1}>{item.value}</Text>
                 </View>
               ))}
             </View>
@@ -868,27 +868,27 @@ const styles = StyleSheet.create({
   },
   prayerTimesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   prayerTimeChip: {
-    minWidth: 62,
+    flex: 1,
+    minWidth: 0,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.primary[100],
     backgroundColor: colors.white,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 4,
     alignItems: 'center',
   },
   prayerTimeLabel: {
-    fontSize: 10,
+    fontSize: 9.5,
     color: colors.gray[500],
     fontWeight: '700',
     marginBottom: 1,
   },
   prayerTimeValue: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.gray[900],
     fontWeight: '800',
   },
