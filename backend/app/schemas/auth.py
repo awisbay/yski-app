@@ -43,3 +43,9 @@ class PasswordResetConfirm(BaseModel):
     """Password reset confirmation schema."""
     token: str
     new_password: str = Field(..., min_length=6)
+
+
+class ChangePasswordRequest(BaseModel):
+    """Change password for authenticated user."""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6)

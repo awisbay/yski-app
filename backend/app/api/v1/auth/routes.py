@@ -25,6 +25,7 @@ from app.schemas.auth import (
     RefreshRequest,
     PasswordResetRequest,
     PasswordResetConfirm,
+    ChangePasswordRequest,
 )
 from app.schemas.user import UserCreate, UserResponse
 from app.services.password_reset import PasswordResetService, send_password_reset_email
@@ -239,3 +240,28 @@ async def logout(
     """Revoke active refresh token for current user session."""
     current_user.current_refresh_jti = None
     return {"message": "Logged out successfully"}
+
+
+@router.post("/change-password")
+async def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Change password for the current authenticated user."""
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password saat ini tidak sesuai",
+        )
+
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password baru tidak boleh sama dengan password lama",
+        )
+
+    from app.core.security import get_password_hash
+
+    current_user.password_hash = get_password_hash(payload.new_password)
+    current_user.current_refresh_jti = None
+    return {"message": "Password berhasil diubah, silakan login ulang"}

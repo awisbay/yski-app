@@ -1,12 +1,5 @@
-import { RoutePlaceholderScreen } from '@/components/ui';
+import { Redirect } from 'expo-router';
 
-export default function NotificationSettingsScreen() {
-  return (
-    <RoutePlaceholderScreen
-      title="Pengaturan Notifikasi"
-      subtitle="Kelola preferensi notifikasi"
-      actionLabel="Kembali ke Notifikasi"
-      actionRoute="/notifications"
-    />
-  );
+export default function NotificationSettingsRedirect() {
+  return <Redirect href="/notifications" />;
 }

@@ -68,4 +68,4 @@ export {
   useCreateFinancialTransaction,
   useReviewFinancialTransaction,
 } from './useFinancial';
-export { useNotifications, useUnreadCount, useMarkAsRead, useRegisterPushToken } from './useNotifications';
+export { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useRegisterPushToken } from './useNotifications';

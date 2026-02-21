@@ -25,7 +25,7 @@ import { typography } from '@/constants/typography';
 const MENU_ITEMS = [
   { icon: User, label: 'Edit Profil', route: '/profile/edit' },
   { icon: Shield, label: 'Ubah Password', route: '/profile/password' },
-  { icon: Bell, label: 'Notifikasi', route: '/notifications/settings' },
+  { icon: Bell, label: 'Notifikasi', route: '/notifications' },
   { icon: FileText, label: 'Syarat & Ketentuan', route: '/terms' },
   { icon: HelpCircle, label: 'Bantuan', route: '/help' },
   { icon: Settings, label: 'Pengaturan', route: '/settings' },

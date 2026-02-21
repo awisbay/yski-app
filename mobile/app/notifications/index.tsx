@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { Bell, Check, Trash2, ChevronRight, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { Bell, Check, ChevronRight, Info, CheckCircle, AlertTriangle } from 'lucide-react-native';
 import { MainThemeLayout } from '@/components/ui';
 import { Card } from '@/components/Card';
-import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
+import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '@/hooks';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -15,14 +16,25 @@ const ICONS: Record<string, any> = {
 };
 
 export default function NotificationsScreen() {
-  const notifications = useNotificationStore((state) => state.notifications);
-  const markAsRead = useNotificationStore((state) => state.markAsRead);
-  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
-  const clearNotifications = useNotificationStore((state) => state.clearNotifications);
+  const { data, isLoading, refetch, isRefetching } = useNotifications({ limit: 100, includeRead: true });
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
+  const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
 
-  const formatTime = (date: Date) => {
+  const notifications = data?.notifications || [];
+  const unreadCount = data?.unread_count || 0;
+
+  useEffect(() => {
+    if (typeof unreadCount === 'number') {
+      setUnreadCount(unreadCount);
+    }
+  }, [setUnreadCount, unreadCount]);
+
+  const formatTime = (date?: string) => {
+    if (!date) return '-';
     const now = new Date();
-    const diff = now.getTime() - new Date(date).getTime();
+    const parsed = new Date(date);
+    const diff = now.getTime() - parsed.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
@@ -31,7 +43,7 @@ export default function NotificationsScreen() {
     if (minutes < 60) return `${minutes} menit yang lalu`;
     if (hours < 24) return `${hours} jam yang lalu`;
     if (days < 7) return `${days} hari yang lalu`;
-    return new Date(date).toLocaleDateString('id-ID');
+    return parsed.toLocaleDateString('id-ID');
   };
 
   const renderNotification = ({ item }: { item: any }) => {
@@ -41,28 +53,31 @@ export default function NotificationsScreen() {
       success: colors.success[500],
       warning: colors.warning[500],
     };
+    const isRead = !!item.is_read;
 
     return (
       <TouchableOpacity
-        onPress={() => markAsRead(item.id)}
+        onPress={() => {
+          if (!isRead) {
+            markAsRead.mutate(item.id, {
+              onSuccess: () => refetch(),
+            });
+          }
+        }}
         activeOpacity={0.7}
       >
-        <Card style={[styles.notificationCard, !item.read ? styles.unreadCard : undefined]}>
+        <Card style={[styles.notificationCard, !isRead ? styles.unreadCard : undefined]}>
           <View style={styles.notificationContent}>
-            <View style={[styles.iconContainer, { backgroundColor: `${iconColors[item.type]}15` }]}>
-              <Icon size={20} color={iconColors[item.type]} />
+            <View style={[styles.iconContainer, { backgroundColor: `${iconColors[item.type] || colors.primary[500]}15` }]}>
+              <Icon size={20} color={iconColors[item.type] || colors.primary[500]} />
             </View>
             <View style={styles.textContainer}>
-              <Text style={[styles.title, !item.read && styles.unreadText]}>
-                {item.title}
-              </Text>
-              <Text style={styles.message} numberOfLines={2}>
-                {item.message}
-              </Text>
-              <Text style={styles.time}>{formatTime(item.createdAt)}</Text>
+              <Text style={[styles.title, !isRead && styles.unreadText]}>{item.title}</Text>
+              <Text style={styles.message} numberOfLines={2}>{item.body}</Text>
+              <Text style={styles.time}>{formatTime(item.created_at)}</Text>
             </View>
           </View>
-          {!item.read && <View style={styles.unreadDot} />}
+          {!isRead && <View style={styles.unreadDot} />}
         </Card>
       </TouchableOpacity>
     );
@@ -71,29 +86,39 @@ export default function NotificationsScreen() {
   return (
     <MainThemeLayout
       title="Notifikasi"
-      subtitle="Update terbaru untuk Anda"
+      subtitle="Sama dengan lonceng di beranda"
       showBackButton
       rightElement={
         notifications.length > 0 ? (
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={markAllAsRead} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={() => markAllAsRead.mutate(undefined, { onSuccess: () => refetch() })}
+              style={styles.headerButton}
+            >
               <Check size={18} color={colors.white} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={clearNotifications} style={[styles.headerButton, styles.clearButton]}>
-              <Trash2 size={18} color={colors.error[100]} />
             </TouchableOpacity>
           </View>
         ) : null
       }
     >
       <View style={styles.content}>
-        {notifications.length > 0 ? (
+        {isLoading ? (
+          <View style={styles.loadingWrap}><ActivityIndicator size="small" color={colors.primary[600]} /></View>
+        ) : notifications.length > 0 ? (
           <FlatList
             data={notifications}
             renderItem={renderNotification}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                tintColor={colors.primary[600]}
+                colors={[colors.primary[600]]}
+              />
+            }
           />
         ) : (
           <EmptyState
@@ -112,6 +137,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerActions: {
     flexDirection: 'row',
     gap: 8,
@@ -125,10 +155,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
-  },
-  clearButton: {
-    backgroundColor: 'rgba(220,38,38,0.22)',
-    borderColor: 'rgba(220,38,38,0.25)',
   },
   listContent: {
     paddingBottom: 100,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ import { Badge } from '@/components/Badge';
 import { ProgressBar } from '@/components/ProgressBar';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useMyBookings, usePrograms, useNews } from '@/hooks';
+import { useMyBookings, usePrograms, useNews, useUnreadCount } from '@/hooks';
 import { colors } from '@/constants/colors';
 
 const OPS_DASHBOARD_MENU = [
@@ -43,7 +43,16 @@ const OPS_DASHBOARD_MENU = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const unreadCountStore = useNotificationStore((state) => state.unreadCount);
+  const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
+  const { data: unreadData } = useUnreadCount();
+  const unreadCount = typeof unreadData?.count === 'number' ? unreadData.count : unreadCountStore;
+
+  useEffect(() => {
+    if (typeof unreadData?.count === 'number' && unreadData.count !== unreadCountStore) {
+      setUnreadCount(unreadData.count);
+    }
+  }, [setUnreadCount, unreadData?.count, unreadCountStore]);
 
   const { data: bookings, isLoading: bookingsLoading, refetch: refetchBookings } = useMyBookings();
   const { data: programs, isLoading: programsLoading } = usePrograms({ limit: 4 });

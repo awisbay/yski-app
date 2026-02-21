@@ -5,14 +5,15 @@ import { Platform } from 'react-native';
 // Query keys
 export const notificationKeys = {
   all: ['notifications'] as const,
-  lists: () => [...notificationKeys.all, 'list'] as const,
+  lists: (params?: { limit?: number; offset?: number; includeRead?: boolean }) =>
+    [...notificationKeys.all, 'list', params || {}] as const,
   unread: () => [...notificationKeys.all, 'unread'] as const,
 };
 
 // Hook to get notifications
 export function useNotifications(params?: { limit?: number; offset?: number; includeRead?: boolean }) {
   return useQuery({
-    queryKey: notificationKeys.lists(),
+    queryKey: notificationKeys.lists(params),
     queryFn: () => notificationsApi.getList(params).then(res => res.data),
   });
 }
