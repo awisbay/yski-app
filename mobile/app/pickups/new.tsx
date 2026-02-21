@@ -56,6 +56,8 @@ export default function NewPickupScreen() {
   const [pickupLat, setPickupLat] = useState<number | null>(null);
   const [pickupLng, setPickupLng] = useState<number | null>(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [requesterName, setRequesterName] = useState(user?.full_name || '');
+  const [requesterPhone, setRequesterPhone] = useState(user?.phone || '');
 
   const [amountInput, setAmountInput] = useState('');
   const [itemDescription, setItemDescription] = useState('');
@@ -112,6 +114,14 @@ export default function NewPickupScreen() {
         Alert.alert('Lokasi belum lengkap', 'Pilih lokasi penjemputan dari peta terlebih dahulu.');
         return false;
       }
+      if (!requesterName.trim() || requesterName.trim().length < 3) {
+        Alert.alert('Nama belum valid', 'Isi nama pemohon minimal 3 karakter.');
+        return false;
+      }
+      if (!requesterPhone.trim() || requesterPhone.replace(/[^0-9]/g, '').length < 10) {
+        Alert.alert('No HP belum valid', 'Isi nomor HP minimal 10 digit angka.');
+        return false;
+      }
       return true;
     }
 
@@ -130,11 +140,6 @@ export default function NewPickupScreen() {
         Alert.alert('Keterangan belum lengkap', 'Tambahkan keterangan barang (contoh: jelantah 5 liter, TV 1 unit).');
         return false;
       }
-    }
-
-    if (!(user?.full_name || '').trim() || !(user?.phone || '').trim()) {
-      Alert.alert('Data profil belum lengkap', 'Nama dan nomor HP akun Anda harus terisi sebelum submit penjemputan.');
-      return false;
     }
 
     return true;
@@ -163,8 +168,8 @@ export default function NewPickupScreen() {
 
       await createPickup.mutateAsync({
         pickup_type: pickupType,
-        requester_name: user?.full_name || '',
-        requester_phone: user?.phone || '',
+        requester_name: requesterName.trim(),
+        requester_phone: requesterPhone.replace(/[^0-9]/g, ''),
         pickup_address: pickupAddress,
         pickup_lat: pickupLat,
         pickup_lng: pickupLng,
@@ -178,7 +183,13 @@ export default function NewPickupScreen() {
         { text: 'OK', onPress: () => router.replace('/pickups') },
       ]);
     } catch (err: any) {
-      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat mengirim permintaan penjemputan.');
+      const detail = err?.response?.data?.detail;
+      const message = typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail)
+        ? detail.map((d: any) => d?.msg ?? String(d)).join(', ')
+        : 'Tidak dapat mengirim permintaan penjemputan.';
+      Alert.alert('Gagal', message);
     }
   };
 
@@ -260,6 +271,25 @@ export default function NewPickupScreen() {
                 <Text style={styles.locationLabel}>Alamat Terpilih</Text>
                 <Text style={styles.locationValue}>{pickupAddress || 'Belum memilih lokasi.'}</Text>
               </View>
+
+              <Text style={styles.inputLabel}>Nama Pemohon</Text>
+              <TextInput
+                value={requesterName}
+                onChangeText={setRequesterName}
+                placeholder="Masukkan nama lengkap"
+                placeholderTextColor={colors.gray[400]}
+                style={styles.input}
+              />
+
+              <Text style={styles.inputLabel}>Nomor HP</Text>
+              <TextInput
+                value={requesterPhone}
+                onChangeText={(text) => setRequesterPhone(text.replace(/[^0-9]/g, ''))}
+                placeholder="08xxxxxxxxxx"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="number-pad"
+                style={styles.input}
+              />
 
               <Text style={styles.helperText}>
                 Gunakan pencarian lokasi seperti Google Maps, atau tekan tombol lokasi saat ini di peta untuk tag posisi Anda.
