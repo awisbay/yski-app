@@ -56,6 +56,8 @@ export function useMyBookings() {
   return useQuery({
     queryKey: bookingKeys.lists(),
     queryFn: () => bookingsApi.getMyBookings().then(res => (res.data || []).map(normalizeBooking)),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -73,6 +75,8 @@ export function useBookingDetail(id: string) {
     queryKey: bookingKeys.detail(id),
     queryFn: () => bookingsApi.getBooking(id).then(res => normalizeBooking(res.data)),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -108,6 +112,7 @@ export function useApproveBooking() {
     mutationFn: (id: string) => bookingsApi.approve(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.list({ scope: 'all' }) });
     },
   });
 }
@@ -118,6 +123,7 @@ export function useRejectBooking() {
     mutationFn: (id: string) => bookingsApi.reject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.list({ scope: 'all' }) });
     },
   });
 }

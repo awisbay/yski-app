@@ -25,6 +25,7 @@ const STATUS_VARIANT: Record<string, any> = {
   pending:   'warning',
   in_progress: 'secondary',
   completed: 'secondary',
+  rejected: 'error',
   cancelled: 'error',
 };
 
@@ -34,6 +35,7 @@ const STATUS_LABEL: Record<string, string> = {
   pending:   'Menunggu',
   in_progress: 'Sedang Berjalan',
   completed: 'Selesai',
+  rejected: 'Ditolak',
   cancelled: 'Dibatalkan',
 };
 
@@ -47,7 +49,7 @@ export default function BookingListScreen() {
     if (activeFilter === 'all')       return true;
     if (activeFilter === 'active')    return b.status === 'confirmed' || b.status === 'approved' || b.status === 'pending' || b.status === 'in_progress';
     if (activeFilter === 'completed') return b.status === 'completed';
-    if (activeFilter === 'cancelled') return b.status === 'cancelled';
+    if (activeFilter === 'cancelled') return b.status === 'cancelled' || b.status === 'rejected';
     return true;
   }) ?? [];
 
