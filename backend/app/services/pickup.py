@@ -227,7 +227,7 @@ class PickupService:
         if not pickup:
             return None
         
-        if pickup.status not in ["scheduled", "pending", "accepted"]:
+        if pickup.status not in ["scheduled", "pending", "accepted", "awaiting_confirmation"]:
             raise HTTPException(status_code=400, detail="Pickup cannot be started")
         
         pickup.status = "in_progress"
