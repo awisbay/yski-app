@@ -36,7 +36,7 @@ export default function NewsDetailScreen() {
             </View>
           )}
         </View>
-        <Text style={styles.category}>{article.category || 'umum'}</Text>
+        <Text style={styles.category}>{(article.category || 'general').replace('_', '-')}</Text>
         <Text style={styles.title}>{article.title}</Text>
         <Text style={styles.date}>
           {new Date(article.publishedAt || article.createdAt).toLocaleDateString('id-ID')}

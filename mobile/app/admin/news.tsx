@@ -33,7 +33,13 @@ type PickedPhoto = {
   fileName: string;
 };
 
-const NEWS_CATEGORIES = ['umum', 'kegiatan', 'pengumuman', 'artikel'] as const;
+const NEWS_CATEGORIES = [
+  { value: 'general', label: 'Umum' },
+  { value: 'kesehatan', label: 'Kesehatan' },
+  { value: 'bencana', label: 'Bencana' },
+  { value: 'pendidikan', label: 'Pendidikan' },
+  { value: 'lain_lain', label: 'Lain-lain' },
+] as const;
 
 export default function AdminNewsScreen() {
   const user = useAuthStore((state) => state.user);
@@ -46,7 +52,7 @@ export default function AdminNewsScreen() {
   const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
   const [briefPrompt, setBriefPrompt] = useState('');
-  const [category, setCategory] = useState<(typeof NEWS_CATEGORIES)[number]>('umum');
+  const [category, setCategory] = useState<(typeof NEWS_CATEGORIES)[number]['value']>('general');
   const [pickedBanner, setPickedBanner] = useState<PickedPhoto | null>(null);
 
   const { data: news, isLoading, refetch } = useNews({ limit: 100, is_published: undefined });
@@ -81,7 +87,7 @@ export default function AdminNewsScreen() {
     setExcerpt('');
     setContent('');
     setBriefPrompt('');
-    setCategory('umum');
+    setCategory('general');
     setPickedBanner(null);
   };
 
@@ -91,7 +97,7 @@ export default function AdminNewsScreen() {
     setExcerpt(item.excerpt || '');
     setContent(item.content || '');
     setBriefPrompt('');
-    setCategory(item.category || 'umum');
+    setCategory(item.category || 'general');
     setPickedBanner(item.thumbnailUrl ? {
       uri: item.thumbnailUrl,
       mimeType: 'image/jpeg',
@@ -226,7 +232,7 @@ export default function AdminNewsScreen() {
       </View>
       <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
       <Text style={styles.newsMeta} numberOfLines={1}>
-        {item.category || 'umum'} · {new Date(item.updatedAt || item.createdAt).toLocaleDateString('id-ID')}
+        {(item.category || 'general').replace('_', '-')} · {new Date(item.updatedAt || item.createdAt).toLocaleDateString('id-ID')}
       </Text>
     </TouchableOpacity>
   );
@@ -303,11 +309,11 @@ export default function AdminNewsScreen() {
               <View style={styles.chipsRow}>
                 {NEWS_CATEGORIES.map((c) => (
                   <TouchableOpacity
-                    key={c}
-                    style={[styles.chip, category === c && styles.chipActive]}
-                    onPress={() => setCategory(c)}
+                    key={c.value}
+                    style={[styles.chip, category === c.value && styles.chipActive]}
+                    onPress={() => setCategory(c.value)}
                   >
-                    <Text style={[styles.chipText, category === c && styles.chipTextActive]}>{c}</Text>
+                    <Text style={[styles.chipText, category === c.value && styles.chipTextActive]}>{c.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>

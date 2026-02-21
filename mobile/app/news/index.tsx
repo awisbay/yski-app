@@ -29,7 +29,7 @@ export default function NewsScreen() {
         </View>
         <View style={styles.newsContent}>
           <View style={styles.metaRow}>
-            <Badge label={item.category || 'umum'} variant="secondary" size="sm" />
+            <Badge label={(item.category || 'general').replace('_', '-')} variant="secondary" size="sm" />
             <View style={styles.dateRow}>
               <Calendar size={12} color={colors.gray[500]} />
               <Text style={styles.dateText}>

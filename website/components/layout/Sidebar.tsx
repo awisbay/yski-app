@@ -9,6 +9,7 @@ import {
   Heart,
   Gavel,
   Truck,
+  Clock,
   Package,
   BookOpen,
   FileText,
@@ -20,13 +21,14 @@ import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
   { href: "/", icon: BarChart3, label: "Overview" },
-  { href: "/users", icon: Users, label: "Pengguna" },
-  { href: "/donations", icon: Heart, label: "Donasi" },
+  { href: "/users", icon: Users, label: "Manajemen User" },
+  { href: "/donations", icon: Heart, label: "Manajemen Donasi" },
   { href: "/auctions", icon: Gavel, label: "Lelang" },
-  { href: "/bookings", icon: Truck, label: "Pemindahan" },
-  { href: "/equipment", icon: Package, label: "Alat Kesehatan" },
+  { href: "/bookings", icon: Truck, label: "Cek Bookingan Pickup" },
+  { href: "/pickups", icon: Clock, label: "Cek Request Penjemputan" },
+  { href: "/equipment", icon: Package, label: "Manajemen Peralatan" },
   { href: "/finance", icon: FileText, label: "Keuangan" },
-  { href: "/content", icon: BookOpen, label: "Konten" },
+  { href: "/content", icon: BookOpen, label: "Program & Berita" },
 ]
 
 interface SidebarProps {
