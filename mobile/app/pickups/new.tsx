@@ -75,7 +75,7 @@ export default function NewPickupScreen() {
       Alert.alert('Izin kamera dibutuhkan', 'Aktifkan izin kamera untuk mengambil foto barang.');
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.75, allowsEditing: true });
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.75, allowsEditing: false });
     if (result.canceled || !result.assets.length) return;
     const asset = result.assets[0];
     setItemPhoto({
@@ -94,7 +94,7 @@ export default function NewPickupScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.75,
-      allowsEditing: true,
+      allowsEditing: false,
     });
     if (result.canceled || !result.assets.length) return;
     const asset = result.assets[0];
