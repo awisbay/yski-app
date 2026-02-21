@@ -83,3 +83,4 @@ export {
   useReviewFinancialTransaction,
 } from './useFinancial';
 export { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useRegisterPushToken } from './useNotifications';
+export { usePrayerTimes } from './usePrayerTimes';

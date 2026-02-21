@@ -27,6 +27,7 @@ import {
   Layers,
   Plus,
   Newspaper,
+  RefreshCw,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { Skeleton } from '@/components/ui';
@@ -43,6 +44,7 @@ import {
   useAllDonations,
   useAllPickups,
   useAllEquipmentLoans,
+  usePrayerTimes,
 } from '@/hooks';
 import { colors } from '@/constants/colors';
 
@@ -74,6 +76,14 @@ export default function HomeScreen() {
   const { data: bookings, isLoading: bookingsLoading, refetch: refetchBookings } = useMyBookings();
   const { data: programs, isLoading: programsLoading } = usePrograms({ limit: 4 });
   const { data: news, isLoading: newsLoading } = useNews({ limit: 3, is_published: true });
+  const {
+    locationLabel: prayerLocation,
+    nextPrayer,
+    times: prayerTimes,
+    loading: prayerLoading,
+    error: prayerError,
+    refresh: refreshPrayerTimes,
+  } = usePrayerTimes();
 
   const [refreshing, setRefreshing] = useState(false);
   const isOperationalRole = ['admin', 'pengurus', 'relawan', 'superadmin'].includes(user?.role || '');
@@ -109,6 +119,7 @@ export default function HomeScreen() {
     if (isOperationalRole) await refetchAllPickups();
     if (canManageDonations) await refetchAllDonations();
     if (canManageEquipment) await refetchAllLoans();
+    await refreshPrayerTimes();
     setRefreshing(false);
   };
 
@@ -233,6 +244,53 @@ export default function HomeScreen() {
           />
         }
       >
+
+        {/* ── Waktu Sholat ── */}
+        <View style={styles.prayerCard}>
+          <View style={styles.prayerTopRow}>
+            <View style={styles.prayerTitleWrap}>
+              <Text style={styles.prayerTitle}>Waktu Sholat</Text>
+              <Text style={styles.prayerLocation} numberOfLines={1}>
+                {prayerLocation}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={refreshPrayerTimes}
+              style={styles.prayerRefreshBtn}
+              activeOpacity={0.85}
+            >
+              <RefreshCw size={14} color={colors.primary[700]} />
+            </TouchableOpacity>
+          </View>
+
+          {prayerLoading ? (
+            <Skeleton height={74} borderRadius={12} />
+          ) : nextPrayer ? (
+            <View style={styles.prayerNextWrap}>
+              <Text style={styles.prayerNextLabel}>Menuju {nextPrayer.name}</Text>
+              <View style={styles.prayerNextRow}>
+                <Text style={styles.prayerNextTime}>{nextPrayer.time}</Text>
+                <View style={styles.prayerCountdown}>
+                  <Clock size={12} color={colors.primary[700]} />
+                  <Text style={styles.prayerCountdownText}>{nextPrayer.label}</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Text style={styles.prayerErrorText}>{prayerError || 'Jadwal sholat belum tersedia.'}</Text>
+          )}
+
+          {prayerTimes ? (
+            <View style={styles.prayerTimesRow}>
+              {prayerTimes.map((item) => (
+                <View key={item.label} style={styles.prayerTimeChip}>
+                  <Text style={styles.prayerTimeLabel}>{item.label}</Text>
+                  <Text style={styles.prayerTimeValue}>{item.value}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
 
         {/* ── Featured Campaign ── */}
         {programsLoading ? (
@@ -724,6 +782,116 @@ const styles = StyleSheet.create({
   },
 
   // ── Featured campaign card ──
+  prayerCard: {
+    marginTop: 4,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.primary[50],
+    padding: 14,
+  },
+  prayerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  prayerTitleWrap: {
+    flex: 1,
+    marginRight: 8,
+  },
+  prayerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.gray[900],
+    marginBottom: 2,
+  },
+  prayerLocation: {
+    fontSize: 11.5,
+    color: colors.gray[600],
+    fontWeight: '600',
+  },
+  prayerRefreshBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prayerNextWrap: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.white,
+    padding: 10,
+    marginBottom: 10,
+  },
+  prayerNextLabel: {
+    fontSize: 11.5,
+    color: colors.gray[600],
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  prayerNextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  prayerNextTime: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.primary[700],
+  },
+  prayerCountdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    backgroundColor: colors.primary[50],
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  prayerCountdownText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary[700],
+  },
+  prayerErrorText: {
+    fontSize: 12,
+    color: colors.error[600],
+    marginBottom: 8,
+  },
+  prayerTimesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  prayerTimeChip: {
+    minWidth: 62,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.white,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  prayerTimeLabel: {
+    fontSize: 10,
+    color: colors.gray[500],
+    fontWeight: '700',
+    marginBottom: 1,
+  },
+  prayerTimeValue: {
+    fontSize: 12,
+    color: colors.gray[900],
+    fontWeight: '800',
+  },
   featuredCard: {
     backgroundColor: colors.primary[50],
     borderRadius: 20,
