@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import { Plus, Truck, MapPin, Wallet, Package, Clock, ChevronRight } from 'lucide-react-native';
 import { MainThemeLayout, Skeleton } from '@/components/ui';
 import { Card } from '@/components/Card';
-import { EmptyState } from '@/components/EmptyState';
 import { useMyPickups, useCancelPickup } from '@/hooks';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -211,16 +210,21 @@ export default function PickupsScreen() {
             contentContainerStyle={styles.listContent}
           />
         ) : (
-          <EmptyState
-            icon={Truck}
-            title="Belum ada penjemputan"
-            description={
-              activeTab === 'all'
-                ? 'Buat penjemputan zakat, jelantah, sedekah, barang bekas, atau lain-lain'
-                : `Tidak ada penjemputan ${activeTab === 'active' ? 'aktif' : 'yang selesai'}.`
-            }
-            action={{ label: 'Buat Penjemputan', onPress: () => router.push('/pickups/new') }}
-          />
+          <View style={styles.emptyWrap}>
+            <View style={styles.emptyIconWrap}>
+              <Truck size={34} color={colors.primary[500]} />
+            </View>
+            <Text style={styles.emptyTitle}>Belum ada penjemputan</Text>
+            <Text style={styles.emptyDesc}>
+              {activeTab === 'all'
+                ? 'Buat penjemputan zakat, jelantah, sedekah, barang bekas, atau lain-lain.'
+                : `Tidak ada penjemputan ${activeTab === 'active' ? 'aktif' : 'yang selesai'}.`}
+            </Text>
+            <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/pickups/new')} activeOpacity={0.86}>
+              <Plus size={16} color={colors.white} />
+              <Text style={styles.emptyBtnText}>Buat Penjemputan</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </MainThemeLayout>
@@ -298,6 +302,55 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  emptyWrap: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+  },
+  emptyIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.gray[900],
+    textAlign: 'center',
+  },
+  emptyDesc: {
+    marginTop: 8,
+    fontSize: 13,
+    color: colors.gray[600],
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  emptyBtn: {
+    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    backgroundColor: colors.primary[600],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+  },
+  emptyBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.white,
   },
   pickupCard: {
     marginBottom: 12,
