@@ -51,10 +51,11 @@ export function useMyPickups() {
   });
 }
 
-export function useAllPickups() {
+export function useAllPickups(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: pickupKeys.list('all'),
     queryFn: () => pickupsApi.getList().then((res) => (res.data || []).map(normalizePickup)),
+    enabled: options?.enabled ?? true,
   });
 }
 

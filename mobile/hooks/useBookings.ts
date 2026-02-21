@@ -63,10 +63,11 @@ export function useMyBookings() {
 }
 
 // Hook to get all bookings for operational roles
-export function useAllBookings() {
+export function useAllBookings(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: bookingKeys.list({ scope: 'all' }),
     queryFn: () => bookingsApi.getList().then(res => (res.data || []).map(normalizeBooking)),
+    enabled: options?.enabled ?? true,
   });
 }
 

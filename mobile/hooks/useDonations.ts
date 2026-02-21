@@ -36,10 +36,11 @@ export function useMyDonations() {
   });
 }
 
-export function useAllDonations() {
+export function useAllDonations(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...donationKeys.lists(), 'all'],
     queryFn: () => donationsApi.getList().then((res) => (res.data || []).map(normalizeDonation)),
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -79,10 +79,11 @@ export function useMyLoans() {
   });
 }
 
-export function useAllEquipmentLoans(status?: string) {
+export function useAllEquipmentLoans(status?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: equipmentKeys.allLoans(status),
     queryFn: () => equipmentApi.getAllLoans({ status }).then(res => (res.data || []).map(normalizeLoan)),
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -29,15 +29,24 @@ import { Badge } from '@/components/Badge';
 import { ProgressBar } from '@/components/ProgressBar';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useMyBookings, usePrograms, useNews, useUnreadCount } from '@/hooks';
+import {
+  useMyBookings,
+  usePrograms,
+  useNews,
+  useUnreadCount,
+  useAllBookings,
+  useAllDonations,
+  useAllPickups,
+  useAllEquipmentLoans,
+} from '@/hooks';
 import { colors } from '@/constants/colors';
 
 const OPS_DASHBOARD_MENU = [
-  { key: 'users', label: 'User', route: '/admin/users', icon: Users, color: colors.primary[600], adminOnly: true },
-  { key: 'bookings', label: 'Booking', route: '/admin/bookings', icon: Calendar, color: colors.secondary[600] },
-  { key: 'equipment', label: 'Peralatan', route: '/admin/equipment', icon: Layers, color: colors.success[600] },
-  { key: 'donations', label: 'Donasi', route: '/admin/donations', icon: Heart, color: colors.warning[600] },
-  { key: 'pickups', label: 'Pickup', route: '/admin/pickups', icon: MapPin, color: colors.info[600] },
+  { key: 'users', label: 'Manajemen User', route: '/admin/users', icon: Users, color: colors.primary[600], adminOnly: true },
+  { key: 'bookings', label: 'Cek Bookingan Pickup', route: '/admin/bookings', icon: Clock, color: colors.secondary[600] },
+  { key: 'equipment', label: 'Manajemen Peralatan', route: '/admin/equipment', icon: Layers, color: colors.success[600] },
+  { key: 'donations', label: 'Cek Donasi Masuk', route: '/admin/donations', icon: TrendingUp, color: colors.warning[600] },
+  { key: 'pickups', label: 'Cek Request Penjemputan', route: '/admin/pickups', icon: MapPin, color: colors.info[600] },
 ];
 
 export default function HomeScreen() {
@@ -61,11 +70,31 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const isOperationalRole = ['admin', 'pengurus', 'relawan', 'superadmin'].includes(user?.role || '');
   const isAdminRole = ['admin', 'superadmin'].includes(user?.role || '');
+  const canManageDonations = ['admin', 'pengurus', 'superadmin'].includes(user?.role || '');
+  const canManageEquipment = ['admin', 'pengurus', 'superadmin'].includes(user?.role || '');
+
+  const { data: allBookings, refetch: refetchAllBookings } = useAllBookings({ enabled: isOperationalRole });
+  const { data: allPickups, refetch: refetchAllPickups } = useAllPickups({ enabled: isOperationalRole });
+  const { data: allDonations, refetch: refetchAllDonations } = useAllDonations({ enabled: canManageDonations });
+  const { data: allLoans, refetch: refetchAllLoans } = useAllEquipmentLoans(undefined, { enabled: canManageEquipment });
+
   const quickMenus = OPS_DASHBOARD_MENU.filter((item) => !item.adminOnly || isAdminRole);
+
+  const queueCounts: Record<string, number> = {
+    bookings: (allBookings || []).filter((b: any) => b.status === 'pending').length,
+    pickups: (allPickups || []).filter((p: any) => p.status === 'pending' || p.status === 'awaiting_confirmation').length,
+    donations: (allDonations || []).filter((d: any) => d.paymentStatus === 'pending' || d.paymentStatus === 'awaiting_verification').length,
+    equipment: (allLoans || []).filter((l: any) => l.status === 'pending').length,
+    users: 0,
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
     await refetchBookings();
+    if (isOperationalRole) await refetchAllBookings();
+    if (isOperationalRole) await refetchAllPickups();
+    if (canManageDonations) await refetchAllDonations();
+    if (canManageEquipment) await refetchAllLoans();
     setRefreshing(false);
   };
 
@@ -237,6 +266,11 @@ export default function HomeScreen() {
                   onPress={() => router.push(item.route)}
                   activeOpacity={0.85}
                 >
+                  {(queueCounts[item.key] || 0) > 0 && (
+                    <View style={styles.quickBadge}>
+                      <Text style={styles.quickBadgeText}>{queueCounts[item.key]}</Text>
+                    </View>
+                  )}
                   <View style={[styles.quickIconWrap, { backgroundColor: `${item.color}18` }]}>
                     <item.icon size={18} color={item.color} />
                   </View>
@@ -682,11 +716,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   quickItem: {
+    position: 'relative',
     width: '48%',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.gray[100],
     borderRadius: 14,
+    minHeight: 98,
+    paddingHorizontal: 8,
     paddingVertical: 12,
     marginBottom: 10,
     alignItems: 'center',
@@ -706,9 +743,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   quickLabel: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     color: colors.gray[800],
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+  quickBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    backgroundColor: colors.error[600],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.white,
+  },
+  quickBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.white,
   },
 
   // ── Impact card (fallback) ──
