@@ -23,6 +23,7 @@ import {
   Layers,
   Plus,
   Newspaper,
+  LucideIcon,
 } from 'lucide-react-native';
 import { Skeleton } from '@/components/ui';
 import { Badge } from '@/components/Badge';
@@ -263,17 +264,25 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={item.key}
                   style={styles.quickItem}
-                  onPress={() => router.push(item.route)}
+                  onPress={() => {
+                    if (!item.route) return;
+                    router.push(item.route);
+                  }}
                   activeOpacity={0.85}
                 >
+                  {(() => {
+                    const QuickIcon = (item.icon || Layers) as LucideIcon;
+                    return (
+                      <View style={[styles.quickIconWrap, { backgroundColor: `${item.color}18` }]}>
+                        <QuickIcon size={18} color={item.color} />
+                      </View>
+                    );
+                  })()}
                   {(queueCounts[item.key] || 0) > 0 && (
                     <View style={styles.quickBadge}>
                       <Text style={styles.quickBadgeText}>{queueCounts[item.key]}</Text>
                     </View>
                   )}
-                  <View style={[styles.quickIconWrap, { backgroundColor: `${item.color}18` }]}>
-                    <item.icon size={18} color={item.color} />
-                  </View>
                   <Text style={styles.quickLabel}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
