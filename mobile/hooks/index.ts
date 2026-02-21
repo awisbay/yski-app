@@ -34,7 +34,16 @@ export {
   useCreateEquipment,
   useUploadEquipmentPhoto,
 } from './useEquipment';
-export { useMyPickups, usePickupDetail, useCreatePickup, useCancelPickup } from './usePickups';
+export {
+  useMyPickups,
+  useAllPickups,
+  useAssignedPickups,
+  usePickupDetail,
+  useCreatePickup,
+  useUploadPickupPhoto,
+  useReviewPickup,
+  useCancelPickup,
+} from './usePickups';
 export { usePrograms, useFeaturedPrograms, useProgramDetail } from './usePrograms';
 export { useNews, useNewsDetail } from './useNews';
 

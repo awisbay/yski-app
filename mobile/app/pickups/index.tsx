@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Plus, Truck, Calendar, MapPin, Clock, ChevronRight, Package, Moon, Heart } from 'lucide-react-native';
+import { Plus, Truck, MapPin, Wallet, Package, Clock, ChevronRight } from 'lucide-react-native';
 import { MainThemeLayout, FilterTabBar, Skeleton } from '@/components/ui';
-import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
@@ -17,11 +16,28 @@ const FILTER_TABS = [
   { key: 'completed', label: 'Selesai' },
 ];
 
-const PICKUP_TYPES: Record<string, { label: string; icon: any; color: string }> = {
-  zakat: { label: 'Zakat', icon: Moon, color: colors.warning[500] },
-  kencleng: { label: 'Kencleng', icon: Package, color: colors.primary[500] },
-  donasi: { label: 'Donasi', icon: Heart, color: colors.success[500] },
+const PICKUP_TYPES: Record<string, { label: string; icon: any; color: string; isMoney: boolean }> = {
+  zakat: { label: 'Zakat', icon: Wallet, color: '#F59E0B', isMoney: true },
+  jelantah: { label: 'Jelantah', icon: Package, color: '#0EA5E9', isMoney: false },
+  sedekah: { label: 'Sedekah', icon: Wallet, color: '#22C55E', isMoney: true },
+  barang_bekas: { label: 'Barang Bekas', icon: Package, color: '#6366F1', isMoney: false },
+  lain_lain: { label: 'Lain-lain', icon: Package, color: '#14B8A6', isMoney: false },
 };
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'Menunggu',
+  awaiting_confirmation: 'Dikonfirmasi Nanti',
+  accepted: 'Jemput Sekarang',
+  scheduled: 'Terjadwal',
+  in_progress: 'Dalam Perjalanan',
+  completed: 'Selesai',
+  cancelled: 'Dibatalkan',
+};
+
+function formatCurrency(amount?: number | null) {
+  if (amount == null) return '-';
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(amount));
+}
 
 export default function PickupsScreen() {
   const [activeTab, setActiveTab] = useState('all');
@@ -31,9 +47,9 @@ export default function PickupsScreen() {
   const filteredPickups = pickups?.filter((pickup: any) => {
     switch (activeTab) {
       case 'active':
-        return pickup.status === 'pending' || pickup.status === 'scheduled';
+        return ['pending', 'awaiting_confirmation', 'accepted', 'scheduled', 'in_progress'].includes(pickup.status);
       case 'completed':
-        return pickup.status === 'completed' || pickup.status === 'cancelled';
+        return ['completed', 'cancelled'].includes(pickup.status);
       default:
         return true;
     }
@@ -48,13 +64,13 @@ export default function PickupsScreen() {
   };
 
   const renderPickupItem = ({ item }: { item: any }) => {
-    const typeInfo = PICKUP_TYPES[item.pickupType] || { label: item.pickupType, icon: Truck, color: colors.gray[500] };
+    const typeInfo = PICKUP_TYPES[item.pickupType] || { label: item.pickupType, icon: Truck, color: colors.gray[500], isMoney: false };
     const TypeIcon = typeInfo.icon;
-    
+
     return (
       <TouchableOpacity
         onPress={() => router.push(`/pickups/${item.id}`)}
-        activeOpacity={0.7}
+        activeOpacity={0.82}
       >
         <Card style={styles.pickupCard}>
           <View style={styles.pickupHeader}>
@@ -64,15 +80,15 @@ export default function PickupsScreen() {
               </View>
               <View>
                 <Text style={styles.typeLabel}>{typeInfo.label}</Text>
-                <Text style={styles.pickupId}>#{item.id.slice(-6).toUpperCase()}</Text>
+                <Text style={styles.pickupId}>#{String(item.requestCode || item.id).slice(-6).toUpperCase()}</Text>
               </View>
             </View>
             <Badge
-              label={item.status}
+              label={STATUS_LABEL[item.status] || item.status}
               variant={
                 item.status === 'completed' ? 'success' :
-                item.status === 'scheduled' ? 'primary' :
-                item.status === 'pending' ? 'warning' :
+                item.status === 'accepted' || item.status === 'scheduled' || item.status === 'in_progress' ? 'primary' :
+                item.status === 'pending' || item.status === 'awaiting_confirmation' ? 'warning' :
                 'error'
               }
             />
@@ -80,41 +96,47 @@ export default function PickupsScreen() {
 
           <View style={styles.pickupInfo}>
             <View style={styles.infoRow}>
-              <Calendar size={16} color={colors.gray[500]} />
-              <Text style={styles.infoText}>
-                {item.preferredDate 
-                  ? new Date(item.preferredDate).toLocaleDateString('id-ID', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                    })
-                  : 'Menunggu jadwal'
-                }
-              </Text>
+              <MapPin size={16} color={colors.gray[500]} />
+              <Text style={styles.infoText} numberOfLines={1}>{item.pickupAddress}</Text>
             </View>
-            {item.preferredTimeSlot && (
+
+            {typeInfo.isMoney ? (
               <View style={styles.infoRow}>
-                <Clock size={16} color={colors.gray[500]} />
-                <Text style={styles.infoText}>{item.preferredTimeSlot}</Text>
+                <Wallet size={16} color={colors.gray[500]} />
+                <Text style={styles.infoText}>Nominal: {formatCurrency(item.amount)}</Text>
+              </View>
+            ) : (
+              <View style={styles.infoRow}>
+                <Package size={16} color={colors.gray[500]} />
+                <Text style={styles.infoText} numberOfLines={1}>{item.itemDescription || '-'}</Text>
               </View>
             )}
-            <View style={styles.infoRow}>
-              <MapPin size={16} color={colors.gray[500]} />
-              <Text style={styles.infoText} numberOfLines={1}>
-                {item.pickupAddress}
-              </Text>
-            </View>
+
+            {item.status === 'accepted' && item.etaMinutes ? (
+              <View style={styles.infoRow}>
+                <Clock size={16} color={colors.primary[500]} />
+                <Text style={[styles.infoText, { color: colors.primary[700] }]}>Estimasi petugas tiba ±{item.etaMinutes} menit</Text>
+              </View>
+            ) : null}
+
+            {item.status === 'awaiting_confirmation' ? (
+              <Text style={styles.awaitingText}>Penjemputan akan dikonfirmasi lagi nanti.</Text>
+            ) : null}
+
+            {!typeInfo.isMoney && item.itemPhotoUrl ? (
+              <Image source={{ uri: item.itemPhotoUrl }} style={styles.previewImage} />
+            ) : null}
           </View>
 
-          {(item.status === 'pending' || item.status === 'scheduled') && (
+          {(item.status === 'pending' || item.status === 'awaiting_confirmation') && (
             <View style={styles.actionRow}>
-              <Button
-                title="Batalkan"
-                variant="secondary"
-                size="sm"
+              <TouchableOpacity
+                style={styles.cancelBtn}
                 onPress={() => handleCancel(item.id)}
-                isLoading={cancelMutation.isPending}
-              />
+                disabled={cancelMutation.isPending}
+              >
+                <Text style={styles.cancelText}>Batalkan</Text>
+              </TouchableOpacity>
               <ChevronRight size={20} color={colors.gray[400]} />
             </View>
           )}
@@ -126,7 +148,7 @@ export default function PickupsScreen() {
   return (
     <MainThemeLayout
       title="Penjemputan"
-      subtitle="Kelola jadwal jemput donasi"
+      subtitle="Zakat, jelantah, sedekah, barang bekas"
       rightElement={
         <TouchableOpacity
           style={styles.addButton}
@@ -145,9 +167,9 @@ export default function PickupsScreen() {
 
         {isLoading ? (
           <>
-            <Skeleton height={160} borderRadius={12} />
-            <Skeleton height={160} borderRadius={12} />
-            <Skeleton height={160} borderRadius={12} />
+            <Skeleton height={180} borderRadius={12} />
+            <Skeleton height={180} borderRadius={12} />
+            <Skeleton height={180} borderRadius={12} />
           </>
         ) : filteredPickups.length > 0 ? (
           <FlatList
@@ -163,11 +185,11 @@ export default function PickupsScreen() {
             title="Belum ada penjemputan"
             description={
               activeTab === 'all'
-                ? 'Jadwalkan penjemputan zakat, kencleng, atau donasi'
+                ? 'Buat penjemputan zakat, jelantah, sedekah, barang bekas, atau lain-lain'
                 : `Tidak ada penjemputan ${activeTab === 'active' ? 'aktif' : 'yang selesai'}.`
             }
             action={{
-              label: 'Jadwalkan Penjemputan',
+              label: 'Buat Penjemputan',
               onPress: () => router.push('/pickups/new'),
             }}
           />
@@ -228,7 +250,7 @@ const styles = StyleSheet.create({
   },
   pickupInfo: {
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   infoRow: {
     flexDirection: 'row',
@@ -240,6 +262,21 @@ const styles = StyleSheet.create({
     color: colors.gray[700],
     flex: 1,
   },
+  awaitingText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.warning[700],
+    backgroundColor: colors.warning[100],
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  previewImage: {
+    height: 140,
+    borderRadius: 10,
+    marginTop: 4,
+    backgroundColor: colors.gray[100],
+  },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -247,5 +284,20 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: colors.gray[100],
+  },
+  cancelBtn: {
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.error[200],
+    backgroundColor: colors.error[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.error[600],
   },
 });

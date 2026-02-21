@@ -138,8 +138,14 @@ export const equipmentApi = {
 export const pickupsApi = {
   getList: () => api.get('/pickups'),
   getMyPickups: () => api.get('/pickups/my'),
+  getAssigned: () => api.get('/pickups/assigned'),
   getDetail: (id: string) => api.get(`/pickups/${id}`),
   create: (data: any) => api.post('/pickups', data),
+  uploadPhoto: (formData: FormData) =>
+    api.post('/pickups/upload-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  review: (id: string, data: any) => api.patch(`/pickups/${id}/review`, data),
   cancel: (id: string, reason?: string) =>
     api.patch(`/pickups/${id}/cancel`, { cancellation_reason: reason }),
 };

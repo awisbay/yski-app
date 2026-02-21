@@ -4,16 +4,19 @@ Pickup Routes
 
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.media import save_upload_file
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
 from app.models.user import User
-from app.schemas.pickup import PickupCreate, PickupResponse, PickupSchedule, PickupComplete
+from app.schemas.pickup import PickupCreate, PickupResponse, PickupSchedule, PickupComplete, PickupReviewRequest
 from app.services.pickup import PickupService
 
 router = APIRouter()
+ALLOWED_PICKUP_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+MAX_PICKUP_IMAGE_SIZE = 8 * 1024 * 1024
 
 
 @router.get("", response_model=List[PickupResponse])
@@ -22,7 +25,7 @@ async def list_pickups(
     limit: int = Query(20, ge=1, le=100),
     status: str = Query(None),
     pickup_type: str = Query(None),
-    current_user: User = Depends(require_role("admin", "pengurus")),
+    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
     db: AsyncSession = Depends(get_db)
 ):
     """List all pickups (Admin/Pengurus only)."""
@@ -82,7 +85,7 @@ async def get_pickup(
     # Check ownership, assignment, or role
     if (pickup.requester_id != current_user.id and 
         pickup.assigned_to != current_user.id and
-        current_user.role not in ["admin", "pengurus"]):
+        current_user.role not in ["admin", "pengurus", "relawan"]):
         raise HTTPException(status_code=403, detail="Access denied")
     
     return pickup
@@ -97,6 +100,36 @@ async def create_pickup(
     """Create a new pickup request."""
     service = PickupService(db)
     pickup = await service.create_request(pickup_data, current_user.id)
+    return pickup
+
+
+@router.post("/upload-photo")
+async def upload_pickup_photo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload pickup item photo and return media URL."""
+    media_url = await save_upload_file(
+        file=file,
+        subdir="pickups/photos",
+        allowed_types=ALLOWED_PICKUP_IMAGE_TYPES,
+        max_size_bytes=MAX_PICKUP_IMAGE_SIZE,
+    )
+    return {"photo_url": media_url}
+
+
+@router.patch("/{pickup_id}/review", response_model=PickupResponse)
+async def review_pickup(
+    pickup_id: UUID,
+    review_data: PickupReviewRequest,
+    current_user: User = Depends(require_role("admin", "pengurus", "relawan")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Review incoming pickup request: accept now or confirm later."""
+    service = PickupService(db)
+    pickup = await service.review_pickup(str(pickup_id), current_user.id, review_data)
+    if not pickup:
+        raise HTTPException(status_code=404, detail="Pickup not found")
     return pickup
 
 
@@ -177,6 +210,7 @@ async def complete_pickup(
 async def cancel_pickup(
     pickup_id: UUID,
     reason: str = Query(None),
+    payload: dict | None = Body(default=None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -192,5 +226,6 @@ async def cancel_pickup(
         current_user.role not in ["admin", "pengurus"]):
         raise HTTPException(status_code=403, detail="Access denied")
     
-    pickup = await service.cancel_pickup(str(pickup_id), reason)
+    body_reason = payload.get("cancellation_reason") if isinstance(payload, dict) else None
+    pickup = await service.cancel_pickup(str(pickup_id), body_reason or reason)
     return pickup

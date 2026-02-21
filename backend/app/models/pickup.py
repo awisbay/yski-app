@@ -7,7 +7,7 @@ from datetime import datetime, date
 from typing import Optional
 from decimal import Decimal
 
-from sqlalchemy import String, Text, Date, ForeignKey, DateTime, func, Numeric
+from sqlalchemy import String, Text, Date, ForeignKey, DateTime, func, Numeric, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,19 +36,24 @@ class PickupRequest(Base):
     requester_phone: Mapped[str] = mapped_column(String(20), nullable=False)
     
     # Pickup Type
-    pickup_type: Mapped[str] = mapped_column(String(20), nullable=False)  # zakat, kencleng, donasi
+    pickup_type: Mapped[str] = mapped_column(String(20), nullable=False)  # zakat, jelantah, sedekah, barang_bekas, lain_lain
     
     # Location
     pickup_address: Mapped[str] = mapped_column(Text, nullable=False)
     pickup_lat: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
     pickup_lng: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
     
+    # Request details
+    amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
+    item_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    item_photo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
     # Schedule
     preferred_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     preferred_time_slot: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # morning, afternoon, evening
     
     # Workflow
-    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, scheduled, in_progress, completed, cancelled
+    status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)  # pending, awaiting_confirmation, accepted, in_progress, completed, cancelled
     
     assigned_to: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
@@ -61,6 +66,11 @@ class PickupRequest(Base):
         nullable=True
     )
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    accepted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    eta_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    eta_distance_km: Mapped[Optional[Decimal]] = mapped_column(Numeric(8, 2), nullable=True)
+    responder_lat: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
+    responder_lng: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
     
     # Completion
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

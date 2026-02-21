@@ -14,9 +14,19 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus, Camera, Image as ImageIcon } from 'lucide-react-native';
+import * as Location from 'expo-location';
+import { Calendar, Clock, MapPin, Navigation2, CheckCircle2, XCircle, Flag, Package, Plus, Minus, Camera, Image as ImageIcon, Truck, Wallet } from 'lucide-react-native';
 import { MainThemeLayout, RoutePlaceholderScreen } from '@/components/ui';
-import { useAllBookings, useApproveBooking, useRejectBooking, useUpdateBookingStatus, useAllDonations, useVerifyDonation } from '@/hooks';
+import {
+  useAllBookings,
+  useApproveBooking,
+  useRejectBooking,
+  useUpdateBookingStatus,
+  useAllDonations,
+  useVerifyDonation,
+  useAllPickups,
+  useReviewPickup,
+} from '@/hooks';
 import {
   useAllEquipmentLoans,
   useEquipmentList,
@@ -80,6 +90,30 @@ async function fetchRouteEstimate(booking: any): Promise<{ distanceKm: number; d
     return {
       distanceKm: Math.round((route.distance / 1000) * 10) / 10,
       durationMin: Math.round((route.duration / 60) * 1.4),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPickupEta(
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number
+): Promise<{ distanceKm: number; durationMin: number } | null> {
+  try {
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${fromLng},${fromLat};${toLng},${toLat}` +
+      '?overview=false';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes?.length) return null;
+    const route = data.routes[0];
+    return {
+      distanceKm: Math.round((route.distance / 1000) * 10) / 10,
+      durationMin: Math.max(5, Math.round((route.duration / 60) * 1.4)),
     };
   } catch {
     return null;
@@ -325,6 +359,206 @@ function BookingEta({ booking }: { booking: any }) {
   return <Text style={styles.rowText}>{text}</Text>;
 }
 
+const PICKUP_TYPE_META: Record<string, { label: string; icon: any; color: string; isMoney: boolean }> = {
+  zakat: { label: 'Zakat', icon: Wallet, color: '#F59E0B', isMoney: true },
+  jelantah: { label: 'Jelantah', icon: Package, color: '#0EA5E9', isMoney: false },
+  sedekah: { label: 'Sedekah', icon: Wallet, color: '#22C55E', isMoney: true },
+  barang_bekas: { label: 'Barang Bekas', icon: Package, color: '#6366F1', isMoney: false },
+  lain_lain: { label: 'Lain-lain', icon: Package, color: '#14B8A6', isMoney: false },
+};
+
+const PICKUP_STATUS_LABEL: Record<string, string> = {
+  pending: 'Menunggu',
+  awaiting_confirmation: 'Dikonfirmasi Nanti',
+  accepted: 'Jemput Sekarang',
+  in_progress: 'Diproses',
+  completed: 'Selesai',
+  cancelled: 'Dibatalkan',
+};
+
+function formatPickupCurrency(amount?: number | string | null) {
+  if (amount == null) return '-';
+  const parsed = Number(amount);
+  if (!Number.isFinite(parsed)) return '-';
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(parsed);
+}
+
+function PickupManagementScreen() {
+  const user = useAuthStore((state) => state.user);
+  const canManage = ['admin', 'superadmin', 'pengurus', 'relawan'].includes(user?.role || '');
+  const { data: pickups, isLoading, refetch } = useAllPickups();
+  const reviewPickup = useReviewPickup();
+
+  if (!canManage) {
+    return (
+      <MainThemeLayout title="Manajemen Penjemputan" subtitle="Akses terbatas" showBackButton onBackPress={() => router.replace('/(admin)')}>
+        <View style={styles.centered}><Text style={styles.emptyText}>Akses halaman ini khusus admin/pengurus/relawan.</Text></View>
+      </MainThemeLayout>
+    );
+  }
+
+  const incoming = (pickups || []).filter((item: any) => item.status === 'pending' || item.status === 'awaiting_confirmation');
+
+  const handleConfirmLater = async (pickup: any) => {
+    try {
+      await reviewPickup.mutateAsync({
+        id: pickup.id,
+        data: {
+          action: 'confirm_later',
+          follow_up_message: 'Penjemputan akan dikonfirmasi lagi nanti.',
+        },
+      });
+      refetch();
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat menyimpan status konfirmasi nanti.');
+    }
+  };
+
+  const handlePickupNow = async (pickup: any) => {
+    if (pickup?.pickupLat == null || pickup?.pickupLng == null) {
+      Alert.alert('Lokasi pickup tidak lengkap', 'Lokasi user belum memiliki koordinat yang valid.');
+      return;
+    }
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') {
+        Alert.alert('Izin lokasi dibutuhkan', 'Aktifkan izin lokasi agar estimasi waktu jemput bisa dihitung.');
+        return;
+      }
+
+      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const fromLat = current.coords.latitude;
+      const fromLng = current.coords.longitude;
+
+      const eta = await fetchPickupEta(fromLat, fromLng, Number(pickup.pickupLat), Number(pickup.pickupLng));
+      if (!eta) {
+        Alert.alert('Estimasi gagal', 'Tidak bisa menghitung estimasi perjalanan saat ini.');
+        return;
+      }
+
+      await reviewPickup.mutateAsync({
+        id: pickup.id,
+        data: {
+          action: 'accept_now',
+          responder_lat: fromLat,
+          responder_lng: fromLng,
+          eta_minutes: eta.durationMin,
+          eta_distance_km: eta.distanceKm,
+        },
+      });
+      refetch();
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat memproses jemput sekarang.');
+    }
+  };
+
+  return (
+    <MainThemeLayout
+      title="Manajemen Penjemputan"
+      subtitle={`${incoming.length} permintaan perlu ditindak`}
+      showBackButton
+      onBackPress={() => router.replace('/(admin)')}
+    >
+      <View style={styles.content}>
+        {isLoading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator color={colors.primary[600]} />
+          </View>
+        ) : (
+          <FlatList
+            data={pickups || []}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => {
+              const typeMeta = PICKUP_TYPE_META[item.pickupType] || PICKUP_TYPE_META.lain_lain;
+              const Icon = typeMeta.icon;
+              const isIncoming = item.status === 'pending' || item.status === 'awaiting_confirmation';
+              return (
+                <View style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.pickupTypeWrap}>
+                      <View style={[styles.pickupTypeIcon, { backgroundColor: `${typeMeta.color}20` }]}>
+                        <Icon size={14} color={typeMeta.color} />
+                      </View>
+                      <Text style={styles.code}>{typeMeta.label}</Text>
+                    </View>
+                    <Text style={[styles.status, isIncoming ? styles.statusPending : styles.statusNonPending]}>
+                      {PICKUP_STATUS_LABEL[item.status] || item.status}
+                    </Text>
+                  </View>
+
+                  <View style={styles.row}>
+                    <Text style={styles.rowText}>Nama: {item.requesterName || '-'}</Text>
+                  </View>
+                  <View style={styles.row}>
+                    <Text style={styles.rowText}>No HP: {item.requesterPhone || '-'}</Text>
+                  </View>
+                  <View style={styles.row}>
+                    <MapPin size={14} color={colors.primary[600]} />
+                    <Text style={styles.rowText} numberOfLines={2}>{item.pickupAddress || '-'}</Text>
+                  </View>
+
+                  {typeMeta.isMoney ? (
+                    <View style={styles.row}>
+                      <Wallet size={14} color={colors.primary[600]} />
+                      <Text style={styles.rowText}>Nominal: {formatPickupCurrency(item.amount)}</Text>
+                    </View>
+                  ) : (
+                    <>
+                      {item.itemDescription ? (
+                        <View style={styles.row}>
+                          <Package size={14} color={colors.primary[600]} />
+                          <Text style={styles.rowText} numberOfLines={2}>{item.itemDescription}</Text>
+                        </View>
+                      ) : null}
+                      {item.itemPhotoUrl ? (
+                        <Image source={{ uri: item.itemPhotoUrl }} style={styles.pickupPreviewImage} />
+                      ) : null}
+                    </>
+                  )}
+
+                  {item.status === 'accepted' && item.etaMinutes ? (
+                    <View style={styles.row}>
+                      <Clock size={14} color={colors.primary[600]} />
+                      <Text style={styles.rowText}>Estimasi tiba: ±{item.etaMinutes} menit ({item.etaDistanceKm || '-'} km)</Text>
+                    </View>
+                  ) : null}
+
+                  {isIncoming ? (
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.rejectBtn]}
+                        onPress={() => handleConfirmLater(item)}
+                        disabled={reviewPickup.isPending}
+                      >
+                        <Text style={styles.rejectText}>Dikonfirmasi Lagi Nanti</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.approveBtn]}
+                        onPress={() => handlePickupNow(item)}
+                        disabled={reviewPickup.isPending}
+                      >
+                        <Text style={styles.approveText}>Jemput Sekarang</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            }}
+            ListEmptyComponent={
+              <View style={styles.centered}>
+                <Text style={styles.emptyText}>Belum ada permintaan penjemputan.</Text>
+              </View>
+            }
+          />
+        )}
+      </View>
+    </MainThemeLayout>
+  );
+}
+
 function normalizeDonationProofUrl(url?: string | null) {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -466,6 +700,10 @@ export default function AdminSectionScreen() {
 
   if (key === 'donations') {
     return <DonationManagementScreen />;
+  }
+
+  if (key === 'pickups') {
+    return <PickupManagementScreen />;
   }
 
   return (
@@ -1154,6 +1392,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.gray[700],
   },
+  pickupTypeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pickupTypeIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   status: {
     fontSize: 11,
     fontWeight: '700',
@@ -1180,6 +1430,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.gray[700],
     lineHeight: 18,
+  },
+  pickupPreviewImage: {
+    height: 150,
+    borderRadius: 10,
+    marginTop: 8,
+    backgroundColor: colors.gray[100],
   },
   actionRow: {
     flexDirection: 'row',

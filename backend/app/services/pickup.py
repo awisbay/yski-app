@@ -13,7 +13,9 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.pickup import PickupRequest
-from app.schemas.pickup import PickupCreate, PickupSchedule, PickupComplete
+from app.models.user import User
+from app.schemas.pickup import PickupCreate, PickupSchedule, PickupComplete, PickupReviewRequest
+from app.services.notification_service import NotificationService
 
 
 def generate_pickup_code() -> str:
@@ -75,6 +77,9 @@ class PickupService:
             pickup_address=data.pickup_address,
             pickup_lat=data.pickup_lat,
             pickup_lng=data.pickup_lng,
+            amount=data.amount,
+            item_description=data.item_description,
+            item_photo_url=data.item_photo_url,
             preferred_date=data.preferred_date,
             preferred_time_slot=data.preferred_time_slot,
             notes=data.notes,
@@ -84,6 +89,101 @@ class PickupService:
         self.db.add(pickup)
         await self.db.flush()
         await self.db.refresh(pickup)
+
+        # Notify operational roles for incoming pickup request.
+        result = await self.db.execute(
+            select(User.id).where(
+                User.role.in_(["admin", "pengurus", "relawan"]),
+                User.is_active == True,  # noqa: E712
+                User.id != requester_id,
+            )
+        )
+        staff_user_ids = [row[0] for row in result.all()]
+        if staff_user_ids:
+            notif = NotificationService(self.db)
+            request_subject = (
+                f"Rp {int(data.amount):,}".replace(",", ".")
+                if data.amount is not None
+                else (data.item_description or data.pickup_type)
+            )
+            await notif.create_bulk_notifications(
+                user_ids=staff_user_ids,
+                title="Permintaan Penjemputan Baru",
+                body=f"{data.requester_name} mengajukan {data.pickup_type}: {request_subject}.",
+                type="info",
+                reference_type="pickup",
+                reference_id=pickup.id,
+            )
+        return pickup
+
+    async def review_pickup(
+        self,
+        pickup_id: str,
+        reviewer_id: UUID,
+        data: PickupReviewRequest,
+    ) -> Optional[PickupRequest]:
+        """Review pickup request: accept now or confirm later."""
+        pickup = await self.get_by_id(pickup_id)
+        if not pickup:
+            return None
+
+        if pickup.status not in ["pending", "awaiting_confirmation"]:
+            raise HTTPException(status_code=400, detail="Pickup sudah diproses")
+
+        now = datetime.now(timezone.utc)
+        pickup.scheduled_by = reviewer_id
+        pickup.scheduled_at = now
+
+        if data.action == "confirm_later":
+            pickup.status = "awaiting_confirmation"
+            pickup.eta_minutes = None
+            pickup.eta_distance_km = None
+            pickup.responder_lat = None
+            pickup.responder_lng = None
+            default_message = "Penjemputan akan dikonfirmasi lagi nanti."
+            followup = (data.follow_up_message or "").strip()
+            pickup.notes = f"{pickup.notes or ''}\n\n[Follow Up]: {followup or default_message}".strip()
+        else:
+            if data.eta_minutes is None or data.eta_distance_km is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Estimasi waktu dan jarak wajib diisi untuk jemput sekarang",
+                )
+            pickup.status = "accepted"
+            pickup.assigned_to = reviewer_id
+            pickup.accepted_at = now
+            pickup.eta_minutes = data.eta_minutes
+            pickup.eta_distance_km = data.eta_distance_km
+            pickup.responder_lat = data.responder_lat
+            pickup.responder_lng = data.responder_lng
+
+        await self.db.flush()
+        await self.db.refresh(pickup)
+
+        # Notify requester about review result.
+        if pickup.requester_id:
+            notif = NotificationService(self.db)
+            if data.action == "confirm_later":
+                message = data.follow_up_message or "Penjemputan akan dikonfirmasi lagi nanti."
+                await notif.create_notification(
+                    user_id=pickup.requester_id,
+                    title="Penjemputan Diproses",
+                    body=message,
+                    type="info",
+                    reference_type="pickup",
+                    reference_id=pickup.id,
+                    send_push=True,
+                )
+            else:
+                await notif.create_notification(
+                    user_id=pickup.requester_id,
+                    title="Penjemputan Diterima",
+                    body=f"Permintaan Anda diterima. Estimasi petugas tiba ±{pickup.eta_minutes} menit.",
+                    type="success",
+                    reference_type="pickup",
+                    reference_id=pickup.id,
+                    send_push=True,
+                )
         return pickup
     
     async def schedule_pickup(self, pickup_id: str, data: PickupSchedule, scheduled_by: UUID) -> Optional[PickupRequest]:
@@ -127,7 +227,7 @@ class PickupService:
         if not pickup:
             return None
         
-        if pickup.status not in ["scheduled", "pending"]:
+        if pickup.status not in ["scheduled", "pending", "accepted"]:
             raise HTTPException(status_code=400, detail="Pickup cannot be started")
         
         pickup.status = "in_progress"

@@ -1,492 +1,512 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  Image,
+} from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Truck, Package, Moon, Heart, ChevronLeft, ChevronRight, User, Phone, MapPin, Calendar, Info } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MapPin, Camera, Image as ImageIcon, ChevronLeft, ChevronRight, Wallet, Package } from 'lucide-react-native';
 import { MainThemeLayout } from '@/components/ui';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import { Card } from '@/components/Card';
-import { useCreatePickup } from '@/hooks';
-import { pickupSchema, type PickupFormData } from '@/lib/validation';
-import { usePickupStore } from '@/stores/pickupStore';
+import { MapPicker } from '@/components/MapPicker';
 import { useAuthStore } from '@/stores/authStore';
+import { useCreatePickup, useUploadPickupPhoto } from '@/hooks';
 import { colors } from '@/constants/colors';
-import { typography } from '@/constants/typography';
 
-const PICKUP_TYPES = [
-  { key: 'zakat', label: 'Zakat', icon: Moon, description: 'Penjemputan zakat mal/fitrah', color: colors.warning[500] },
-  { key: 'kencleng', label: 'Kencleng', icon: Package, description: 'Penjemputan kencleng/box amal', color: colors.primary[500] },
-  { key: 'donasi', label: 'Donasi', icon: Heart, description: 'Penjemputan barang donasi', color: colors.success[500] },
+type PickupType = 'zakat' | 'jelantah' | 'sedekah' | 'barang_bekas' | 'lain_lain';
+
+type PickedPhoto = {
+  uri: string;
+  mimeType: string;
+  fileName: string;
+};
+
+const PICKUP_TYPES: Array<{ key: PickupType; label: string; icon: any; color: string; isMoney: boolean }> = [
+  { key: 'zakat', label: 'Zakat', icon: Wallet, color: '#F59E0B', isMoney: true },
+  { key: 'jelantah', label: 'Jelantah', icon: Package, color: '#0EA5E9', isMoney: false },
+  { key: 'sedekah', label: 'Sedekah', icon: Wallet, color: '#22C55E', isMoney: true },
+  { key: 'barang_bekas', label: 'Barang Bekas', icon: Package, color: '#6366F1', isMoney: false },
+  { key: 'lain_lain', label: 'Lain-lain', icon: Package, color: '#14B8A6', isMoney: false },
 ];
 
-const TIME_SLOTS = ['08:00-10:00', '10:00-12:00', '13:00-15:00', '15:00-17:00'];
+function formatRupiahInput(raw: string) {
+  const digits = raw.replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 
 export default function NewPickupScreen() {
-  const [step, setStep] = useState(1);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
-  const createMutation = useCreatePickup();
+  const createPickup = useCreatePickup();
+  const uploadPickupPhoto = useUploadPickupPhoto();
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<PickupFormData>({
-    resolver: zodResolver(pickupSchema),
-    defaultValues: {
-      pickupType: 'zakat',
-      requesterName: user?.full_name || '',
-      requesterPhone: user?.phone || '',
-      pickupAddress: '',
-      preferredDate: undefined,
-      preferredTimeSlot: undefined,
-      notes: '',
-    },
-  });
+  const [step, setStep] = useState(1);
+  const [pickupType, setPickupType] = useState<PickupType>('zakat');
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
-  const selectedType = watch('pickupType');
-  const selectedDate = watch('preferredDate');
+  const [amountInput, setAmountInput] = useState('');
+  const [itemDescription, setItemDescription] = useState('');
+  const [notes, setNotes] = useState('');
+  const [itemPhoto, setItemPhoto] = useState<PickedPhoto | null>(null);
 
-  const onSubmit = async (data: PickupFormData) => {
+  const currentType = useMemo(
+    () => PICKUP_TYPES.find((t) => t.key === pickupType) || PICKUP_TYPES[0],
+    [pickupType]
+  );
+
+  const isSubmitting = createPickup.isPending || uploadPickupPhoto.isPending;
+
+  const handlePickFromCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Izin kamera dibutuhkan', 'Aktifkan izin kamera untuk mengambil foto barang.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.75, allowsEditing: true });
+    if (result.canceled || !result.assets.length) return;
+    const asset = result.assets[0];
+    setItemPhoto({
+      uri: asset.uri,
+      mimeType: asset.mimeType || 'image/jpeg',
+      fileName: asset.fileName || `pickup-camera-${Date.now()}.jpg`,
+    });
+  };
+
+  const handlePickFromGallery = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Izin galeri dibutuhkan', 'Aktifkan izin galeri untuk memilih foto barang.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.75,
+      allowsEditing: true,
+    });
+    if (result.canceled || !result.assets.length) return;
+    const asset = result.assets[0];
+    setItemPhoto({
+      uri: asset.uri,
+      mimeType: asset.mimeType || 'image/jpeg',
+      fileName: asset.fileName || `pickup-gallery-${Date.now()}.jpg`,
+    });
+  };
+
+  const validateStep = () => {
+    if (step === 1) return true;
+    if (step === 2) {
+      if (!pickupAddress || pickupLat == null || pickupLng == null) {
+        Alert.alert('Lokasi belum lengkap', 'Pilih lokasi penjemputan dari peta terlebih dahulu.');
+        return false;
+      }
+      return true;
+    }
+
+    if (currentType.isMoney) {
+      const amount = Number(amountInput.replace(/\./g, ''));
+      if (!Number.isFinite(amount) || amount <= 0) {
+        Alert.alert('Nominal belum valid', 'Masukkan nominal zakat/sedekah yang valid.');
+        return false;
+      }
+    } else {
+      if (!itemPhoto) {
+        Alert.alert('Foto belum ada', 'Unggah foto barang/jelantah terlebih dahulu.');
+        return false;
+      }
+      if (!itemDescription.trim()) {
+        Alert.alert('Keterangan belum lengkap', 'Tambahkan keterangan barang (contoh: jelantah 5 liter, TV 1 unit).');
+        return false;
+      }
+    }
+
+    if (!(user?.full_name || '').trim() || !(user?.phone || '').trim()) {
+      Alert.alert('Data profil belum lengkap', 'Nama dan nomor HP akun Anda harus terisi sebelum submit penjemputan.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleNextOrSubmit = async () => {
+    if (!validateStep()) return;
+
     if (step < 3) {
-      setStep(step + 1);
+      setStep((prev) => prev + 1);
       return;
     }
 
     try {
-      await createMutation.mutateAsync({
-        pickup_type: data.pickupType,
-        requester_name: data.requesterName,
-        requester_phone: data.requesterPhone,
-        pickup_address: data.pickupAddress,
-        preferred_date: data.preferredDate?.toISOString().split('T')[0],
-        preferred_time_slot: data.preferredTimeSlot,
-        notes: data.notes,
-      });
-      router.replace('/pickups');
-    } catch (error) {
-      console.error('Pickup creation failed:', error);
-    }
-  };
+      let itemPhotoUrl: string | null = null;
+      if (!currentType.isMoney && itemPhoto) {
+        const form = new FormData();
+        form.append('file', {
+          uri: itemPhoto.uri,
+          name: itemPhoto.fileName,
+          type: itemPhoto.mimeType,
+        } as any);
+        const uploaded = await uploadPickupPhoto.mutateAsync(form);
+        itemPhotoUrl = uploaded?.data?.photo_url || null;
+      }
 
-  const onDateChange = (event: any, date?: Date) => {
-    setShowDatePicker(false);
-    if (date) {
-      setValue('preferredDate', date);
+      await createPickup.mutateAsync({
+        pickup_type: pickupType,
+        requester_name: user?.full_name || '',
+        requester_phone: user?.phone || '',
+        pickup_address: pickupAddress,
+        pickup_lat: pickupLat,
+        pickup_lng: pickupLng,
+        amount: currentType.isMoney ? Number(amountInput.replace(/\./g, '')) : null,
+        item_description: currentType.isMoney ? null : itemDescription.trim(),
+        item_photo_url: currentType.isMoney ? null : itemPhotoUrl,
+        notes: notes.trim() || null,
+      });
+
+      Alert.alert('Berhasil', 'Permintaan penjemputan sudah dikirim. Tim kami akan memprosesnya.', [
+        { text: 'OK', onPress: () => router.replace('/pickups') },
+      ]);
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.detail || 'Tidak dapat mengirim permintaan penjemputan.');
     }
   };
 
   return (
     <MainThemeLayout
-      title="Jadwalkan Penjemputan"
-      subtitle="Atur detail penjemputan Anda"
+      title="Penjemputan Donasi"
+      subtitle="Isi data penjemputan dengan cepat"
       showBackButton
       onBackPress={() => {
         if (step > 1) {
-          setStep(step - 1);
-        } else {
-          router.back();
+          setStep((prev) => prev - 1);
+          return;
         }
+        router.back();
       }}
     >
-      <View style={styles.stepContainer}>
-        {[1, 2, 3].map((s) => (
-          <View key={s} style={styles.stepWrapper}>
-            <View style={[styles.step, step >= s && styles.stepActive]}>
-              <Text style={[styles.stepText, step >= s && styles.stepTextActive]}>
-                {s}
-              </Text>
-            </View>
-            {s < 3 && <View style={[styles.stepLine, step > s && styles.stepLineActive]} />}
-          </View>
-        ))}
-      </View>
-
       <KeyboardAvoidingView
-        style={styles.content}
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-      >
-        {step === 1 && (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Pilih Jenis Penjemputan</Text>
-            <Text style={styles.stepDescription}>
-              Pilih jenis penjemputan yang Anda butuhkan
-            </Text>
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 110 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.stepRow}>
+            {[1, 2, 3].map((n) => (
+              <View key={n} style={styles.stepItem}>
+                <View style={[styles.stepCircle, step >= n && styles.stepCircleActive]}>
+                  <Text style={[styles.stepLabel, step >= n && styles.stepLabelActive]}>{n}</Text>
+                </View>
+                {n < 3 ? <View style={[styles.stepLine, step > n && styles.stepLineActive]} /> : null}
+              </View>
+            ))}
+          </View>
 
-            <Controller
-              control={control}
-              name="pickupType"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.typesContainer}>
-                  {PICKUP_TYPES.map((type) => (
+          {step === 1 && (
+            <View>
+              <Text style={styles.sectionTitle}>Pilih Jenis Penjemputan</Text>
+              <View style={styles.typeGrid}>
+                {PICKUP_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  const isActive = pickupType === type.key;
+                  return (
                     <TouchableOpacity
                       key={type.key}
+                      activeOpacity={0.85}
                       style={[
                         styles.typeCard,
-                        value === type.key && { borderColor: type.color, backgroundColor: type.color + '08' },
+                        isActive && { borderColor: type.color, backgroundColor: `${type.color}10` },
                       ]}
-                      onPress={() => onChange(type.key)}
+                      onPress={() => setPickupType(type.key)}
                     >
-                      <View style={[styles.typeIcon, { backgroundColor: type.color + '15' }]}>
-                        <type.icon size={28} color={type.color} />
+                      <View style={[styles.typeIconWrap, { backgroundColor: `${type.color}20` }]}>
+                        <Icon size={20} color={type.color} />
                       </View>
-                      <Text style={[styles.typeLabel, value === type.key && { color: type.color }]}>
-                        {type.label}
-                      </Text>
-                      <Text style={styles.typeDescription}>
-                        {type.description}
-                      </Text>
+                      <Text style={styles.typeName}>{type.label}</Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            />
-          </View>
-        )}
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
-        {step === 2 && (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Informasi Kontak</Text>
-            <Text style={styles.stepDescription}>
-              Masukkan informasi kontak dan alamat penjemputan
-            </Text>
+          {step === 2 && (
+            <View>
+              <Text style={styles.sectionTitle}>Lokasi Penjemputan</Text>
+              <TouchableOpacity
+                style={styles.mapButton}
+                activeOpacity={0.85}
+                onPress={() => setShowMapPicker(true)}
+              >
+                <MapPin size={17} color={colors.primary[700]} />
+                <Text style={styles.mapButtonText}>{pickupAddress ? 'Ubah Lokasi di Peta' : 'Cari Lokasi di Peta'}</Text>
+              </TouchableOpacity>
 
-            <Controller
-              control={control}
-              name="requesterName"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="Nama Lengkap"
-                  placeholder="Masukkan nama lengkap..."
-                  value={value}
-                  onChangeText={onChange}
-                  leftIcon={<User size={20} color={colors.gray[400]} />}
-                  error={errors.requesterName?.message}
-                />
-              )}
-            />
+              <View style={styles.locationCard}>
+                <Text style={styles.locationLabel}>Alamat Terpilih</Text>
+                <Text style={styles.locationValue}>{pickupAddress || 'Belum memilih lokasi.'}</Text>
+              </View>
 
-            <Controller
-              control={control}
-              name="requesterPhone"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="Nomor Telepon"
-                  placeholder="08xxxxxxxxxx"
-                  value={value}
-                  onChangeText={onChange}
-                  keyboardType="phone-pad"
-                  leftIcon={<Phone size={20} color={colors.gray[400]} />}
-                  error={errors.requesterPhone?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="pickupAddress"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="Alamat Penjemputan"
-                  placeholder="Masukkan alamat lengkap..."
-                  value={value}
-                  onChangeText={onChange}
-                  multiline
-                  numberOfLines={3}
-                  leftIcon={<MapPin size={20} color={colors.gray[400]} />}
-                  error={errors.pickupAddress?.message}
-                />
-              )}
-            />
-          </View>
-        )}
-
-        {step === 3 && (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Jadwal Penjemputan</Text>
-            <Text style={styles.stepDescription}>
-              Pilih jadwal penjemputan yang diinginkan (opsional)
-            </Text>
-
-            <Controller
-              control={control}
-              name="preferredDate"
-              render={({ field: { onChange, value } }) => (
-                <>
-                  <Text style={styles.sectionTitle}>Pilih Tanggal (Opsional)</Text>
-                  <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                    <Card style={styles.dateCard}>
-                      <View style={styles.dateRow}>
-                        <Calendar size={24} color={colors.primary[600]} />
-                        <View style={styles.dateInfo}>
-                          <Text style={styles.dateLabel}>Tanggal</Text>
-                          <Text style={styles.dateValue}>
-                            {value
-                              ? value.toLocaleDateString('id-ID', {
-                                  weekday: 'long',
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric',
-                                })
-                              : 'Pilih tanggal'
-                            }
-                          </Text>
-                        </View>
-                        <ChevronRight size={20} color={colors.gray[400]} />
-                      </View>
-                    </Card>
-                  </TouchableOpacity>
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={value || new Date()}
-                      mode="date"
-                      minimumDate={new Date()}
-                      onChange={onDateChange}
-                    />
-                  )}
-                </>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="preferredTimeSlot"
-              render={({ field: { onChange, value } }) => (
-                <>
-                  <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Pilih Waktu (Opsional)</Text>
-                  <View style={styles.slotsGrid}>
-                    {TIME_SLOTS.map((slot) => (
-                      <TouchableOpacity
-                        key={slot}
-                        style={[
-                          styles.slotButton,
-                          value === slot && styles.slotSelected,
-                        ]}
-                        onPress={() => onChange(slot === value ? null : slot)}
-                      >
-                        <Text
-                          style={[
-                            styles.slotText,
-                            value === slot && styles.slotTextSelected,
-                          ]}
-                        >
-                          {slot}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="notes"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="Catatan (Opsional)"
-                  placeholder="Tambahkan catatan khusus..."
-                  value={value || ''}
-                  onChangeText={onChange}
-                  multiline
-                  numberOfLines={3}
-                  style={{ marginTop: 16 }}
-                />
-              )}
-            />
-
-            <View style={styles.infoBox}>
-              <Info size={20} color={colors.primary[600]} />
-              <Text style={styles.infoText}>
-                Tim kami akan menghubungi Anda untuk konfirmasi jadwal penjemputan.
+              <Text style={styles.helperText}>
+                Gunakan pencarian lokasi seperti Google Maps, atau tekan tombol lokasi saat ini di peta untuk tag posisi Anda.
               </Text>
             </View>
-          </View>
-        )}
+          )}
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title={step === 3 ? 'Konfirmasi' : 'Lanjut'}
-            onPress={handleSubmit(onSubmit as any)}
-            isLoading={createMutation.isPending}
-            rightIcon={step < 3 ? <ChevronRight size={20} color={colors.white} /> : undefined}
-          />
+          {step === 3 && (
+            <View>
+              <Text style={styles.sectionTitle}>Detail Penjemputan {currentType.label}</Text>
+
+              {currentType.isMoney ? (
+                <View>
+                  <Text style={styles.inputLabel}>Nominal (Rp)</Text>
+                  <TextInput
+                    value={amountInput}
+                    onChangeText={(text) => setAmountInput(formatRupiahInput(text))}
+                    keyboardType="number-pad"
+                    placeholder="Contoh: 100.000"
+                    placeholderTextColor={colors.gray[400]}
+                    style={styles.input}
+                  />
+                </View>
+              ) : (
+                <View>
+                  <Text style={styles.inputLabel}>Foto Barang</Text>
+                  <View style={styles.photoActions}>
+                    <TouchableOpacity style={styles.photoBtn} onPress={handlePickFromCamera}>
+                      <Camera size={16} color={colors.primary[700]} />
+                      <Text style={styles.photoBtnText}>Kamera</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.photoBtn} onPress={handlePickFromGallery}>
+                      <ImageIcon size={16} color={colors.primary[700]} />
+                      <Text style={styles.photoBtnText}>Galeri</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {itemPhoto ? <Image source={{ uri: itemPhoto.uri }} style={styles.previewImage} /> : null}
+
+                  <Text style={styles.inputLabel}>Keterangan Barang</Text>
+                  <TextInput
+                    value={itemDescription}
+                    onChangeText={setItemDescription}
+                    placeholder="Contoh: Jelantah 5 liter, TV 1 unit, kipas 1 unit"
+                    placeholderTextColor={colors.gray[400]}
+                    style={[styles.input, styles.multilineInput]}
+                    multiline
+                    textAlignVertical="top"
+                  />
+                </View>
+              )}
+
+              <Text style={styles.inputLabel}>Catatan (Opsional)</Text>
+              <TextInput
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Catatan tambahan untuk tim penjemputan"
+                placeholderTextColor={colors.gray[400]}
+                style={[styles.input, styles.multilineInput]}
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}> 
+          <TouchableOpacity
+            style={[styles.navBtn, styles.backBtn]}
+            onPress={() => (step > 1 ? setStep((prev) => prev - 1) : router.back())}
+            activeOpacity={0.85}
+          >
+            <ChevronLeft size={18} color={colors.primary[700]} />
+            <Text style={styles.backText}>Kembali</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navBtn, styles.nextBtn, isSubmitting && { opacity: 0.7 }]}
+            onPress={handleNextOrSubmit}
+            disabled={isSubmitting}
+            activeOpacity={0.85}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <>
+                <Text style={styles.nextText}>{step < 3 ? 'Lanjut' : 'Submit Penjemputan'}</Text>
+                <ChevronRight size={18} color={colors.white} />
+              </>
+            )}
+          </TouchableOpacity>
         </View>
-      </ScrollView>
       </KeyboardAvoidingView>
+
+      <MapPicker
+        visible={showMapPicker}
+        title="Lokasi Penjemputan"
+        initialCoords={
+          pickupLat != null && pickupLng != null
+            ? { latitude: pickupLat, longitude: pickupLng }
+            : undefined
+        }
+        onClose={() => setShowMapPicker(false)}
+        onConfirm={(loc) => {
+          setPickupAddress(loc.address);
+          setPickupLat(loc.latitude);
+          setPickupLng(loc.longitude);
+          setShowMapPicker(false);
+        }}
+      />
     </MainThemeLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  stepContainer: {
-    flexDirection: 'row',
+  container: { flex: 1 },
+  content: { paddingHorizontal: 20, gap: 10 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  stepItem: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  stepCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    marginBottom: 24,
-  },
-  stepWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  step: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.gray[200],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepActive: {
-    backgroundColor: colors.primary[500],
-  },
-  stepText: {
-    ...typography.body2,
-    fontWeight: '600',
-    color: colors.gray[500],
-  },
-  stepTextActive: {
-    color: colors.white,
-  },
-  stepLine: {
-    width: 40,
-    height: 2,
-    backgroundColor: colors.gray[200],
-    marginHorizontal: 8,
-  },
-  stepLineActive: {
-    backgroundColor: colors.primary[500],
-  },
-  content: {
-    flex: 1,
-  },
-  stepContent: {
-    padding: 16,
-  },
-  stepTitle: {
-    ...typography.h3,
-    marginBottom: 8,
-  },
-  stepDescription: {
-    ...typography.body2,
-    color: colors.gray[500],
-    marginBottom: 24,
-  },
-  typesContainer: {
-    gap: 12,
-  },
-  typeCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  typeIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  typeLabel: {
-    ...typography.body1,
-    fontWeight: '600',
-    color: colors.gray[900],
-    marginBottom: 4,
-  },
-  typeDescription: {
-    ...typography.body2,
-    color: colors.gray[500],
-  },
-  sectionTitle: {
-    ...typography.body1,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  dateCard: {
-    marginBottom: 8,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  dateLabel: {
-    ...typography.caption,
-    color: colors.gray[500],
-  },
-  dateValue: {
-    ...typography.body1,
-    fontWeight: '500',
-    color: colors.gray[900],
-    marginTop: 2,
-  },
-  slotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  slotButton: {
-    width: '48%',
-    paddingVertical: 12,
     backgroundColor: colors.gray[100],
+  },
+  stepCircleActive: { backgroundColor: colors.primary[600] },
+  stepLabel: { fontSize: 12, fontWeight: '800', color: colors.gray[500] },
+  stepLabelActive: { color: colors.white },
+  stepLine: { flex: 1, height: 2, backgroundColor: colors.gray[200], marginHorizontal: 8 },
+  stepLineActive: { backgroundColor: colors.primary[400] },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: colors.gray[900], marginBottom: 12 },
+
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  typeCard: {
+    width: '48%',
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    padding: 12,
+    gap: 10,
+  },
+  typeIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeName: { fontSize: 13, fontWeight: '700', color: colors.gray[900] },
+
+  mapButton: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    borderRadius: 12,
+    backgroundColor: colors.primary[50],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  mapButtonText: { fontSize: 13, fontWeight: '700', color: colors.primary[700] },
+  locationCard: {
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    padding: 12,
+  },
+  locationLabel: { fontSize: 11, fontWeight: '700', color: colors.gray[500], marginBottom: 4 },
+  locationValue: { fontSize: 13, color: colors.gray[800], lineHeight: 18 },
+  helperText: { marginTop: 10, fontSize: 12, lineHeight: 18, color: colors.gray[500] },
+
+  inputLabel: { fontSize: 12, fontWeight: '700', color: colors.gray[600], marginBottom: 6, marginTop: 10 },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    height: 48,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: colors.gray[900],
+  },
+  multilineInput: {
+    height: 96,
+    paddingTop: 10,
+  },
+
+  photoActions: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  photoBtn: {
+    flex: 1,
+    height: 42,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    borderRadius: 10,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  photoBtnText: { fontSize: 12, fontWeight: '700', color: colors.primary[700] },
+  previewImage: {
+    width: '100%',
+    height: 170,
+    borderRadius: 12,
+    marginTop: 4,
+    marginBottom: 4,
+    backgroundColor: colors.gray[100],
+  },
+
+  footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[100],
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  navBtn: {
+    height: 50,
     borderRadius: 12,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  slotSelected: {
-    backgroundColor: colors.primary[500],
-    borderColor: colors.primary[500],
-  },
-  slotText: {
-    ...typography.body2,
-    fontWeight: '500',
-    color: colors.gray[700],
-  },
-  slotTextSelected: {
-    color: colors.white,
-  },
-  infoBox: {
+    justifyContent: 'center',
     flexDirection: 'row',
-    gap: 12,
-    backgroundColor: colors.primary[50],
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 24,
+    gap: 6,
   },
-  infoText: {
+  backBtn: {
     flex: 1,
-    ...typography.body2,
-    color: colors.gray[700],
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    backgroundColor: colors.primary[50],
   },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
+  nextBtn: {
+    flex: 1.8,
+    backgroundColor: colors.primary[600],
   },
+  backText: { fontSize: 14, fontWeight: '700', color: colors.primary[700] },
+  nextText: { fontSize: 14, fontWeight: '700', color: colors.white },
 });
