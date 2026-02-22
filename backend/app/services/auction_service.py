@@ -73,7 +73,12 @@ class AuctionService:
         search: Optional[str] = None,
         status: Optional[str] = None,
     ) -> tuple[List[AuctionItem], int]:
-        query = select(AuctionItem).options(selectinload(AuctionItem.images), selectinload(AuctionItem.bids))
+        query = select(AuctionItem).options(
+            selectinload(AuctionItem.images),
+            selectinload(AuctionItem.bids),
+            selectinload(AuctionItem.donor),
+            selectinload(AuctionItem.winner),
+        )
 
         if search:
             query = query.where(AuctionItem.title.ilike(f"%{search}%"))
