@@ -2,12 +2,12 @@ import { LogBox } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Suppress non-critical Expo Go dev-environment warning
 LogBox.ignoreLogs(['Unable to activate keep awake']);
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, useRef } from 'react';
-import * as Notifications from 'expo-notifications';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { setupNotificationListeners } from '@/services/notifications';
@@ -31,9 +31,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function prepare() {
-      await hydrate();
-      await initializeNotifications();
-      setIsReady(true);
+      try {
+        await hydrate();
+        await initializeNotifications();
+      } catch (error) {
+        console.warn('App initialization error:', error);
+      } finally {
+        setIsReady(true);
+      }
     }
     prepare();
 
@@ -72,15 +77,17 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="auth" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(admin)" />
-        </Stack>
-        <StatusBar style="auto" />
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(admin)" />
+          </Stack>
+          <StatusBar style="auto" />
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
