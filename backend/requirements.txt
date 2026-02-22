@@ -1,35 +1,35 @@
 # FastAPI
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
+fastapi==0.129.2
+uvicorn[standard]==0.41.0
 
 # Database
-sqlalchemy[asyncio]==2.0.27
-asyncpg==0.29.0
-alembic==1.13.1
-aiosqlite==0.19.0  # For testing
+sqlalchemy[asyncio]==2.0.46
+asyncpg==0.31.0
+alembic==1.18.4
+aiosqlite==0.22.1  # For testing
 
 # Redis
 redis==5.0.1
 
 # Celery
-celery==5.3.6
+celery==5.6.2
 
 # Authentication
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
-python-multipart==0.0.9
+python-multipart==0.0.22
 
 # Validation & Serialization
-pydantic==2.6.1
-pydantic-settings==2.1.0
-email-validator==2.1.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
+email-validator==2.3.0
 
 # HTTP Client
-httpx==0.26.0
+httpx==0.28.1
 
 # MinIO
-minio==7.2.0
+minio==7.2.20
 
 # Testing
 pytest==7.4.4
@@ -37,4 +37,4 @@ pytest-asyncio==0.23.4
 pytest-cov==4.1.0
 
 # Utilities
-python-dotenv==1.0.0
+python-dotenv==1.2.1
