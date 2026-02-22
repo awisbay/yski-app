@@ -1,6 +1,10 @@
+import { LogBox } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Suppress non-critical Expo Go dev-environment warning
+LogBox.ignoreLogs(['Unable to activate keep awake']);
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
