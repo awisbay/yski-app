@@ -48,9 +48,19 @@ class BookingRejectRequest(BaseModel):
     rejection_reason: str = Field(..., min_length=3, max_length=500)
 
 
-class BookingResponse(BookingBase):
+class BookingResponse(BaseModel):
     id: UUID
     booking_code: str
+    booking_date: date
+    time_slot: str
+    pickup_address: str
+    pickup_lat: Optional[Decimal] = None
+    pickup_lng: Optional[Decimal] = None
+    dropoff_address: str
+    dropoff_lat: Optional[Decimal] = None
+    dropoff_lng: Optional[Decimal] = None
+    purpose: Optional[str] = None
+    notes: Optional[str] = None
     requester_id: UUID
     requester_name: str
     requester_phone: str

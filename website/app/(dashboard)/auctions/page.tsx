@@ -24,19 +24,25 @@ import type { AuctionItem, AuctionMetrics } from "@/types"
 
 const AUCTION_STATUSES = ["all", "ready", "bidding", "payment_pending", "sold", "cancelled"] as const
 type AuctionStatusFilter = (typeof AUCTION_STATUSES)[number]
+interface AuctionListResponse {
+  items: AuctionItem[]
+  total: number
+}
 
 function useAuctions(status: AuctionStatusFilter) {
   return useQuery({
     queryKey: ["auctions", status],
     queryFn: async () => {
-      const response = await api.get<AuctionItem[]>("/auctions", {
+      const response = await api.get<AuctionListResponse | AuctionItem[]>("/auctions", {
         params: {
           skip: 0,
           limit: 100,
           status: status !== "all" ? status : undefined,
         },
       })
-      return Array.isArray(response.data) ? response.data : []
+      if (Array.isArray(response.data)) return response.data
+      if (response.data && Array.isArray(response.data.items)) return response.data.items
+      return []
     },
   })
 }
@@ -234,9 +240,14 @@ export default function AuctionsPage() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6 space-y-4">
-          {(isError || metricsError) && (
+          {isError && (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               Gagal memuat data lelang. Silakan refresh halaman.
+            </div>
+          )}
+          {metricsError && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              Ringkasan metrik lelang belum berhasil dimuat, namun data tabel tetap ditampilkan.
             </div>
           )}
           <DataTableToolbar

@@ -96,7 +96,7 @@ export default function BookingsPage() {
       !search ||
       b.booking_code.toLowerCase().includes(search.toLowerCase()) ||
       b.requester_name.toLowerCase().includes(search.toLowerCase()) ||
-      b.purpose.toLowerCase().includes(search.toLowerCase())
+      (b.purpose ?? "").toLowerCase().includes(search.toLowerCase())
     return matchesStatus && matchesSearch
   })
 
@@ -275,9 +275,14 @@ export default function BookingsPage() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6 space-y-4">
-          {(isError || metricsError) && (
+          {isError && (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               Gagal memuat data booking pickup. Silakan refresh halaman.
+            </div>
+          )}
+          {metricsError && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              Ringkasan metrik booking belum berhasil dimuat, namun data tabel tetap ditampilkan.
             </div>
           )}
           <div className="flex items-center gap-3">
