@@ -9,7 +9,7 @@ celery_app = Celery(
     "yski_tasks",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks.notifications", "app.tasks.reports"],
+    include=["app.tasks.scheduled_jobs"],
 )
 
 celery_app.conf.update(
@@ -25,9 +25,17 @@ celery_app.conf.update(
 
 # Beat schedule for periodic tasks
 celery_app.conf.beat_schedule = {
-    "cleanup-expired-bookings": {
-        "task": "app.tasks.bookings.cleanup_expired",
+    "close-expired-auctions": {
+        "task": "app.tasks.scheduled_jobs.close_expired_auctions_task",
         "schedule": 300.0,  # Every 5 minutes
+    },
+    "check-overdue-loans": {
+        "task": "app.tasks.scheduled_jobs.check_overdue_loans_task",
+        "schedule": 86400.0,  # Once daily
+    },
+    "expire-unpaid-donations": {
+        "task": "app.tasks.scheduled_jobs.expire_unpaid_donations_task",
+        "schedule": 3600.0,  # Once hourly
     },
 }
 
