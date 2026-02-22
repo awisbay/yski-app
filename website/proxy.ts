@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 
-export function middleware(request: NextRequest) {
+const PUBLIC_FILE = /\.(.*)$/
+
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow login page and public assets
-  if (pathname.startsWith("/login") || pathname.startsWith("/_next") || pathname.startsWith("/favicon")) {
+  // Allow login page and static/public assets
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    PUBLIC_FILE.test(pathname)
+  ) {
     return NextResponse.next()
   }
 
@@ -39,5 +48,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|login).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|login|robots.txt|sitemap.xml).*)"],
 }
