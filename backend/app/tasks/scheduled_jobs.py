@@ -9,8 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.services.auction_service import AuctionService
-from app.services.equipment_service import EquipmentService
-from app.services.donation_service import DonationService
 from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
