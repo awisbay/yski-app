@@ -1,45 +1,97 @@
-name: Build YSKI Mobile APK
+name: 📱 Build Mobile APK
 
 on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'Build profile'
+        description: 'Build Profile'
         required: true
         default: 'preview'
         type: choice
         options:
           - preview
           - production
+      platform:
+        description: 'Platform'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - ios
+      submit:
+        description: 'Submit to Store (production only)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
 
-      - name: Setup EAS
+      - name: 🏗️ Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         working-directory: ./mobile
         run: npm ci
 
-      - name: Build Android APK
-        working-directory: ./mobile
-        run: eas build --platform android --profile ${{ github.event.inputs.profile }} --non-interactive
-
-      - name: Get download URL
+      - name: 📝 Update API URL
         working-directory: ./mobile
         run: |
-          echo "Build completed! Download URL:"
-          eas build:list --platform android --limit 1 --json | jq -r '.[0].artifacts.buildUrl'
+          API_URL="${{ secrets.API_URL || 'http://173.212.211.18:8080/api/v1' }}"
+          echo "Using API URL: $API_URL"
+          
+          # Update app.json
+          jq --arg url "$API_URL" '.expo.extra.apiUrl = $url' app.json > temp.json
+          mv temp.json app.json
+
+      - name: 🔨 Build ${{ inputs.platform }} (${{ inputs.profile }})
+        working-directory: ./mobile
+        run: |
+          if [ "${{ inputs.profile }}" = "production" ] && [ "${{ inputs.submit }}" = "true" ]; then
+            eas build --platform ${{ inputs.platform }} --profile production --auto-submit --non-interactive
+          else
+            eas build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive
+          fi
+
+      - name: 📋 Get Build Info
+        if: always()
+        working-directory: ./mobile
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Profile**: ${{ inputs.profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: ${{ inputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Submit to Store**: ${{ inputs.submit }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Try to get latest build URL
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Downloads" >> $GITHUB_STEP_SUMMARY
+          echo "Check [Expo Dashboard](https://expo.dev/accounts/${{ secrets.EXPO_ACCOUNT }}/projects/${{ secrets.EXPO_PROJECT }}/builds) for download links" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔔 Notify Slack
+        if: always() && secrets.SLACK_WEBHOOK_URL
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            📱 YSKI Mobile Build (${{ inputs.profile }})
+            Platform: ${{ inputs.platform }}
+            Status: ${{ job.status }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
