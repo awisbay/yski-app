@@ -57,6 +57,9 @@ yarn-error.log*
 .yarn
 .pnp.*
 
+# Root-level lockfile (each sub-package manages its own)
+/package-lock.json
+
 # Expo / React Native
 .expo/
 .expo-shared/
