@@ -13,6 +13,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.donation import Donation
 from app.schemas.donation import DonationCreate, DonationVerify
@@ -126,7 +127,7 @@ class DonationService:
             return None
         
         result = await self.db.execute(
-            select(Donation).where(Donation.id == uuid_id)
+            select(Donation).options(selectinload(Donation.verifier)).where(Donation.id == uuid_id)
         )
         return result.scalar_one_or_none()
     
@@ -139,7 +140,7 @@ class DonationService:
         donation_type: Optional[str] = None
     ) -> List[Donation]:
         """List donations with filters."""
-        query = select(Donation)
+        query = select(Donation).options(selectinload(Donation.verifier))
         
         if status:
             query = query.where(Donation.payment_status == status)

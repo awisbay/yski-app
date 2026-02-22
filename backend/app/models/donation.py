@@ -74,3 +74,7 @@ class Donation(Base):
     
     def __repr__(self) -> str:
         return f"<Donation(id={self.id}, code={self.donation_code}, amount={self.amount}, status={self.payment_status})>"
+
+    @property
+    def verified_by_name(self) -> Optional[str]:
+        return self.verifier.full_name if self.verifier else None

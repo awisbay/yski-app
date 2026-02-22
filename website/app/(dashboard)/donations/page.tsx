@@ -73,10 +73,10 @@ export default function DonationsPage() {
 
   const filteredDonations = search
     ? donations.filter(
-        (d) =>
-          d.donor_name.toLowerCase().includes(search.toLowerCase()) ||
-          d.donation_code.toLowerCase().includes(search.toLowerCase())
-      )
+      (d) =>
+        d.donor_name.toLowerCase().includes(search.toLowerCase()) ||
+        d.donation_code.toLowerCase().includes(search.toLowerCase())
+    )
     : donations
 
   const columns: ColumnDef<Donation>[] = [
@@ -114,11 +114,11 @@ export default function DonationsPage() {
       cell: ({ row }) => <StatusBadge status={row.original.payment_status} />,
     },
     {
-      accessorKey: "verified_by",
+      accessorKey: "verified_by_name",
       header: "Diverifikasi Oleh",
       cell: ({ row }) => {
-        const v = row.original.verified_by
-        return <span className="text-sm text-gray-600">{v ? v.slice(0, 8) + "..." : "—"}</span>
+        const v = row.original.verified_by_name
+        return <span className="text-sm text-gray-600">{v ? v : "—"}</span>
       },
     },
     {
@@ -164,7 +164,7 @@ export default function DonationsPage() {
     Jumlah: d.amount,
     "Metode Bayar": d.payment_method,
     "Status Bayar": d.payment_status,
-    "Diverifikasi Oleh": d.verified_by ?? "",
+    "Diverifikasi Oleh": d.verified_by_name ?? "",
     "Diverifikasi Pada": d.verified_at ? format(new Date(d.verified_at), "dd/MM/yyyy HH:mm") : "",
     Tanggal: format(new Date(d.created_at), "dd/MM/yyyy"),
   }))

@@ -73,6 +73,7 @@ export interface Donation {
   payment_status: 'pending' | 'paid' | 'cancelled' | 'refunded'
   proof_url: string | null
   verified_by: string | null
+  verified_by_name: string | null
   verified_at: string | null
   message: string | null
   created_at: string
@@ -144,7 +145,9 @@ export interface AuctionItem {
   current_price: number
   min_increment: number
   donor_id: string
+  donor_name?: string
   winner_id: string | null
+  winner_name: string | null
   status: 'ready' | 'bidding' | 'payment_pending' | 'sold' | 'cancelled'
   payment_status: string | null
   payment_proof_url: string | null

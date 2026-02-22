@@ -121,12 +121,12 @@ export default function AuctionsPage() {
       },
     },
     {
-      accessorKey: "winner_id",
+      accessorKey: "winner_name",
       header: "Pemenang",
       cell: ({ row }) => {
-        const w = row.original.winner_id
+        const w = row.original.winner_name
         return (
-          <span className="text-sm text-gray-600">{w ? w.slice(0, 8) + "..." : "—"}</span>
+          <span className="text-sm text-gray-600">{w ? w : "—"}</span>
         )
       },
     },

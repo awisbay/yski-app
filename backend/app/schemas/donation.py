@@ -38,6 +38,7 @@ class DonationResponse(DonationBase):
     payment_status: str
     proof_url: Optional[str] = None
     verified_by: Optional[UUID] = None
+    verified_by_name: Optional[str] = None
     verified_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
