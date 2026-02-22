@@ -49,7 +49,12 @@
     },
     "extra": {
       "apiUrl": "http://173.212.211.18/api/v1",
-      "googleMapsApiKey": ""
-    }
+      "googleMapsApiKey": "",
+      "router": {},
+      "eas": {
+        "projectId": "333d16d5-6eac-4385-a216-5496296131a3"
+      }
+    },
+    "owner": "wisbay"
   }
 }
