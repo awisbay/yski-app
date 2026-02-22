@@ -135,6 +135,7 @@ export interface EquipmentLoan {
   notes: string | null
   created_at: string
   updated_at: string | null
+  equipment?: MedicalEquipment
 }
 
 export interface AuctionItem {

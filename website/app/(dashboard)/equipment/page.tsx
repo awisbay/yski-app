@@ -206,11 +206,12 @@ export default function EquipmentPage() {
 
   const loanColumns: ColumnDef<EquipmentLoan>[] = [
     {
-      accessorKey: "equipment_id",
-      header: "ID Alat",
-      cell: ({ row }) => (
-        <span className="font-mono text-xs text-gray-500">{row.original.equipment_id}</span>
-      ),
+      accessorKey: "equipment.name",
+      header: "Nama Alat",
+      cell: ({ row }) => {
+        const eqName = row.original.equipment?.name ?? "—"
+        return <span className="text-sm font-medium text-gray-900">{eqName}</span>
+      },
     },
     {
       accessorKey: "borrower_name",
