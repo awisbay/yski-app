@@ -3,8 +3,16 @@
 export interface User {
   id: string
   full_name: string
+  kunyah_name?: string | null
   email: string
   phone: string | null
+  occupation?: string | null
+  address?: string | null
+  city?: string | null
+  province?: string | null
+  interested_as_donatur?: boolean
+  interested_as_relawan?: boolean
+  wants_beneficiary_survey?: boolean
   avatar_url: string | null
   role: 'admin' | 'pengurus' | 'relawan' | 'sahabat'
   is_active: boolean
