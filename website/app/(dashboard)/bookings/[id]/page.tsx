@@ -1,9 +1,9 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MapPin, Phone, User, Star } from "lucide-react"
+import { ArrowLeft, MapPin, Phone, User, Star, Navigation2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -24,11 +24,49 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const qc = useQueryClient()
   const [confirmAction, setConfirmAction] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")
+  const [routeInfo, setRouteInfo] = useState<{ distanceKm: number; durationMin: number } | null>(null)
+  const [isFetchingRoute, setIsFetchingRoute] = useState(false)
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking", id],
     queryFn: () => api.get<MovingBooking>(`/bookings/${id}`).then((r) => r.data),
   })
+
+  useEffect(() => {
+    if (!booking || !booking.pickup_lat || !booking.pickup_lng || !booking.dropoff_lat || !booking.dropoff_lng) {
+      return
+    }
+
+    let cancelled = false
+    setIsFetchingRoute(true)
+
+    const fetchRoute = async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${booking.pickup_lng},${booking.pickup_lat};${booking.dropoff_lng},${booking.dropoff_lat}?overview=false`
+        const res = await fetch(url)
+        const data = await res.json()
+        if (data.code !== "Ok" || !data.routes?.length) return
+
+        if (!cancelled) {
+          const route = data.routes[0]
+          setRouteInfo({
+            distanceKm: Math.round((route.distance / 1000) * 10) / 10,
+            durationMin: Math.round((route.duration / 60) * 1.4),
+          })
+        }
+      } catch (e) {
+        // ignore validation errors for route
+      } finally {
+        if (!cancelled) {
+          setIsFetchingRoute(false)
+        }
+      }
+    }
+
+    fetchRoute()
+
+    return () => { cancelled = true }
+  }, [booking])
 
   const approveMutation = useMutation({
     mutationFn: () => api.post(`/bookings/${id}/approve`),
@@ -141,6 +179,28 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-sm text-gray-900 mt-0.5">{booking.dropoff_address}</p>
                   </div>
                 </div>
+
+                {isFetchingRoute ? (
+                  <div className="flex items-start gap-3 mt-4 pt-3 border-t border-gray-100">
+                    <Navigation2 className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0 animate-pulse" />
+                    <div>
+                      <Label className="text-xs text-gray-500">Estimasi Perjalanan</Label>
+                      <p className="text-sm text-gray-500 mt-0.5">Menghitung rute...</p>
+                    </div>
+                  </div>
+                ) : routeInfo ? (
+                  <div className="flex items-start gap-3 mt-4 pt-3 border-t border-gray-100">
+                    <Navigation2 className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <Label className="text-xs text-gray-500">Estimasi Perjalanan</Label>
+                      <p className="text-sm font-medium text-gray-900 mt-0.5">
+                        {routeInfo.distanceKm} km
+                        <span className="mx-2 text-gray-300">|</span>
+                        <span className="font-normal text-gray-600">±{routeInfo.durationMin} menit</span>
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>
