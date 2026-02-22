@@ -47,7 +47,7 @@ function usePickups(status: string, pickupType: string) {
           pickup_type: pickupType !== "all" ? pickupType : undefined,
         },
       })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }

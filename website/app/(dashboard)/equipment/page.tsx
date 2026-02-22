@@ -32,7 +32,7 @@ function useEquipment() {
     queryKey: ["equipment"],
     queryFn: async () => {
       const response = await api.get<MedicalEquipment[]>("/equipment", { params: { skip: 0, limit: 100, is_active: true } })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }
@@ -42,7 +42,7 @@ function useEquipmentLoans() {
     queryKey: ["equipment-loans"],
     queryFn: async () => {
       const response = await api.get<EquipmentLoan[]>("/equipment/loans/all", { params: { skip: 0, limit: 100 } })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }
@@ -51,7 +51,7 @@ function useEquipmentMetrics() {
   return useQuery({
     queryKey: ["dashboard", "equipment", "metrics"],
     queryFn: () =>
-      api.get<EquipmentMetrics>("/dashboard/equipment/metrics").then((r) => r.data),
+      api.get<EquipmentMetrics>("/dashboard/equipment/metrics"),
   })
 }
 

@@ -48,7 +48,7 @@
       "typedRoutes": false
     },
     "extra": {
-      "apiUrl": "http://192.168.100.88/api/v1",
+      "apiUrl": "http://173.212.211.18/api/v1",
       "googleMapsApiKey": ""
     }
   }

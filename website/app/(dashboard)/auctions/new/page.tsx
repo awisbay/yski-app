@@ -57,7 +57,7 @@ export default function NewAuctionPage() {
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateAuctionPayload) =>
-      api.post("/auctions", payload).then((r) => r.data),
+      api.post("/auctions", payload),
     onSuccess: () => {
       toast.success("Lelang berhasil dibuat")
       router.push("/auctions")

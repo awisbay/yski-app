@@ -29,7 +29,7 @@ function useNewsArticles() {
     queryKey: ["news-articles"],
     queryFn: async () => {
       const response = await api.get<NewsArticle[]>("/content/news", { params: { skip: 0, limit: 100 } })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }
@@ -39,7 +39,7 @@ function usePrograms() {
     queryKey: ["programs"],
     queryFn: async () => {
       const response = await api.get<Program[]>("/content/programs", { params: { skip: 0, limit: 100 } })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }

@@ -22,7 +22,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
 
   const { data: equipment, isLoading } = useQuery({
     queryKey: ["equipment", id],
-    queryFn: () => api.get<MedicalEquipment>(`/equipment/${id}`).then((r) => r.data),
+    queryFn: () => api.get<MedicalEquipment>(`/equipment/${id}`),
   })
 
   const { data: loans = [], isLoading: loansLoading } = useQuery({
@@ -30,7 +30,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     queryFn: () =>
       api
         .get<EquipmentLoan[]>("/equipment/loans/all", { params: { equipment_id: id, limit: 50 } })
-        .then((r) => r.data),
+        ,
   })
 
   if (isLoading) {

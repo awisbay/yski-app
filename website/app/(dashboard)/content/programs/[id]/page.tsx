@@ -51,7 +51,7 @@ export default function EditProgramPage({ params }: { params: Promise<{ id: stri
 
   const { data: program, isLoading } = useQuery({
     queryKey: ["program", id],
-    queryFn: () => api.get<Program>(`/content/programs/${id}`).then((r) => r.data),
+    queryFn: () => api.get<Program>(`/content/programs/${id}`),
   })
 
   const form = useForm<FormValues>({

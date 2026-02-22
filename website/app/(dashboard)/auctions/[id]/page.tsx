@@ -37,12 +37,12 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: auction, isLoading } = useQuery({
     queryKey: ["auction", id],
-    queryFn: () => api.get<AuctionItem>(`/auctions/${id}`).then((r) => r.data),
+    queryFn: () => api.get<AuctionItem>(`/auctions/${id}`),
   })
 
   const { data: bids = [], isLoading: bidsLoading } = useQuery({
     queryKey: ["auction", id, "bids"],
-    queryFn: () => api.get<AuctionBid[]>(`/auctions/${id}/bids`).then((r) => r.data),
+    queryFn: () => api.get<AuctionBid[]>(`/auctions/${id}/bids`),
   })
 
   const approveBidMutation = useMutation({

@@ -19,28 +19,28 @@ import type { DashboardOverview, FinancialReport, NewsArticle, Program } from "@
 function useOverview() {
   return useQuery({
     queryKey: ["dashboard", "overview"],
-    queryFn: () => api.get<DashboardOverview>("/dashboard/overview").then((r) => r.data),
+    queryFn: () => api.get<DashboardOverview>("/dashboard/overview"),
   })
 }
 
 function useNewsSummary() {
   return useQuery({
     queryKey: ["dashboard", "overview", "news-summary"],
-    queryFn: () => api.get<NewsArticle[]>("/content/news", { params: { skip: 0, limit: 200 } }).then((r) => r.data),
+    queryFn: () => api.get<NewsArticle[]>("/content/news", { params: { skip: 0, limit: 200 } }),
   })
 }
 
 function useProgramSummary() {
   return useQuery({
     queryKey: ["dashboard", "overview", "program-summary"],
-    queryFn: () => api.get<Program[]>("/content/programs", { params: { skip: 0, limit: 200 } }).then((r) => r.data),
+    queryFn: () => api.get<Program[]>("/content/programs", { params: { skip: 0, limit: 200 } }),
   })
 }
 
 function useFinanceSummary() {
   return useQuery({
     queryKey: ["dashboard", "overview", "finance-summary"],
-    queryFn: () => api.get<FinancialReport[]>("/financial/reports", { params: { skip: 0, limit: 200 } }).then((r) => r.data),
+    queryFn: () => api.get<FinancialReport[]>("/financial/reports", { params: { skip: 0, limit: 200 } }),
   })
 }
 

@@ -39,7 +39,7 @@ function useDonations(paymentStatus: PaymentStatusFilter) {
           payment_status: paymentStatus !== "all" ? paymentStatus : undefined,
         },
       })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }
@@ -47,7 +47,7 @@ function useDonations(paymentStatus: PaymentStatusFilter) {
 function useDonationMetrics() {
   return useQuery({
     queryKey: ["dashboard", "donations", "metrics"],
-    queryFn: () => api.get<DonationMetrics>("/dashboard/donations/metrics").then((r) => r.data),
+    queryFn: () => api.get<DonationMetrics>("/dashboard/donations/metrics"),
   })
 }
 

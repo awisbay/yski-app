@@ -44,7 +44,7 @@ function useBookings() {
     queryKey: ["bookings"],
     queryFn: async () => {
       const response = await api.get<MovingBooking[]>("/bookings", { params: { skip: 0, limit: 100 } })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }
@@ -53,7 +53,7 @@ function useBookingMetrics() {
   return useQuery({
     queryKey: ["dashboard", "bookings", "metrics"],
     queryFn: () =>
-      api.get<BookingMetrics>("/dashboard/bookings/metrics").then((r) => r.data),
+      api.get<BookingMetrics>("/dashboard/bookings/metrics"),
   })
 }
 

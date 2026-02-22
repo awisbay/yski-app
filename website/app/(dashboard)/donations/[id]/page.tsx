@@ -33,7 +33,7 @@ export default function DonationDetailPage({ params }: { params: Promise<{ id: s
 
   const { data: donation, isLoading } = useQuery({
     queryKey: ["donation", id],
-    queryFn: () => api.get<Donation>(`/donations/${id}`).then((r) => r.data),
+    queryFn: () => api.get<Donation>(`/donations/${id}`),
   })
 
   const verifyMutation = useMutation({

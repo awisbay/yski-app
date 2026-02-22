@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { exportToExcel } from "@/lib/export"
 
 interface ExportButtonProps {
-  data: object[]
+  data: Record<string, unknown>[]
   filename: string
   label?: string
   disabled?: boolean
@@ -13,7 +13,7 @@ interface ExportButtonProps {
 
 export function ExportButton({ data, filename, label = "Export Excel", disabled }: ExportButtonProps) {
   function handleExport() {
-    exportToExcel(data, filename)
+    exportToExcel(data, { filename })
   }
 
   return (

@@ -52,7 +52,7 @@ export default function FinanceDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: report, isLoading } = useQuery({
     queryKey: ["financial-report", id],
-    queryFn: () => api.get<FinancialReport>(`/financial/reports/${id}`).then((r) => r.data),
+    queryFn: () => api.get<FinancialReport>(`/financial/reports/${id}`),
   })
 
   const { data: entries = [], isLoading: entriesLoading } = useQuery({
@@ -60,7 +60,7 @@ export default function FinanceDetailPage({ params }: { params: Promise<{ id: st
     queryFn: () =>
       api
         .get<FinancialEntry[]>(`/financial/reports/${id}/entries`)
-        .then((r) => r.data),
+        ,
   })
 
   const publishMutation = useMutation({

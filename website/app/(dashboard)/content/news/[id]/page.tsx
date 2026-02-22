@@ -61,7 +61,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
 
   const { data: article, isLoading } = useQuery({
     queryKey: ["news-article", id],
-    queryFn: () => api.get<NewsArticle>(`/content/news/${id}`).then((r) => r.data),
+    queryFn: () => api.get<NewsArticle>(`/content/news/${id}`),
   })
 
   const form = useForm<FormValues>({

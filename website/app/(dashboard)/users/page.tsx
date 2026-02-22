@@ -42,7 +42,7 @@ function useUsers(search: string, role: string, status: string) {
           is_active: status === "all" ? undefined : status === "active",
         },
       })
-      return Array.isArray(response.data) ? response.data : []
+      return Array.isArray(response) ? response : []
     },
   })
 }
@@ -50,7 +50,7 @@ function useUsers(search: string, role: string, status: string) {
 function useUserMetrics() {
   return useQuery({
     queryKey: ["dashboard", "users", "metrics"],
-    queryFn: () => api.get<UserMetrics>("/dashboard/users/metrics").then((r) => r.data),
+    queryFn: () => api.get<UserMetrics>("/dashboard/users/metrics"),
   })
 }
 

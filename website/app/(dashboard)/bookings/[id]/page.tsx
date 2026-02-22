@@ -29,7 +29,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking", id],
-    queryFn: () => api.get<MovingBooking>(`/bookings/${id}`).then((r) => r.data),
+    queryFn: () => api.get<MovingBooking>(`/bookings/${id}`),
   })
 
   useEffect(() => {

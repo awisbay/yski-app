@@ -41,7 +41,7 @@ function useCategories() {
   return useQuery({
     queryKey: ["financial-categories"],
     queryFn: () =>
-      api.get<FinancialCategory[]>("/financial/categories").then((r) => r.data),
+      api.get<FinancialCategory[]>("/financial/categories"),
   })
 }
 
@@ -60,7 +60,7 @@ function useTransactions(params?: {
         .get<FinancialTransactionList>("/financial/transactions", {
           params: { limit: params?.limit ?? 100, ...params },
         })
-        .then((r) => r.data),
+        ,
   })
 }
 
@@ -68,7 +68,7 @@ function useBalances() {
   return useQuery({
     queryKey: ["financial-balances"],
     queryFn: () =>
-      api.get<FinancialBalances>("/financial/balances").then((r) => r.data),
+      api.get<FinancialBalances>("/financial/balances"),
   })
 }
 

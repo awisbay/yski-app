@@ -40,8 +40,8 @@ function useAuctions(status: AuctionStatusFilter) {
           status: status !== "all" ? status : undefined,
         },
       })
-      if (Array.isArray(response.data)) return response.data
-      if (response.data && Array.isArray(response.data.items)) return response.data.items
+      if (Array.isArray(response)) return response
+      if (response && Array.isArray((response as AuctionListResponse).items)) return (response as AuctionListResponse).items
       return []
     },
   })
@@ -50,7 +50,7 @@ function useAuctions(status: AuctionStatusFilter) {
 function useAuctionMetrics() {
   return useQuery({
     queryKey: ["dashboard", "auctions", "metrics"],
-    queryFn: () => api.get<AuctionMetrics>("/dashboard/auctions/metrics").then((r) => r.data),
+    queryFn: () => api.get<AuctionMetrics>("/dashboard/auctions/metrics"),
   })
 }
 

@@ -31,7 +31,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["user", id],
-    queryFn: () => api.get<User>(`/users/${id}`).then((r) => r.data),
+    queryFn: () => api.get<User>(`/users/${id}`),
   })
 
   const roleChangeMutation = useMutation({
