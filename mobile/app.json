@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Yayasan Sahabat Khairat Indonesia",
-    "slug": "clicky-foundation",
-    "scheme": "clicky",
+    "name": "YSKI App",
+    "slug": "sahabat-khairat-indonesia",
+    "scheme": "yski",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -21,10 +21,11 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#10B981"
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
       },
-      "package": "org.yski.clicky"
+      "package": "org.yski.clicky",
+      "usesCleartextTraffic": true
     },
     "web": {
       "bundler": "metro",
@@ -42,13 +43,26 @@
           "photosPermission": "Izinkan akses galeri untuk memilih foto peralatan.",
           "cameraPermission": "Izinkan akses kamera untuk mengambil foto peralatan."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/logo.png",
+          "color": "#10B981"
+        }
+      ],
+      [
+        "react-native-maps",
+        {
+          "googleMapsApiKey": ""
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": false
     },
     "extra": {
-      "apiUrl": "http://173.212.211.18/api/v1",
+      "apiUrl": "http://173.212.211.18:8080/api/v1",
       "googleMapsApiKey": "",
       "router": {},
       "eas": {
