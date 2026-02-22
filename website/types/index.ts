@@ -220,6 +220,54 @@ export interface FinancialEntry {
   created_at: string
 }
 
+// Modern financial system (aligned with mobile app)
+export interface FinancialCategory {
+  id: string
+  name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string | null
+}
+
+export interface FinancialTransaction {
+  id: string
+  category_id: string
+  category_name: string
+  transaction_type: 'request_fund' | 'income_report'
+  entry_side: 'credit' | 'debit'
+  amount: number
+  description: string | null
+  requested_by: string
+  requester_name: string
+  status: 'pending' | 'approved' | 'rejected'
+  reviewed_by: string | null
+  reviewer_name: string | null
+  reviewed_at: string | null
+  reviewed_note: string | null
+  approved_at: string | null
+  created_at: string
+}
+
+export interface FinancialTransactionList {
+  transactions: FinancialTransaction[]
+  total: number
+}
+
+export interface CategoryBalance {
+  category_id: string
+  category_name: string
+  total_credit: number
+  total_debit: number
+  balance: number
+}
+
+export interface FinancialBalances {
+  total_credit: number
+  total_debit: number
+  current_balance: number
+  by_category: CategoryBalance[]
+}
+
 // Dashboard metrics types
 export interface DashboardOverview {
   totals: {

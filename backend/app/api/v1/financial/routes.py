@@ -2,6 +2,7 @@
 Financial API Routes - transaksi & saldo kategori.
 """
 
+from datetime import date as date_type
 from typing import Optional
 from uuid import UUID
 
@@ -69,10 +70,12 @@ async def create_category(
 @router.get("/transactions", response_model=FinancialTransactionListResponse)
 async def list_transactions(
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=500),
     status_filter: Optional[str] = Query(default=None, alias="status"),
     transaction_type: Optional[str] = Query(default=None),
     category_id: Optional[UUID] = Query(default=None),
+    date_from: Optional[date_type] = Query(default=None),
+    date_to: Optional[date_type] = Query(default=None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin", "superadmin", "pengurus")),
 ):
@@ -83,6 +86,8 @@ async def list_transactions(
         status_filter=status_filter,
         transaction_type=transaction_type,
         category_id=category_id,
+        date_from=date_from,
+        date_to=date_to,
     )
     return {
         "transactions": [_serialize_transaction(item) for item in items],

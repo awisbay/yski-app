@@ -56,18 +56,12 @@
 
 ### 1.6. Finance Management
 - **Details**: 
-  - Table for all finances
-  - View finance details
+  - Summary metrics: Total Pemasukan (akumulasi kredit semua kategori), Total Pengeluaran (akumulasi debit semua kategori), Saldo Saat Ini
+  - **Tab Transaksi**: Tabel semua transaksi (tanggal, kategori, jenis, jumlah, disubmit oleh, catatan, status), filter by status & jenis, approve/reject pending, buat transaksi baru
+  - **Tab Kategori**: CRUD kategori keuangan (hanya bisa ditambahkan dari web), digunakan di mobile app
+  - **Tab Laporan per Kategori**: Kartu saldo per kategori (uang masuk, uang keluar, saldo), klik kategori untuk filter tabel, tabel sederhana (tanggal, kategori, uang masuk, uang keluar, disubmit oleh, catatan)
+  - **Tab Laporan Keuangan (Buku Kas)**: Tabel standar akuntansi (No, Tanggal, Keterangan, Kategori, Debit, Kredit, Saldo berjalan, Oleh), filter periode (Triwulan Q1-Q4 / Semester H1-H2 / Tahunan), pilihan tahun, footer total, export CSV
   - Export finance data
-  - metrics dashboard for finance
-  - Add category
-  - Edit category
-  - Delete category
-  - Add transaction
-  - Edit transaction
-  - Delete transaction
-  - Approve transaction
-  - Reject transaction
 
 ### 1.7. Content Management
 - **Details**: 

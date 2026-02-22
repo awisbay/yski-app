@@ -447,6 +447,8 @@ class FinancialService:
         status_filter: Optional[str] = None,
         transaction_type: Optional[str] = None,
         category_id: Optional[UUID] = None,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
     ) -> tuple[List[FinancialTransaction], int]:
         filters = []
         if status_filter:
@@ -455,6 +457,10 @@ class FinancialService:
             filters.append(FinancialTransaction.transaction_type == transaction_type)
         if category_id:
             filters.append(FinancialTransaction.category_id == category_id)
+        if date_from:
+            filters.append(FinancialTransaction.created_at >= datetime.combine(date_from, datetime.min.time()))
+        if date_to:
+            filters.append(FinancialTransaction.created_at <= datetime.combine(date_to, datetime.max.time()))
 
         where_clause = and_(*filters) if filters else None
 
