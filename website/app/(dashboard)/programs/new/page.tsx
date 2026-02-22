@@ -45,7 +45,7 @@ export default function NewProgramPage() {
         title: data.title,
         description: data.description,
         target_amount: data.target_amount ? parseFloat(data.target_amount) : undefined,
-      }).then((r) => r.data),
+      }),
     onSuccess: () => {
       toast.success("Program berhasil dibuat")
       router.push("/programs")

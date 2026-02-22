@@ -66,7 +66,7 @@ export default function NewArticlePage() {
       api.post<NewsArticle>("/content/news", {
         ...data,
         scheduled_at: data.scheduled_at || undefined,
-      }).then((r) => r.data),
+      }),
     onSuccess: (article) => {
       toast.success("Artikel berhasil dibuat")
       router.push(`/news/${article.id}`)

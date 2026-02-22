@@ -13,7 +13,7 @@ interface ExportButtonProps {
 
 export function ExportButton({ data, filename, label = "Export Excel", disabled }: ExportButtonProps) {
   function handleExport() {
-    exportToExcel(data, { filename })
+    exportToExcel(data, filename)
   }
 
   return (
