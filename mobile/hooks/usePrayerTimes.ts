@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
 type DailySchedule = {
@@ -20,7 +21,7 @@ type PrayerName = 'Subuh' | 'Dzuhur' | 'Ashar' | 'Maghrib' | 'Isya';
 type NextPrayer = {
   name: PrayerName;
   time: string;
-  minutesRemaining: number;
+  secondsRemaining: number;
   label: string;
 };
 
@@ -34,7 +35,15 @@ type PrayerTimesState = {
   error: string | null;
 };
 
+type LocationCache = {
+  province: string;
+  city: string;
+  locationLabel: string;
+};
+
 const EQURAN_BASE = 'https://equran.id/api/v2';
+const STORAGE_KEY = 'prayer_location_v1';
+const OUTSIDE_INDONESIA_MSG = 'Lokasi anda tidak dapat ditemukan';
 
 function normalizeText(value: string) {
   return (value || '')
@@ -100,9 +109,80 @@ function findBestFromTargets(candidates: string[], targets: string[]) {
   return bestCandidate;
 }
 
+function formatRemaining(seconds: number) {
+  const safe = Math.max(0, seconds);
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const secs = safe % 60;
+
+  if (hours > 0) return `${hours} jam ${minutes} menit ${secs} detik`;
+  if (minutes > 0) return `${minutes} menit ${secs} detik`;
+  return `${secs} detik`;
+}
+
+function parseTimeToDate(baseDate: Date, hhmm: string) {
+  const [hourRaw, minuteRaw] = hhmm.split(':');
+  const hour = Number(hourRaw || 0);
+  const minute = Number(minuteRaw || 0);
+  return new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
+    hour,
+    minute,
+    0,
+    0
+  );
+}
+
+function computeNextPrayer(
+  now: Date,
+  today: DailySchedule | null,
+  allSchedules: DailySchedule[] = []
+): NextPrayer | null {
+  if (!today) return null;
+
+  const prayerSlots: Array<{ key: PrayerName; time: string }> = [
+    { key: 'Subuh', time: today.subuh },
+    { key: 'Dzuhur', time: today.dzuhur },
+    { key: 'Ashar', time: today.ashar },
+    { key: 'Maghrib', time: today.maghrib },
+    { key: 'Isya', time: today.isya },
+  ];
+
+  for (const slot of prayerSlots) {
+    const targetTime = parseTimeToDate(now, slot.time);
+    if (targetTime.getTime() > now.getTime()) {
+      const diffSeconds = Math.max(1, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
+      return {
+        name: slot.key,
+        time: slot.time,
+        secondsRemaining: diffSeconds,
+        label: formatRemaining(diffSeconds),
+      };
+    }
+  }
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const tomorrowKey = tomorrow.toISOString().slice(0, 10);
+  const tomorrowSchedule = allSchedules.find((item) => item.tanggal_lengkap === tomorrowKey);
+  const fallbackTime = tomorrowSchedule?.subuh || today.subuh;
+  const tomorrowSubuh = parseTimeToDate(tomorrow, fallbackTime);
+  const diffSeconds = Math.max(1, Math.floor((tomorrowSubuh.getTime() - now.getTime()) / 1000));
+
+  return {
+    name: 'Subuh',
+    time: fallbackTime,
+    secondsRemaining: diffSeconds,
+    label: formatRemaining(diffSeconds),
+  };
+}
+
 async function getTaggedLocationCandidates(latitude: number, longitude: number) {
   const provinceCandidates: string[] = [];
   const cityCandidates: string[] = [];
+  const countryCodes: string[] = [];
   let locationLabel = '';
 
   const geocodes = await Location.reverseGeocodeAsync({
@@ -116,13 +196,13 @@ async function getTaggedLocationCandidates(latitude: number, longitude: number) 
     pushUnique(cityCandidates, geocode.city);
     pushUnique(cityCandidates, geocode.district);
     pushUnique(cityCandidates, geocode.subregion);
+    pushUnique(countryCodes, geocode.isoCountryCode || geocode.country);
 
     const cityDisplay = geocode.city || geocode.subregion || geocode.district || '';
     const provinceDisplay = geocode.region || '';
     locationLabel = [cityDisplay, provinceDisplay].filter(Boolean).join(', ');
   }
 
-  // Ambil detail wilayah dari geocoding map (OSM reverse) sebagai sumber tagging tambahan.
   try {
     const nominatimUrl =
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`;
@@ -145,6 +225,8 @@ async function getTaggedLocationCandidates(latitude: number, longitude: number) 
     pushUnique(cityCandidates, address.municipality);
     pushUnique(cityCandidates, address.city_district);
     pushUnique(cityCandidates, address.state_district);
+    pushUnique(countryCodes, address.country_code);
+    pushUnique(countryCodes, address.country);
 
     if (!locationLabel && reverseJson?.display_name) {
       locationLabel = String(reverseJson.display_name)
@@ -154,70 +236,41 @@ async function getTaggedLocationCandidates(latitude: number, longitude: number) 
         .trim();
     }
   } catch {
-    // non-blocking fallback to expo reverse geocode
+    // no-op
   }
 
   return {
     provinceCandidates,
     cityCandidates,
+    countryCodes,
     locationLabel,
   };
 }
 
-function parseTimeToDate(baseDate: Date, hhmm: string) {
-  const [hourRaw, minuteRaw] = hhmm.split(':');
-  const hour = Number(hourRaw || 0);
-  const minute = Number(minuteRaw || 0);
-  return new Date(
-    baseDate.getFullYear(),
-    baseDate.getMonth(),
-    baseDate.getDate(),
-    hour,
-    minute,
-    0,
-    0
-  );
-}
-
-function computeNextPrayer(today: DailySchedule | null, allSchedules: DailySchedule[] = []): NextPrayer | null {
-  if (!today) return null;
-
+async function fetchMonthlySchedule(province: string, city: string) {
   const now = new Date();
-  const prayerSlots: Array<{ key: PrayerName; time: string }> = [
-    { key: 'Subuh', time: today.subuh },
-    { key: 'Dzuhur', time: today.dzuhur },
-    { key: 'Ashar', time: today.ashar },
-    { key: 'Maghrib', time: today.maghrib },
-    { key: 'Isya', time: today.isya },
-  ];
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
 
-  for (const slot of prayerSlots) {
-    const targetTime = parseTimeToDate(now, slot.time);
-    if (targetTime.getTime() > now.getTime()) {
-      const diffMinutes = Math.max(1, Math.ceil((targetTime.getTime() - now.getTime()) / 60000));
-      return {
-        name: slot.key,
-        time: slot.time,
-        minutesRemaining: diffMinutes,
-        label: `${diffMinutes} menit lagi`,
-      };
-    }
-  }
+  const scheduleRes = await fetch(`${EQURAN_BASE}/shalat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      provinsi: province,
+      kabkota: city,
+      bulan: month,
+      tahun: year,
+    }),
+  });
+  const scheduleJson = await scheduleRes.json();
+  const allSchedules: DailySchedule[] = scheduleJson?.data?.jadwal || [];
+  const todayKey = now.toISOString().slice(0, 10);
+  const todaySchedule =
+    allSchedules.find((item) => item.tanggal_lengkap === todayKey) ||
+    allSchedules.find((item) => item.tanggal === now.getDate()) ||
+    null;
 
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const tomorrowKey = tomorrow.toISOString().slice(0, 10);
-  const tomorrowSchedule = allSchedules.find((item) => item.tanggal_lengkap === tomorrowKey);
-  const fallbackTime = tomorrowSchedule?.subuh || today.subuh;
-  const tomorrowSubuh = parseTimeToDate(tomorrow, fallbackTime);
-  const diffMinutes = Math.max(1, Math.ceil((tomorrowSubuh.getTime() - now.getTime()) / 60000));
-
-  return {
-    name: 'Subuh',
-    time: fallbackTime,
-    minutesRemaining: diffMinutes,
-    label: `${diffMinutes} menit lagi`,
-  };
+  return { allSchedules, todaySchedule };
 }
 
 export function usePrayerTimes() {
@@ -230,93 +283,129 @@ export function usePrayerTimes() {
     loading: true,
     error: null,
   });
-
-  const refresh = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.status !== 'granted') {
-        throw new Error('Izin lokasi belum diberikan.');
-      }
-
-      const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const tagged = await getTaggedLocationCandidates(
-        position.coords.latitude,
-        position.coords.longitude
-      );
-
-      const provinceRes = await fetch(`${EQURAN_BASE}/shalat/provinsi`);
-      const provinceJson = await provinceRes.json();
-      const provinces: string[] = provinceJson?.data || [];
-      const matchedProvince = findBestFromTargets(provinces, tagged.provinceCandidates);
-      if (!matchedProvince) {
-        throw new Error('Provinsi tidak ditemukan dari lokasi.');
-      }
-
-      const cityRes = await fetch(`${EQURAN_BASE}/shalat/kabkota`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provinsi: matchedProvince }),
-      });
-      const cityJson = await cityRes.json();
-      const cities: string[] = cityJson?.data || [];
-      const matchedCity =
-        findBestFromTargets(cities, tagged.cityCandidates) ||
-        findBestFromTargets(cities, [tagged.locationLabel]) ||
-        cities[0];
-      if (!matchedCity) {
-        throw new Error('Kab/Kota tidak ditemukan dari lokasi.');
-      }
-
-      const now = new Date();
-      const month = now.getMonth() + 1;
-      const year = now.getFullYear();
-
-      const scheduleRes = await fetch(`${EQURAN_BASE}/shalat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provinsi: matchedProvince,
-          kabkota: matchedCity,
-          bulan: month,
-          tahun: year,
-        }),
-      });
-      const scheduleJson = await scheduleRes.json();
-      const allSchedules: DailySchedule[] = scheduleJson?.data?.jadwal || [];
-      const todayKey = now.toISOString().slice(0, 10);
-      const todaySchedule =
-        allSchedules.find((item) => item.tanggal_lengkap === todayKey) ||
-        allSchedules.find((item) => item.tanggal === now.getDate()) ||
-        null;
-
-      const nextPrayer = computeNextPrayer(todaySchedule, allSchedules);
-      const locationLabel = `${matchedCity}, ${matchedProvince}`;
-
-      setState({
-        locationLabel,
-        province: matchedProvince,
-        city: matchedCity,
-        todaySchedule,
-        nextPrayer,
-        loading: false,
-        error: null,
-      });
-    } catch (error: any) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: error?.message || 'Gagal memuat jadwal sholat.',
-      }));
-    }
-  }, []);
+  const [allSchedules, setAllSchedules] = useState<DailySchedule[]>([]);
+  const [nowTick, setNowTick] = useState<Date>(new Date());
 
   useEffect(() => {
-    refresh();
+    const id = setInterval(() => setNowTick(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const resolveLocationFromDevice = useCallback(async () => {
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (permission.status !== 'granted') {
+      throw new Error('Izin lokasi belum diberikan.');
+    }
+
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    const tagged = await getTaggedLocationCandidates(
+      position.coords.latitude,
+      position.coords.longitude
+    );
+
+    const normalizedCodes = tagged.countryCodes.map((code) => normalizeText(code));
+    const isIndonesia =
+      normalizedCodes.some((code) => code === 'id' || code === 'indonesia') ||
+      tagged.locationLabel.toLowerCase().includes('indonesia');
+    if (!isIndonesia) {
+      throw new Error(OUTSIDE_INDONESIA_MSG);
+    }
+
+    const provinceRes = await fetch(`${EQURAN_BASE}/shalat/provinsi`);
+    const provinceJson = await provinceRes.json();
+    const provinces: string[] = provinceJson?.data || [];
+    const matchedProvince = findBestFromTargets(provinces, tagged.provinceCandidates);
+    if (!matchedProvince) {
+      throw new Error('Provinsi tidak ditemukan dari lokasi.');
+    }
+
+    const cityRes = await fetch(`${EQURAN_BASE}/shalat/kabkota`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provinsi: matchedProvince }),
+    });
+    const cityJson = await cityRes.json();
+    const cities: string[] = cityJson?.data || [];
+    const matchedCity =
+      findBestFromTargets(cities, tagged.cityCandidates) ||
+      findBestFromTargets(cities, [tagged.locationLabel]) ||
+      cities[0];
+    if (!matchedCity) {
+      throw new Error('Kab/Kota tidak ditemukan dari lokasi.');
+    }
+
+    const locationLabel = `${matchedCity}, ${matchedProvince}`;
+    const result: LocationCache = {
+      province: matchedProvince,
+      city: matchedCity,
+      locationLabel,
+    };
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    return result;
+  }, []);
+
+  const refresh = useCallback(
+    async (forceLocationUpdate = true) => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+
+      try {
+        let location: LocationCache | null = null;
+
+        if (!forceLocationUpdate) {
+          const cached = await AsyncStorage.getItem(STORAGE_KEY);
+          if (cached) {
+            location = JSON.parse(cached) as LocationCache;
+          }
+        }
+
+        if (!location) {
+          location = await resolveLocationFromDevice();
+        }
+
+        const { allSchedules: schedules, todaySchedule } = await fetchMonthlySchedule(
+          location.province,
+          location.city
+        );
+
+        setAllSchedules(schedules);
+        setState({
+          locationLabel: location.locationLabel,
+          province: location.province,
+          city: location.city,
+          todaySchedule,
+          nextPrayer: computeNextPrayer(new Date(), todaySchedule, schedules),
+          loading: false,
+          error: null,
+        });
+      } catch (error: any) {
+        const message = error?.message || 'Gagal memuat jadwal sholat.';
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: message,
+          locationLabel: message === OUTSIDE_INDONESIA_MSG ? OUTSIDE_INDONESIA_MSG : prev.locationLabel,
+          todaySchedule: null,
+          nextPrayer: null,
+        }));
+      }
+    },
+    [resolveLocationFromDevice]
+  );
+
+  useEffect(() => {
+    // Hanya saat pertama kali: pakai cache lokasi jika ada.
+    refresh(false);
   }, [refresh]);
+
+  useEffect(() => {
+    if (!state.todaySchedule) return;
+    setState((prev) => ({
+      ...prev,
+      nextPrayer: computeNextPrayer(nowTick, prev.todaySchedule, allSchedules),
+    }));
+  }, [nowTick, state.todaySchedule, allSchedules]);
 
   const times = useMemo(() => {
     if (!state.todaySchedule) return null;
@@ -332,6 +421,6 @@ export function usePrayerTimes() {
   return {
     ...state,
     times,
-    refresh,
+    refresh: () => refresh(true),
   };
 }
