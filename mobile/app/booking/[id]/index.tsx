@@ -26,16 +26,20 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: colors.gray[500],
 };
 
-function formatDate(value?: string) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleDateString('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+function formatDateList(values?: string[] | null, fallback?: string) {
+  const dates = values && values.length ? values : (fallback ? [fallback] : []);
+  if (!dates.length) return '-';
+  return dates
+    .map((raw) => {
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return raw;
+      return d.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    })
+    .join(', ');
 }
 
 export default function BookingDetailScreen() {
@@ -86,7 +90,7 @@ export default function BookingDetailScreen() {
                   </View>
                   <View style={styles.rowTextWrap}>
                     <Text style={styles.label}>Tanggal</Text>
-                    <Text style={styles.value}>{formatDate(booking.bookingDate)}</Text>
+                    <Text style={styles.value}>{formatDateList(booking.bookingDates, booking.bookingDate)}</Text>
                   </View>
                 </View>
 
@@ -99,9 +103,11 @@ export default function BookingDetailScreen() {
                   <View style={styles.rowTextWrap}>
                     <Text style={styles.label}>Waktu</Text>
                     <Text style={styles.value}>
-                      {(booking.timeSlots && booking.timeSlots.length > 0)
+                      {booking.isFullDay
+                        ? '1 Hari (Semua Jam)'
+                        : ((booking.timeSlots && booking.timeSlots.length > 0)
                         ? booking.timeSlots.join(', ')
-                        : (booking.timeSlot || '-')}
+                        : (booking.timeSlot || '-'))}
                     </Text>
                   </View>
                 </View>

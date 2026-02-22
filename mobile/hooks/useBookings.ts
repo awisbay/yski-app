@@ -10,6 +10,12 @@ function normalizeBooking(raw: any) {
     : typeof rawTimeSlots === 'string'
     ? rawTimeSlots.split(',').map((s) => s.trim()).filter(Boolean)
     : undefined;
+  const rawBookingDates = raw.bookingDates ?? raw.booking_dates;
+  const normalizedBookingDates = Array.isArray(rawBookingDates)
+    ? rawBookingDates
+    : typeof rawBookingDates === 'string'
+    ? rawBookingDates.split(',').map((s) => s.trim()).filter(Boolean)
+    : undefined;
   return {
     ...raw,
     bookingDate: raw.bookingDate ?? raw.booking_date,
@@ -30,6 +36,8 @@ function normalizeBooking(raw: any) {
     approvedBy: raw.approvedBy ?? raw.approved_by,
     reviewText: raw.reviewText ?? raw.review_text,
     rejectionReason: raw.rejectionReason ?? raw.rejection_reason,
+    isFullDay: raw.isFullDay ?? raw.is_full_day ?? false,
+    bookingDates: normalizedBookingDates,
   };
 }
 

@@ -7,7 +7,7 @@ from datetime import datetime, date
 from typing import Optional
 from decimal import Decimal
 
-from sqlalchemy import String, Text, Date, ForeignKey, Numeric, SmallInteger, DateTime, func, UniqueConstraint
+from sqlalchemy import String, Text, Date, ForeignKey, Numeric, SmallInteger, DateTime, Boolean, func, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,8 +26,10 @@ class MovingBooking(Base):
     )
     booking_code: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
     booking_date: Mapped[date] = mapped_column(Date, nullable=False)
+    booking_dates: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # CSV dates, e.g. "2026-02-23,2026-02-24"
     time_slot: Mapped[str] = mapped_column(String(5), nullable=False)  # e.g. '08:00'..'21:00'
     time_slots: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # CSV slots, e.g. "08:00,10:00"
+    is_full_day: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Requester
     requester_id: Mapped[uuid.UUID] = mapped_column(

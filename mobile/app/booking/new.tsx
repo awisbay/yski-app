@@ -33,7 +33,7 @@ import {
 } from 'lucide-react-native';
 import { MapPicker, LocationPoint } from '@/components/MapPicker';
 import { useCreateBooking, useBookingSlots } from '@/hooks';
-import { bookingSchema, type BookingFormData } from '@/lib/validation';
+import { bookingSchema } from '@/lib/validation';
 import { colors } from '@/constants/colors';
 
 const TIME_SLOTS = ['08:00', '10:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
@@ -54,6 +54,17 @@ interface RouteInfo {
   durationMin: number;
 }
 
+interface BookingWizardFormData {
+  bookingDate: Date;
+  bookingDates: Date[];
+  timeSlots: string[];
+  isFullDay: boolean;
+  pickupAddress: string;
+  dropoffAddress: string;
+  purpose: string;
+  notes?: string;
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function daysInMonth(y: number, m: number) {
@@ -66,6 +77,22 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear()
     && a.getMonth() === b.getMonth()
     && a.getDate() === b.getDate();
+}
+
+function sortDatesAsc(values: Date[]) {
+  return [...values].sort((a, b) => a.getTime() - b.getTime());
+}
+
+function formatDateKey(value: Date) {
+  return value.toISOString().split('T')[0];
+}
+
+function formatShortDate(value: Date) {
+  return value.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 async function fetchRoute(
@@ -99,11 +126,13 @@ export default function NewBookingScreen() {
 
   // form
   const { control, trigger, watch, setValue, formState: { errors } } =
-    useForm<BookingFormData>({
+    useForm<BookingWizardFormData>({
       resolver: zodResolver(bookingSchema),
       defaultValues: {
         bookingDate: new Date(Date.now() + 86400000),
+        bookingDates: [new Date(Date.now() + 86400000)],
         timeSlots: [],
+        isFullDay: false,
         pickupAddress: '',
         dropoffAddress: '',
         purpose: '',
@@ -111,9 +140,12 @@ export default function NewBookingScreen() {
       },
     });
 
-  const selectedDate  = watch('bookingDate');
+  const selectedDate = watch('bookingDate');
+  const selectedDates = watch('bookingDates');
   const selectedSlots = watch('timeSlots');
-  const dateString    = selectedDate.toISOString().split('T')[0];
+  const isFullDay = watch('isFullDay');
+  const [activeDate, setActiveDate] = useState<Date>(selectedDate);
+  const dateString = formatDateKey(activeDate);
 
   const { data: slotsData } = useBookingSlots(dateString);
   const availableSlots: Record<string, boolean> = useMemo(() => {
@@ -192,7 +224,7 @@ export default function NewBookingScreen() {
   const handleNext = async () => {
     setSubmitError(null);
     if (step === 1) {
-      const ok = await trigger(['bookingDate', 'timeSlots']);
+      const ok = await trigger(['bookingDate', 'bookingDates', 'timeSlots']);
       if (ok) setStep(2);
     } else if (step === 2) {
       const ok = await trigger(['pickupAddress', 'dropoffAddress']);
@@ -203,14 +235,21 @@ export default function NewBookingScreen() {
       // Final submit
       try {
         const slots = watch('timeSlots');
+        const dates = sortDatesAsc(watch('bookingDates') ?? []);
         if (!slots.length) {
           setSubmitError('Pilih minimal 1 slot waktu.');
           return;
         }
+        if (!dates.length) {
+          setSubmitError('Pilih minimal 1 tanggal booking.');
+          return;
+        }
         await createMutation.mutateAsync({
-          booking_date:    watch('bookingDate').toISOString().split('T')[0],
+          booking_date:    formatDateKey(dates[0]),
+          booking_dates:   dates.map((d) => formatDateKey(d)),
           time_slot:       slots[0],
           time_slots:      slots,
+          is_full_day:     watch('isFullDay'),
           pickup_address:  watch('pickupAddress'),
           pickup_lat:      pickupLoc?.latitude,
           pickup_lng:      pickupLoc?.longitude,
@@ -236,12 +275,22 @@ export default function NewBookingScreen() {
 
   // Toggle a slot in/out of the selected array
   const toggleSlot = (slot: string) => {
+    if (watch('isFullDay')) return;
     const current = watch('timeSlots');
     if (current.includes(slot)) {
       setValue('timeSlots', current.filter((s) => s !== slot), { shouldValidate: true });
       return;
     }
     setValue('timeSlots', [...current, slot], { shouldValidate: true });
+  };
+
+  const setFullDay = (value: boolean) => {
+    setValue('isFullDay', value, { shouldValidate: true });
+    if (value) {
+      setValue('timeSlots', [...TIME_SLOTS], { shouldValidate: true });
+      return;
+    }
+    setValue('timeSlots', [], { shouldValidate: true });
   };
 
   const goBack = () => {
@@ -283,8 +332,21 @@ export default function NewBookingScreen() {
   const handleDayPress = (day: number) => {
     const d = new Date(calYear, calMon, day);
     if (d < minDate || d > maxDate) return;
-    setValue('bookingDate', d);
-    setValue('timeSlots', []);
+    const current = sortDatesAsc(selectedDates ?? []);
+    const exists = current.some((item) => isSameDay(item, d));
+    let nextDates = exists
+      ? current.filter((item) => !isSameDay(item, d))
+      : [...current, d];
+
+    if (!nextDates.length) {
+      nextDates = [d];
+    }
+
+    const sorted = sortDatesAsc(nextDates);
+    setValue('bookingDates', sorted, { shouldValidate: true });
+    setValue('bookingDate', sorted[0], { shouldValidate: true });
+    setValue('timeSlots', isFullDay ? [...TIME_SLOTS] : [], { shouldValidate: true });
+    setActiveDate(exists ? sorted[0] : d);
   };
 
   const prevMonth = () => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
@@ -292,6 +354,10 @@ export default function NewBookingScreen() {
 
   const canGoPrev = calMonth > new Date(minDate.getFullYear(), minDate.getMonth(), 1);
   const canGoNext = calMonth < new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+  useEffect(() => {
+    setActiveDate(selectedDate);
+  }, [selectedDate]);
 
   // ── route card ──
   const RouteCard = () => {
@@ -425,6 +491,9 @@ export default function NewBookingScreen() {
                   <Calendar size={18} color={colors.primary[600]} />
                   <Text style={styles.sectionTitle}>Pilih Tanggal Penjemputan</Text>
                 </View>
+                <Text style={styles.slotHint}>
+                  Bisa pilih lebih dari 1 tanggal (multi date)
+                </Text>
 
                 <View style={styles.calendarCard}>
                   <View style={styles.calNavRow}>
@@ -455,7 +524,8 @@ export default function NewBookingScreen() {
                     {calCells.map((day, idx) => {
                       if (!day) return <View key={`e-${idx}`} style={styles.calCell} />;
                       const d = new Date(calYear, calMon, day);
-                      const isSelected = isSameDay(d, selectedDate);
+                      const isSelected = (selectedDates ?? []).some((item) => isSameDay(item, d));
+                      const isActiveDate = isSameDay(d, activeDate);
                       const isDisabled = d < minDate || d > maxDate;
                       const isToday    = isSameDay(d, today);
                       return (
@@ -464,6 +534,7 @@ export default function NewBookingScreen() {
                           style={[
                             styles.calCell,
                             isSelected && styles.calCellSelected,
+                            isActiveDate && styles.calCellActiveDate,
                             isToday && !isSelected && styles.calCellToday,
                           ]}
                           onPress={() => handleDayPress(day)}
@@ -483,6 +554,26 @@ export default function NewBookingScreen() {
                     })}
                   </View>
                 </View>
+
+                {selectedDates?.length ? (
+                  <View style={styles.dateSummaryWrap}>
+                    <Text style={styles.dateSummaryTitle}>Tanggal dipilih ({selectedDates.length})</Text>
+                    <View style={styles.dateSummaryChips}>
+                      {sortDatesAsc(selectedDates).map((item, idx) => (
+                        <TouchableOpacity
+                          key={`${formatDateKey(item)}-${idx}`}
+                          style={[styles.dateChip, isSameDay(item, activeDate) && styles.dateChipActive]}
+                          onPress={() => setActiveDate(item)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.dateChipText, isSameDay(item, activeDate) && styles.dateChipTextActive]}>
+                            {formatShortDate(item)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
               </View>
 
               <View style={styles.sectionBlock}>
@@ -493,30 +584,41 @@ export default function NewBookingScreen() {
                 <Text style={styles.slotHint}>
                   Pilih satu atau beberapa slot waktu
                 </Text>
+                <View style={styles.fullDayRow}>
+                  <TouchableOpacity
+                    style={[styles.fullDayPill, isFullDay && styles.fullDayPillActive]}
+                    onPress={() => setFullDay(!isFullDay)}
+                    activeOpacity={0.8}
+                  >
+                    <CheckCircle2 size={15} color={isFullDay ? colors.white : colors.primary[600]} />
+                    <Text style={[styles.fullDayText, isFullDay && styles.fullDayTextActive]}>1 Hari (Semua Jam)</Text>
+                  </TouchableOpacity>
+                </View>
                 <View style={styles.slotsGrid}>
                   {TIME_SLOTS.map(slot => {
                     const isAvail    = availableSlots[slot] !== false;
                     const isSelected = selectedSlots.includes(slot);
+                    const disabledByFullDay = isFullDay;
                     return (
                       <TouchableOpacity
                         key={slot}
                         style={[
                           styles.slotPill,
                           isSelected  && styles.slotPillSelected,
-                          !isAvail    && styles.slotPillDisabled,
+                          (!isAvail || disabledByFullDay) && styles.slotPillDisabled,
                         ]}
                         onPress={() => isAvail && toggleSlot(slot)}
-                        disabled={!isAvail}
+                        disabled={!isAvail || disabledByFullDay}
                         activeOpacity={0.75}
                       >
                         {isSelected
                           ? <CheckCircle2 size={15} color={colors.white} />
-                          : <Clock size={15} color={isAvail ? colors.primary[600] : colors.gray[400]} />
+                          : <Clock size={15} color={(!isAvail || disabledByFullDay) ? colors.gray[400] : colors.primary[600]} />
                         }
                         <Text style={[
                           styles.slotText,
                           isSelected && styles.slotTextSelected,
-                          !isAvail   && styles.slotTextDisabled,
+                          (!isAvail || disabledByFullDay) && styles.slotTextDisabled,
                         ]}>
                           {slot}
                         </Text>
@@ -608,9 +710,7 @@ export default function NewBookingScreen() {
                     <View style={styles.summaryTextCol}>
                       <Text style={styles.summaryLbl}>Tanggal</Text>
                       <Text style={styles.summaryVal}>
-                        {selectedDate.toLocaleDateString('id-ID', {
-                          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-                        })}
+                        {sortDatesAsc(selectedDates ?? []).map((d) => formatShortDate(d)).join(', ')}
                       </Text>
                     </View>
                   </View>
@@ -623,7 +723,9 @@ export default function NewBookingScreen() {
                     </View>
                     <View style={styles.summaryTextCol}>
                       <Text style={styles.summaryLbl}>Waktu</Text>
-                      <Text style={styles.summaryVal}>{selectedSlots.join(', ')}</Text>
+                      <Text style={styles.summaryVal}>
+                        {isFullDay ? '1 Hari (Semua Jam)' : selectedSlots.join(', ')}
+                      </Text>
                     </View>
                   </View>
 
@@ -907,6 +1009,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   calCellSelected: { backgroundColor: colors.primary[600] },
+  calCellActiveDate: {
+    borderWidth: 1.5,
+    borderColor: colors.primary[300],
+  },
   calCellToday: { backgroundColor: colors.primary[50] },
   calDayText: {
     fontSize: 13, fontWeight: '500', color: colors.gray[800],
@@ -918,6 +1024,67 @@ const styles = StyleSheet.create({
   // Slots
   slotHint: {
     fontSize: 12, color: colors.gray[500], marginBottom: 10,
+  },
+  dateSummaryWrap: {
+    marginTop: 12,
+  },
+  dateSummaryTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray[600],
+    marginBottom: 8,
+  },
+  dateSummaryChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  dateChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    backgroundColor: colors.primary[50],
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  dateChipActive: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[600],
+  },
+  dateChipText: {
+    fontSize: 11,
+    color: colors.primary[700],
+    fontWeight: '700',
+  },
+  dateChipTextActive: {
+    color: colors.white,
+  },
+  fullDayRow: {
+    marginBottom: 10,
+  },
+  fullDayPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: colors.primary[300],
+    backgroundColor: colors.primary[50],
+  },
+  fullDayPillActive: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[600],
+  },
+  fullDayText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary[700],
+  },
+  fullDayTextActive: {
+    color: colors.white,
   },
   slotsGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 10,

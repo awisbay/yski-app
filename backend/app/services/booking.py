@@ -36,6 +36,23 @@ def _extract_slots(booking: MovingBooking) -> set[str]:
     return slots
 
 
+def _extract_dates(booking: MovingBooking) -> set[date]:
+    """Extract all booked dates from a booking row (single-date and multi-date)."""
+    dates: set[date] = set()
+    if booking.booking_date:
+        dates.add(booking.booking_date)
+    if booking.booking_dates:
+        for raw in booking.booking_dates.split(","):
+            val = raw.strip()
+            if not val:
+                continue
+            try:
+                dates.add(date.fromisoformat(val))
+            except ValueError:
+                continue
+    return dates
+
+
 class BookingService:
     """Service class for booking operations."""
     
@@ -82,7 +99,14 @@ class BookingService:
     ) -> MovingBooking:
         """Create a new booking with anti double-booking."""
         # Business validation
-        selected_slots = list(dict.fromkeys(data.time_slots or [data.time_slot]))
+        selected_dates = sorted(set(data.booking_dates or [data.booking_date]))
+        if not selected_dates:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Minimal 1 tanggal harus dipilih",
+            )
+
+        selected_slots = ALLOWED_SLOTS[:] if data.is_full_day else list(dict.fromkeys(data.time_slots or [data.time_slot]))
         if not selected_slots:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Minimal 1 slot harus dipilih")
 
@@ -94,64 +118,74 @@ class BookingService:
             )
         
         today = date.today()
-        if data.booking_date <= today:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Booking date must be in the future"
-            )
-        
-        if data.booking_date > today + timedelta(days=MAX_ADVANCE_DAYS):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot book more than {MAX_ADVANCE_DAYS} days ahead"
-            )
-        
-        # Lock all active bookings on the date, then validate overlaps safely.
-        same_day_result = await self.db.execute(
+        for booking_date in selected_dates:
+            if booking_date <= today:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Booking date must be in the future"
+                )
+            if booking_date > today + timedelta(days=MAX_ADVANCE_DAYS):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot book more than {MAX_ADVANCE_DAYS} days ahead"
+                )
+
+        # Lock active bookings up to max date, then validate overlaps safely.
+        all_rows_result = await self.db.execute(
             select(MovingBooking)
             .with_for_update()
             .where(
-                MovingBooking.booking_date == data.booking_date,
+                MovingBooking.booking_date <= max(selected_dates),
                 MovingBooking.status.notin_(["rejected", "cancelled"])
             )
         )
-        same_day_bookings = list(same_day_result.scalars().all())
+        active_bookings = list(all_rows_result.scalars().all())
 
-        requester_occupied: set[str] = set()
-        occupied_by_others: set[str] = set()
-        for booking_row in same_day_bookings:
-            occupied = _extract_slots(booking_row)
-            if booking_row.requester_id == requester_id:
-                requester_occupied.update(occupied)
-            else:
-                occupied_by_others.update(occupied)
+        conflicts: list[str] = []
+        for target_date in selected_dates:
+            requester_occupied: set[str] = set()
+            occupied_by_others: set[str] = set()
 
-        # User can book up to all slots in a day, but not duplicate their own slot booking.
-        if len(requester_occupied.union(selected_slots)) > MAX_SLOTS_PER_DAY_PER_USER:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Anda sudah memesan seluruh slot untuk tanggal {data.booking_date}"
-            )
+            for booking_row in active_bookings:
+                if target_date not in _extract_dates(booking_row):
+                    continue
+                occupied = _extract_slots(booking_row)
+                if booking_row.requester_id == requester_id:
+                    requester_occupied.update(occupied)
+                else:
+                    occupied_by_others.update(occupied)
 
-        if requester_occupied.intersection(selected_slots):
+            # User can book up to all slots in a day, but not duplicate own slot booking.
+            if len(requester_occupied.union(selected_slots)) > MAX_SLOTS_PER_DAY_PER_USER:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Anda sudah memesan seluruh slot untuk tanggal {target_date.isoformat()}",
+                )
+
+            if requester_occupied.intersection(selected_slots):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Anda sudah memesan salah satu slot pada tanggal {target_date.isoformat()}",
+                )
+
+            conflicted = sorted(occupied_by_others.intersection(selected_slots))
+            if conflicted:
+                conflicts.append(f"{target_date.isoformat()} ({', '.join(conflicted)})")
+
+        if conflicts:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Anda sudah memesan salah satu slot yang dipilih pada tanggal ini"
-            )
-
-        conflicted = sorted(occupied_by_others.intersection(selected_slots))
-        if conflicted:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Slot berikut sudah dibooking pengguna lain: {', '.join(conflicted)}"
+                detail="Slot berikut sudah dibooking pengguna lain: " + "; ".join(conflicts),
             )
         
         # Create one booking row for all selected slots.
         booking = MovingBooking(
             booking_code=generate_booking_code(),
-            booking_date=data.booking_date,
+            booking_date=selected_dates[0],
+            booking_dates=",".join(d.isoformat() for d in selected_dates),
             time_slot=selected_slots[0],
             time_slots=",".join(selected_slots),
+            is_full_day=bool(data.is_full_day),
             requester_id=requester_id,
             requester_name=requester_name,
             requester_phone=requester_phone,
@@ -212,15 +246,17 @@ class BookingService:
                 detail=f"Cannot check more than {MAX_ADVANCE_DAYS} days ahead"
             )
         
-        # Get booked slots
+        # Get active bookings up to target date (covers multi-date bookings stored in one row).
         result = await self.db.execute(
             select(MovingBooking).where(
-                MovingBooking.booking_date == target_date,
+                MovingBooking.booking_date <= target_date,
                 MovingBooking.status.notin_(["rejected", "cancelled"])
             )
         )
         booked_slots: set[str] = set()
         for booking in result.scalars().all():
+            if target_date not in _extract_dates(booking):
+                continue
             booked_slots.update(_extract_slots(booking))
         
         return [

@@ -23,7 +23,9 @@ class BookingBase(BaseModel):
 
 
 class BookingCreate(BookingBase):
+    booking_dates: Optional[list[date]] = None
     time_slots: Optional[list[str]] = None
+    is_full_day: bool = False
     requester_name: Optional[str] = None
     requester_phone: Optional[str] = None
 
@@ -58,7 +60,9 @@ class BookingResponse(BookingBase):
     rejection_reason: Optional[str] = None
     rating: Optional[int] = None
     review_text: Optional[str] = None
+    booking_dates: Optional[str] = None
     time_slots: Optional[str] = None
+    is_full_day: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
     purpose: Optional[str] = None

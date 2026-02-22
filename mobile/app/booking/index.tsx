@@ -39,6 +39,22 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Dibatalkan',
 };
 
+function formatBookingDates(item: any): string {
+  const dates = Array.isArray(item.bookingDates) && item.bookingDates.length
+    ? item.bookingDates
+    : item.bookingDate
+    ? [item.bookingDate]
+    : [];
+  if (!dates.length) return '-';
+  return dates
+    .map((d: string) => {
+      const date = new Date(d);
+      if (Number.isNaN(date.getTime())) return d;
+      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    })
+    .join(', ');
+}
+
 export default function BookingListScreen() {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState('all');
@@ -89,9 +105,7 @@ export default function BookingListScreen() {
                 <Calendar size={13} color={colors.primary[600]} />
               </View>
               <Text style={styles.infoText}>
-                {new Date(item.bookingDate).toLocaleDateString('id-ID', {
-                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-                })}
+                {formatBookingDates(item)}
               </Text>
             </View>
             <View style={styles.infoRow}>
@@ -99,7 +113,7 @@ export default function BookingListScreen() {
                 <Clock size={13} color={colors.primary[600]} />
               </View>
               <Text style={styles.infoText}>
-                {(item.timeSlots && item.timeSlots.length > 0) ? item.timeSlots.join(', ') : (item.timeSlot || '-')}
+                {item.isFullDay ? '1 Hari (Semua Jam)' : ((item.timeSlots && item.timeSlots.length > 0) ? item.timeSlots.join(', ') : (item.timeSlot || '-'))}
               </Text>
             </View>
             <View style={styles.infoRow}>
