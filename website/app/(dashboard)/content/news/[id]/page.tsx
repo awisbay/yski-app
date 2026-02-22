@@ -155,7 +155,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     mutationFn: () => api.delete(`/content/news/${id}`),
     onSuccess: () => {
       toast.success("Artikel dihapus")
-      router.push("/content")
+      router.push("/content/news")
     },
     onError: () => toast.error("Gagal menghapus artikel"),
   })
@@ -186,7 +186,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/content">
+            <Link href="/content/news">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

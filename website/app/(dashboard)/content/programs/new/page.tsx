@@ -48,7 +48,7 @@ export default function NewProgramPage() {
       }),
     onSuccess: () => {
       toast.success("Program berhasil dibuat")
-      router.push("/content")
+      router.push("/content/programs")
     },
     onError: () => toast.error("Gagal membuat program"),
   })
@@ -61,7 +61,7 @@ export default function NewProgramPage() {
     <div className="space-y-6 max-w-xl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/content">
+          <Link href="/content/programs">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -138,7 +138,7 @@ export default function NewProgramPage() {
 
           <div className="flex items-center gap-3 justify-end">
             <Button type="button" variant="outline" asChild>
-              <Link href="/content">Batal</Link>
+              <Link href="/content/programs">Batal</Link>
             </Button>
             <Button
               type="submit"

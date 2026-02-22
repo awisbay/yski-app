@@ -129,7 +129,7 @@ export default function EditProgramPage({ params }: { params: Promise<{ id: stri
     <div className="space-y-6 max-w-xl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/content">
+          <Link href="/content/programs">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>

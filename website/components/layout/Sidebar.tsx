@@ -28,8 +28,8 @@ const NAV_ITEMS = [
   { href: "/bookings", icon: Truck, label: "Cek Bookingan Pickup" },
   { href: "/pickups", icon: Clock, label: "Cek Request Penjemputan" },
   { href: "/equipment", icon: Package, label: "Manajemen Peralatan" },
-  { href: "/content?tab=program", icon: LayoutGrid, label: "Manajemen Program" },
-  { href: "/content?tab=news", icon: Newspaper, label: "Manajemen Berita" },
+  { href: "/content/programs", icon: LayoutGrid, label: "Manajemen Program" },
+  { href: "/content/news", icon: Newspaper, label: "Manajemen Berita" },
   { href: "/finance", icon: FileText, label: "Keuangan" },
 ]
 

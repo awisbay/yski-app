@@ -82,7 +82,7 @@ export default function NewArticlePage() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/content">
+          <Link href="/content/news">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -257,7 +257,7 @@ export default function NewArticlePage() {
 
           <div className="flex items-center gap-3 justify-end">
             <Button type="button" variant="outline" asChild>
-              <Link href="/content">Batal</Link>
+              <Link href="/content/news">Batal</Link>
             </Button>
             <Button
               type="submit"
