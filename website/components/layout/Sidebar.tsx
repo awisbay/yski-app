@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
-  { href: "/", icon: BarChart3, label: "Overview" },
+  { href: "/overview", icon: BarChart3, label: "Overview" },
   { href: "/users", icon: Users, label: "Manajemen User" },
   { href: "/donations", icon: Heart, label: "Manajemen Donasi" },
   { href: "/auctions", icon: Gavel, label: "Lelang" },
@@ -44,7 +44,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
   const isActive = (href: string) => {
     const normalizedHref = href.split("?")[0]
-    if (href === "/") return pathname === "/"
+    if (href === "/overview") return pathname === "/overview"
     return pathname.startsWith(normalizedHref)
   }
 
