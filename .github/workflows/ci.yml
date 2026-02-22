@@ -206,9 +206,6 @@ jobs:
             # Restart services
             docker compose up -d --remove-orphans
 
-            # Cleanup
-            docker system prune -f
-
             # Health check
             sleep 10
             curl -f http://localhost:8000/health || exit 1
