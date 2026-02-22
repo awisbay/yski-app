@@ -25,7 +25,12 @@
         "backgroundColor": "#ffffff"
       },
       "package": "org.yski.clicky",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -49,12 +54,6 @@
         {
           "icon": "./assets/images/logo.png",
           "color": "#10B981"
-        }
-      ],
-      [
-        "react-native-maps",
-        {
-          "googleMapsApiKey": ""
         }
       ]
     ],
