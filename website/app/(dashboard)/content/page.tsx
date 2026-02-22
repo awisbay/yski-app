@@ -27,20 +27,20 @@ import type { NewsArticle, Program } from "@/types"
 function useNewsArticles() {
   return useQuery({
     queryKey: ["news-articles"],
-    queryFn: () =>
-      api
-        .get<NewsArticle[]>("/content/news", { params: { skip: 0, limit: 100 } })
-        .then((r) => r.data),
+    queryFn: async () => {
+      const response = await api.get<NewsArticle[]>("/content/news", { params: { skip: 0, limit: 100 } })
+      return Array.isArray(response.data) ? response.data : []
+    },
   })
 }
 
 function usePrograms() {
   return useQuery({
     queryKey: ["programs"],
-    queryFn: () =>
-      api
-        .get<Program[]>("/content/programs", { params: { skip: 0, limit: 100 } })
-        .then((r) => r.data),
+    queryFn: async () => {
+      const response = await api.get<Program[]>("/content/programs", { params: { skip: 0, limit: 100 } })
+      return Array.isArray(response.data) ? response.data : []
+    },
   })
 }
 
@@ -56,8 +56,8 @@ export default function ContentPage() {
   const [activeTab, setActiveTab] = useState<"berita" | "program">(initialTab)
   const [confirmAction, setConfirmAction] = useState<{ type: string; id: string; title?: string } | null>(null)
 
-  const { data: articles = [], isLoading: articlesLoading } = useNewsArticles()
-  const { data: programs = [], isLoading: programsLoading } = usePrograms()
+  const { data: articles = [], isLoading: articlesLoading, isError: articlesError } = useNewsArticles()
+  const { data: programs = [], isLoading: programsLoading, isError: programsError } = usePrograms()
 
   const approveNewsMutation = useMutation({
     mutationFn: (id: string) => api.post(`/content/news/${id}/approve`),
@@ -343,6 +343,11 @@ export default function ContentPage() {
         <TabsContent value="berita" className="mt-4">
           <Card>
             <CardContent className="pt-6 space-y-4">
+              {articlesError && (
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  Gagal memuat data berita. Silakan refresh halaman.
+                </div>
+              )}
               <DataTableToolbar
                 globalFilter={searchNews}
                 onGlobalFilterChange={setSearchNews}
@@ -368,6 +373,11 @@ export default function ContentPage() {
         <TabsContent value="program" className="mt-4">
           <Card>
             <CardContent className="pt-6 space-y-4">
+              {programsError && (
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  Gagal memuat data program. Silakan refresh halaman.
+                </div>
+              )}
               <DataTableToolbar
                 globalFilter={searchPrograms}
                 onGlobalFilterChange={setSearchPrograms}

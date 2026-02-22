@@ -38,17 +38,17 @@ const STATUS_OPTIONS = [
 function usePickups(status: string, pickupType: string) {
   return useQuery({
     queryKey: ["pickups", status, pickupType],
-    queryFn: () =>
-      api
-        .get<PickupRequest[]>("/pickups", {
-          params: {
-            skip: 0,
-            limit: 200,
-            status: status !== "all" ? status : undefined,
-            pickup_type: pickupType !== "all" ? pickupType : undefined,
-          },
-        })
-        .then((r) => r.data),
+    queryFn: async () => {
+      const response = await api.get<PickupRequest[]>("/pickups", {
+        params: {
+          skip: 0,
+          limit: 100,
+          status: status !== "all" ? status : undefined,
+          pickup_type: pickupType !== "all" ? pickupType : undefined,
+        },
+      })
+      return Array.isArray(response.data) ? response.data : []
+    },
   })
 }
 
@@ -59,7 +59,7 @@ export default function PickupsPage() {
   const [typeFilter, setTypeFilter] = useState<(typeof PICKUP_TYPES)[number]>("all")
   const [confirmAction, setConfirmAction] = useState<{ type: "confirm_later" | "start" | "complete"; item: PickupRequest } | null>(null)
 
-  const { data: pickups = [], isLoading } = usePickups(statusFilter, typeFilter)
+  const { data: pickups = [], isLoading, isError } = usePickups(statusFilter, typeFilter)
 
   const confirmLaterMutation = useMutation({
     mutationFn: (id: string) =>
@@ -195,6 +195,11 @@ export default function PickupsPage() {
           <CardTitle className="text-base">Request Penjemputan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isError && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              Gagal memuat data request penjemputan. Silakan refresh halaman.
+            </div>
+          )}
           <DataTableToolbar
             globalFilter={search}
             onGlobalFilterChange={setSearch}

@@ -28,16 +28,16 @@ type AuctionStatusFilter = (typeof AUCTION_STATUSES)[number]
 function useAuctions(status: AuctionStatusFilter) {
   return useQuery({
     queryKey: ["auctions", status],
-    queryFn: () =>
-      api
-        .get<AuctionItem[]>("/auctions", {
-          params: {
-            skip: 0,
-            limit: 100,
-            status: status !== "all" ? status : undefined,
-          },
-        })
-        .then((r) => r.data),
+    queryFn: async () => {
+      const response = await api.get<AuctionItem[]>("/auctions", {
+        params: {
+          skip: 0,
+          limit: 100,
+          status: status !== "all" ? status : undefined,
+        },
+      })
+      return Array.isArray(response.data) ? response.data : []
+    },
   })
 }
 
@@ -54,8 +54,8 @@ export default function AuctionsPage() {
   const [statusFilter, setStatusFilter] = useState<AuctionStatusFilter>("all")
   const [deleteTarget, setDeleteTarget] = useState<AuctionItem | null>(null)
 
-  const { data: auctions = [], isLoading } = useAuctions(statusFilter)
-  const { data: metrics, isLoading: metricsLoading } = useAuctionMetrics()
+  const { data: auctions = [], isLoading, isError } = useAuctions(statusFilter)
+  const { data: metrics, isLoading: metricsLoading, isError: metricsError } = useAuctionMetrics()
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/auctions/${id}`),
@@ -234,6 +234,11 @@ export default function AuctionsPage() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6 space-y-4">
+          {(isError || metricsError) && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              Gagal memuat data lelang. Silakan refresh halaman.
+            </div>
+          )}
           <DataTableToolbar
             globalFilter={search}
             onGlobalFilterChange={setSearch}

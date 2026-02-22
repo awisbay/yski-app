@@ -42,8 +42,10 @@ const STATUS_OPTIONS = [
 function useBookings() {
   return useQuery({
     queryKey: ["bookings"],
-    queryFn: () =>
-      api.get<MovingBooking[]>("/bookings", { params: { skip: 0, limit: 100 } }).then((r) => r.data),
+    queryFn: async () => {
+      const response = await api.get<MovingBooking[]>("/bookings", { params: { skip: 0, limit: 100 } })
+      return Array.isArray(response.data) ? response.data : []
+    },
   })
 }
 
@@ -63,8 +65,8 @@ export default function BookingsPage() {
   const [confirmAction, setConfirmAction] = useState<{ type: string; booking: MovingBooking } | null>(null)
   const [rejectReason, setRejectReason] = useState("")
 
-  const { data: bookings = [], isLoading } = useBookings()
-  const { data: metrics, isLoading: metricsLoading } = useBookingMetrics()
+  const { data: bookings = [], isLoading, isError } = useBookings()
+  const { data: metrics, isLoading: metricsLoading, isError: metricsError } = useBookingMetrics()
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => api.post(`/bookings/${id}/approve`),
@@ -273,6 +275,11 @@ export default function BookingsPage() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6 space-y-4">
+          {(isError || metricsError) && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              Gagal memuat data booking pickup. Silakan refresh halaman.
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <DataTableToolbar

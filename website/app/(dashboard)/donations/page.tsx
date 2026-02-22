@@ -31,16 +31,16 @@ type PaymentStatusFilter = (typeof PAYMENT_STATUSES)[number]
 function useDonations(paymentStatus: PaymentStatusFilter) {
   return useQuery({
     queryKey: ["donations", paymentStatus],
-    queryFn: () =>
-      api
-        .get<Donation[]>("/donations", {
-          params: {
-            skip: 0,
-            limit: 200,
-            payment_status: paymentStatus !== "all" ? paymentStatus : undefined,
-          },
-        })
-        .then((r) => r.data),
+    queryFn: async () => {
+      const response = await api.get<Donation[]>("/donations", {
+        params: {
+          skip: 0,
+          limit: 100,
+          payment_status: paymentStatus !== "all" ? paymentStatus : undefined,
+        },
+      })
+      return Array.isArray(response.data) ? response.data : []
+    },
   })
 }
 
@@ -57,8 +57,8 @@ export default function DonationsPage() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>("all")
   const [verifyTarget, setVerifyTarget] = useState<Donation | null>(null)
 
-  const { data: donations = [], isLoading } = useDonations(paymentStatus)
-  const { data: metrics, isLoading: metricsLoading } = useDonationMetrics()
+  const { data: donations = [], isLoading, isError } = useDonations(paymentStatus)
+  const { data: metrics, isLoading: metricsLoading, isError: metricsError } = useDonationMetrics()
 
   const verifyMutation = useMutation({
     mutationFn: (id: string) => api.post(`/donations/${id}/verify`),
@@ -248,6 +248,11 @@ export default function DonationsPage() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6 space-y-4">
+          {(isError || metricsError) && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              Gagal memuat data donasi. Silakan refresh halaman.
+            </div>
+          )}
           <DataTableToolbar
             globalFilter={search}
             onGlobalFilterChange={setSearch}
