@@ -165,10 +165,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   <span className="text-gray-900">{booking.approved_by}</span>
                 </div>
               )}
-              {booking.assigned_to && (
+              {booking.assigned_to_name && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">Ditugaskan kepada</span>
-                  <span className="text-gray-900">{booking.assigned_to}</span>
+                  <span className="text-gray-900">{booking.assigned_to_name}</span>
                 </div>
               )}
               {booking.rejection_reason && (

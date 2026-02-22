@@ -66,6 +66,7 @@ class BookingResponse(BaseModel):
     requester_phone: str
     status: str
     assigned_to: Optional[UUID] = None
+    assigned_to_name: Optional[str] = None
     approved_by: Optional[UUID] = None
     rejection_reason: Optional[str] = None
     rating: Optional[int] = None

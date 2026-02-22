@@ -151,10 +151,10 @@ export default function BookingsPage() {
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
-      accessorKey: "assigned_to",
+      accessorKey: "assigned_to_name",
       header: "Ditugaskan",
       cell: ({ row }) => (
-        <span className="text-sm text-gray-700">{row.original.assigned_to ?? "—"}</span>
+        <span className="text-sm text-gray-700">{row.original.assigned_to_name ?? "—"}</span>
       ),
     },
     {
@@ -209,7 +209,7 @@ export default function BookingsPage() {
     "Telepon": b.requester_phone,
     "Keperluan": b.purpose,
     "Status": b.status,
-    "Ditugaskan": b.assigned_to ?? "",
+    "Ditugaskan": b.assigned_to_name ?? "",
     "Dibuat": format(new Date(b.created_at), "dd/MM/yyyy HH:mm"),
   }))
 

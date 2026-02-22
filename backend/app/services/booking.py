@@ -12,6 +12,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, ProgrammingError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.booking import MovingBooking
 from app.schemas.booking import BookingCreate, BookingUpdate
@@ -67,7 +68,9 @@ class BookingService:
             return None
         
         result = await self.db.execute(
-            select(MovingBooking).where(MovingBooking.id == uuid_id)
+            select(MovingBooking)
+            .options(selectinload(MovingBooking.assigned_volunteer))
+            .where(MovingBooking.id == uuid_id)
         )
         return result.scalar_one_or_none()
     
@@ -79,7 +82,7 @@ class BookingService:
         requester_id: Optional[str] = None
     ) -> List[MovingBooking]:
         """List bookings with filters."""
-        query = select(MovingBooking)
+        query = select(MovingBooking).options(selectinload(MovingBooking.assigned_volunteer))
         
         if status:
             query = query.where(MovingBooking.status == status)

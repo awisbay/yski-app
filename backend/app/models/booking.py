@@ -92,3 +92,7 @@ class MovingBooking(Base):
     
     def __repr__(self) -> str:
         return f"<MovingBooking(id={self.id}, code={self.booking_code}, date={self.booking_date}, slot={self.time_slot})>"
+
+    @property
+    def assigned_to_name(self) -> Optional[str]:
+        return self.assigned_volunteer.full_name if self.assigned_volunteer else None

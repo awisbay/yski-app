@@ -97,6 +97,7 @@ export interface MovingBooking {
   notes: string | null
   status: string
   assigned_to: string | null
+  assigned_to_name: string | null
   approved_by: string | null
   rejection_reason: string | null
   rating: number | null
