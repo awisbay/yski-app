@@ -29,7 +29,7 @@ email-validator==2.1.0
 httpx==0.26.0
 
 # MinIO
-minio==7.2.0
+minio==7.2.20
 
 # Testing
 pytest==7.4.4
