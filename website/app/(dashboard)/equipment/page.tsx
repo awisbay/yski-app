@@ -24,7 +24,7 @@ import { DonutChart } from "@/components/charts/DonutChart"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import api from "@/lib/api"
-import { formatDate, formatNumber } from "@/lib/utils"
+import { formatDate, formatNumber, getMediaUrl } from "@/lib/utils"
 import type { MedicalEquipment, EquipmentLoan, EquipmentMetrics } from "@/types"
 
 function useEquipment() {
@@ -41,7 +41,7 @@ function useEquipmentLoans() {
   return useQuery({
     queryKey: ["equipment-loans"],
     queryFn: async () => {
-      const response = await api.get<EquipmentLoan[]>("/equipment/loans", { params: { skip: 0, limit: 100 } })
+      const response = await api.get<EquipmentLoan[]>("/equipment/loans/all", { params: { skip: 0, limit: 100 } })
       return Array.isArray(response.data) ? response.data : []
     },
   })
@@ -106,7 +106,7 @@ export default function EquipmentPage() {
         row.original.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={row.original.photo_url}
+            src={getMediaUrl(row.original.photo_url)}
             alt={row.original.name}
             className="h-10 w-10 rounded object-cover border border-gray-200"
           />
@@ -152,9 +152,8 @@ export default function EquipmentPage() {
       header: "Tersedia",
       cell: ({ row }) => (
         <span
-          className={`text-sm font-medium ${
-            row.original.available_stock === 0 ? "text-red-600" : "text-emerald-600"
-          }`}
+          className={`text-sm font-medium ${row.original.available_stock === 0 ? "text-red-600" : "text-emerald-600"
+            }`}
         >
           {row.original.available_stock}
         </span>

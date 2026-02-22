@@ -122,7 +122,8 @@ class EquipmentService:
         skip: int = 0,
         limit: int = 20,
         status: Optional[str] = None,
-        borrower_id: Optional[str] = None
+        borrower_id: Optional[str] = None,
+        equipment_id: Optional[str] = None
     ) -> List[EquipmentLoan]:
         """List loans with filters."""
         query = select(EquipmentLoan)
@@ -132,6 +133,8 @@ class EquipmentService:
             query = query.where(EquipmentLoan.status == status)
         if borrower_id:
             query = query.where(EquipmentLoan.borrower_id == UUID(borrower_id))
+        if equipment_id:
+            query = query.where(EquipmentLoan.equipment_id == UUID(equipment_id))
         
         query = query.offset(skip).limit(limit).order_by(EquipmentLoan.created_at.desc())
         result = await self.db.execute(query)

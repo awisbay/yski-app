@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import api from "@/lib/api"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getMediaUrl } from "@/lib/utils"
 import type { MedicalEquipment, EquipmentLoan } from "@/types"
 
 export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +29,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     queryKey: ["equipment-loans", id],
     queryFn: () =>
       api
-        .get<EquipmentLoan[]>("/equipment/loans", { params: { equipment_id: id, limit: 50 } })
+        .get<EquipmentLoan[]>("/equipment/loans/all", { params: { equipment_id: id, limit: 50 } })
         .then((r) => r.data),
   })
 
@@ -85,7 +85,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
             {equipment.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={equipment.photo_url}
+                src={getMediaUrl(equipment.photo_url)}
                 alt={equipment.name}
                 className="w-full h-48 object-cover rounded-lg border border-gray-200"
               />

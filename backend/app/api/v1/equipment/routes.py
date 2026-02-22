@@ -141,6 +141,7 @@ async def delete_equipment(
 @router.get("/loans/all", response_model=List[EquipmentLoanResponse])
 async def list_loans(
     status: str = Query(None),
+    equipment_id: UUID = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_role("admin", "pengurus")),
@@ -148,7 +149,12 @@ async def list_loans(
 ):
     """List all loans (Admin/Pengurus only)."""
     service = EquipmentService(db)
-    loans = await service.list_loans(skip=skip, limit=limit, status=status)
+    loans = await service.list_loans(
+        skip=skip, 
+        limit=limit, 
+        status=status,
+        equipment_id=str(equipment_id) if equipment_id else None
+    )
     return loans
 
 
